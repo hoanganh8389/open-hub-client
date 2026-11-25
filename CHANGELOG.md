@@ -1,5 +1,18 @@
 # Lịch sử phát hành
 
+## 0.5.0 — 2026-11-25 (cổng cộng đồng P1–P4)
+
+- **Cổng cộng đồng** (`OHCL_Front`, mockup persona P1–P4), khung riêng, bỏ CSS của theme trên các trang Hub:
+  - **Trang chủ cổng ngành** thay trang chủ của theme (công tắc ở 14 · Cài đặt): hero theo persona, lối tắt, tìm nhanh, bản đồ, tin tức thật (bài viết của site), danh mục, số liệu thật (sự kiện "—").
+  - **`/ban-do/`** danh bạ + bản đồ: lọc từ khoá / loại hình / tỉnh phía máy chủ; ba trạng thái có dữ liệu · trống · lỗi.
+  - **`/co-so/<id>-<tên>/`** hồ sơ cơ sở: chỉ trường công khai, nút Zalo tới trợ lý của chính cơ sở; không phải V4 ⇒ 404.
+  - **`/tro-thanh-hoi-vien/`** quyền lợi + form đăng ký ⇒ hồ sơ mới ở 02 · Hội viên (nguồn web); chống spam: nonce, bẫy bot, 5 lần / giờ / IP; lỗi bốn trường.
+- **Chỉ hồ sơ V4 ra ngoài** (R-MAP): đồng ý công khai + toạ độ + khoá đang chạy và dùng trong 30 ngày + leader xác minh + đang hoạt động. Toạ độ công khai làm tròn 4 số; không lộ điện thoại / email. Danh sách công khai đệm 10 phút, xoá khi hồ sơ đổi; lõi vắng ⇒ báo lỗi, không đệm.
+- Member 360°: trường giờ mở cửa, toạ độ, ô **đồng ý công khai**, dòng **Bản đồ V1–V4** kèm lý do còn thiếu, khối **Xác minh (V3)** (bằng chứng, hạn mặc định 12 tháng, bỏ xác minh).
+- Hợp đồng ngành @2 thêm khoá tuỳ chọn **`persona`** (khẩu hiệu, tiêu đề, giá trị, quyền lợi, danh mục) — bản nhỏ, plugin ngành cũ vẫn chạy.
+- Bản đồ: Leaflet 1.9.4 đóng gói trong plugin (BSD-2, `assets/vendor/leaflet`) + nền OpenStreetMap; ghim màu ngành.
+- `tests/front-smoke.php` 25/25 (bậc V1–V4, chỉ V4 công khai, không lộ dữ liệu riêng, escape, đăng ký, chống spam, lõi vắng); gỡ điều kiện "đồng ý công khai" ⇒ 6 FAIL.
+
 ## 0.4.0 — 2026-11-25 (Đ1c Member 360°)
 
 - Hồ sơ hội viên = CPT `bz_hub_member` trên site Hub (không bảng mới): meta lõi `_bzm_*` (phân khúc, tỉnh, liên hệ, website, Coach, trạng thái, khoá `key_id` + `key_prefix`), trường ngành `_bzi_*` theo hợp đồng @2.

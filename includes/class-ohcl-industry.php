@@ -47,7 +47,10 @@ final class OHCL_Industry {
 	/** Script / decorative fonts that break Vietnamese diacritics (R-HUB-13). */
 	const FORBIDDEN_FONTS = '/caveat|dancing\s*script|pacifico|great\s*vibes|lobster|satisfy|sacramento|kaushan/i';
 
-	const KNOWN_KEYS = array( 'contract', 'id', 'name', 'industry', 'leader', 'brand', 'modules', 'terms', 'segments', 'member_fields', 'standards', 'coach_skills', 'academy_tracks', 'campaign_templates', 'apps', 'trial_days', 'knowledge_assets', 'plugin', 'version' );
+	const KNOWN_KEYS = array( 'contract', 'id', 'name', 'industry', 'leader', 'brand', 'modules', 'terms', 'segments', 'member_fields', 'standards', 'coach_skills', 'academy_tracks', 'campaign_templates', 'apps', 'trial_days', 'knowledge_assets', 'persona', 'plugin', 'version' );
+
+	/** Line icons a persona may use (same set as the mockup). */
+	const ICONS = array( 'leaf', 'heart', 'globe', 'users', 'factory', 'bag', 'pin', 'gift', 'cal', 'doc', 'book', 'store', 'truck', 'chat', 'search' );
 
 	/** @var array|null per-request cache */
 	private static $current = null;
@@ -72,9 +75,93 @@ final class OHCL_Industry {
 			'apps'               => array(),
 			'trial_days'         => 30,
 			'knowledge_assets'   => array(),
+			'persona'            => self::default_persona(),
 			'plugin'             => '',
 			'version'            => '',
 		);
+	}
+
+	/**
+	 * Words of the public community portal (persona layer, R-HUB-12). Neutral defaults; an industry overrides
+	 * them through the optional key `persona` (contract @2, minor addition: old industry plugins keep working).
+	 */
+	public static function default_persona() {
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F1 — chữ mặc định của cổng cộng đồng (khi ngành chưa khai persona).
+		return array(
+			'slogan'     => 'Cùng nhau phát triển',
+			'kicker'     => 'Cùng kiến tạo',
+			'title'      => 'Ngành của chúng ta',
+			'title_em'   => 'phát triển bền vững',
+			'subtitle'   => 'Kết nối cộng đồng · Tặng công nghệ · Trao tri thức',
+			'motto'      => 'Tặng công nghệ · Trao tri thức · Kết nối khách hàng',
+			'values'     => array( array( 'icon' => 'users', 'label' => 'Kết nối cộng đồng' ), array( 'icon' => 'gift', 'label' => 'Công nghệ 0đ' ), array( 'icon' => 'book', 'label' => 'Trao tri thức' ) ),
+			'benefits'   => array(
+				array( 'icon' => 'gift', 'title' => 'Bộ phần mềm chuyển đổi số — tặng 0đ', 'text' => 'Bán hàng, kho, kế toán, khách quen, website. Mã nguồn mở, dùng mãi mãi.', 'highlight' => true ),
+				array( 'icon' => 'chat', 'title' => 'Trợ lý AI trên Zalo — dùng thử', 'text' => 'Hết dùng thử, sổ sách vẫn chạy bình thường.', 'highlight' => true ),
+				array( 'icon' => 'pin', 'title' => 'Có tên trên bản đồ ngành', 'text' => 'Hồ sơ cơ sở và nút nhắn Zalo tới trợ lý của chính bạn.', 'highlight' => false ),
+				array( 'icon' => 'users', 'title' => 'Cộng đồng và kho mẫu ngành', 'text' => 'Tài liệu, quy trình mẫu, sự kiện ưu tiên hội viên.', 'highlight' => false ),
+			),
+			'categories' => array(),
+			'join_note'  => 'Ban điều hành duyệt rồi cấp site và khoá trợ lý AI cho cơ sở. Không cần thẻ thanh toán.',
+		);
+	}
+
+	/** Validate the optional persona key. Pure. Bad items are dropped with a warning. */
+	public static function validate_persona( $raw, array $segments, array &$warnings ) {
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F1 — kiểm khoá persona: chuỗi có độ dài trần, biểu tượng trong bộ cho phép, danh mục trỏ đúng phân khúc.
+		$out = self::default_persona();
+		if ( ! is_array( $raw ) ) {
+			return $out;
+		}
+		foreach ( array( 'slogan' => 120, 'kicker' => 60, 'title' => 80, 'title_em' => 80, 'subtitle' => 160, 'motto' => 120, 'join_note' => 200 ) as $k => $max ) {
+			if ( isset( $raw[ $k ] ) ) {
+				$v = self::str( $raw[ $k ], $max );
+				if ( preg_match( self::FORBIDDEN_FONTS, $v ) ) {
+					$warnings[] = 'persona.' . $k . ': nhắc font viết tay, bỏ (R-HUB-13)';
+					continue;
+				}
+				$out[ $k ] = $v;
+			}
+		}
+		$icon = function ( $v ) {
+			return in_array( $v, self::ICONS, true ) ? $v : 'leaf';
+		};
+		if ( isset( $raw['values'] ) && is_array( $raw['values'] ) ) {
+			$out['values'] = array();
+			foreach ( array_slice( $raw['values'], 0, 3 ) as $it ) {
+				$l = is_array( $it ) && isset( $it['label'] ) ? self::str( $it['label'], 40 ) : '';
+				if ( '' !== $l ) {
+					$out['values'][] = array( 'icon' => $icon( isset( $it['icon'] ) ? $it['icon'] : '' ), 'label' => $l );
+				}
+			}
+		}
+		if ( isset( $raw['benefits'] ) && is_array( $raw['benefits'] ) ) {
+			$out['benefits'] = array();
+			foreach ( array_slice( $raw['benefits'], 0, 8 ) as $i => $it ) {
+				$t = is_array( $it ) && isset( $it['title'] ) ? self::str( $it['title'], 80 ) : '';
+				if ( '' === $t ) {
+					$warnings[] = 'persona.benefits[' . $i . ']: thiếu title, bỏ';
+					continue;
+				}
+				$out['benefits'][] = array( 'icon' => $icon( isset( $it['icon'] ) ? $it['icon'] : '' ), 'title' => $t, 'text' => isset( $it['text'] ) ? self::str( $it['text'], 200 ) : '', 'highlight' => ! empty( $it['highlight'] ) );
+			}
+		}
+		if ( isset( $raw['categories'] ) && is_array( $raw['categories'] ) ) {
+			$out['categories'] = array();
+			foreach ( array_slice( $raw['categories'], 0, 8 ) as $i => $it ) {
+				$l   = is_array( $it ) && isset( $it['label'] ) ? self::str( $it['label'], 40 ) : '';
+				$seg = is_array( $it ) && isset( $it['segment'] ) ? (string) $it['segment'] : '';
+				if ( '' === $l ) {
+					continue;
+				}
+				if ( '' !== $seg && ! isset( $segments[ $seg ] ) ) {
+					$warnings[] = 'persona.categories[' . $i . ']: phân khúc "' . self::str( $seg, 40 ) . '" không có, bỏ liên kết';
+					$seg        = '';
+				}
+				$out['categories'][] = array( 'icon' => $icon( isset( $it['icon'] ) ? $it['icon'] : '' ), 'label' => $l, 'segment' => $seg );
+			}
+		}
+		return $out;
 	}
 
 	/**
@@ -288,6 +375,8 @@ final class OHCL_Industry {
 				);
 			}
 		}
+
+		$cfg['persona'] = self::validate_persona( isset( $raw['persona'] ) ? $raw['persona'] : null, $cfg['segments'], $warnings );
 
 		return array( 'ok' => true, 'config' => $cfg, 'errors' => array(), 'warnings' => $warnings, 'ignored' => $ignored );
 	}

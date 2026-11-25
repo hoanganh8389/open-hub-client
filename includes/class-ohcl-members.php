@@ -45,7 +45,18 @@ final class OHCL_Members {
 		'contact_zalo' => array( 'Zalo của cơ sở', 40 ),
 		'site_url'     => array( 'Website', 200 ),
 		'coach'        => array( 'Coach phụ trách (mã)', 40 ),
+		'hours'        => array( 'Giờ mở cửa', 120 ),
+		'lat'          => array( 'Vĩ độ (bản đồ)', 12 ),
+		'lng'          => array( 'Kinh độ (bản đồ)', 12 ),
 	);
+
+	/** Public map levels (CHUAN-HO-SO-CO-SO-BAN-DO §3). Only V4 is ever public. */
+	const LEVELS = array( 1 => 'V1 · Đã đăng ký', 2 => 'V2 · Có khoá đang chạy', 3 => 'V3 · Leader xác minh', 4 => 'V4 · Công khai' );
+
+	/** Evidence a leader may tick when verifying (V3). */
+	const EVIDENCE = array( 'gpkd' => 'Giấy phép kinh doanh', 'chung-nhan' => 'Chứng nhận ngành', 'ghe-tham' => 'Đã ghé thăm', 'goi-video' => 'Gọi video' );
+
+	const PUBLIC_CACHE = 'ohcl_public_dir';
 
 	public static function register() {
 		register_post_type(
@@ -172,6 +183,16 @@ final class OHCL_Members {
 			return OHCL_Error::make( 'ohcl_member_url_invalid', 'Website phải bắt đầu bằng http:// hoặc https://.', 'Sửa địa chỉ website hoặc để trống.', 400 );
 		}
 		$core['coach'] = strtolower( preg_replace( '/[^a-z0-9-]/i', '', $core['coach'] ) );
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — toạ độ phải là số hợp lệ, có đủ cặp; đồng ý công khai là ô riêng.
+		foreach ( array( 'lat' => 90, 'lng' => 180 ) as $k => $lim ) {
+			if ( '' !== $core[ $k ] && ( ! is_numeric( str_replace( ',', '.', $core[ $k ] ) ) || abs( (float) str_replace( ',', '.', $core[ $k ] ) ) > $lim ) ) {
+				return OHCL_Error::make( 'ohcl_member_geo_invalid', 'Toạ độ không hợp lệ.', 'Nhập vĩ độ, kinh độ dạng số (ví dụ 21.0285 và 105.8542) hoặc để trống cả hai.', 400 );
+			}
+			$core[ $k ] = '' === $core[ $k ] ? '' : (string) round( (float) str_replace( ',', '.', $core[ $k ] ), 6 );
+		}
+		if ( ( '' === $core['lat'] ) !== ( '' === $core['lng'] ) ) {
+			return OHCL_Error::make( 'ohcl_member_geo_pair', 'Cần đủ cả vĩ độ và kinh độ.', 'Nhập cả hai số hoặc để trống cả hai.', 400 );
+		}
 
 		$ind = array();
 		foreach ( $industry['member_fields'] as $f ) {
@@ -200,7 +221,61 @@ final class OHCL_Members {
 			}
 			$ind[ $f['key'] ] = $v;
 		}
-		return array( 'title' => $title, 'core' => $core, 'industry' => $ind );
+		return array( 'title' => $title, 'core' => $core, 'industry' => $ind, 'consent' => ! empty( $in['public_consent'] ) );
+	}
+
+	/**
+	 * Map level V1–V4 (computed, never stored). V4 = consent + coords + V2 (live key used ≤ 30 days)
+	 * + V3 (leader verification still valid) + membership not paused / left.
+	 */
+	public static function level( array $m, $key, $now_ts ) {
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — bậc bản đồ tính lại mỗi lần; khoá ngưng / xác minh hết hạn ⇒ rớt bậc, ẩn khỏi công khai.
+		$v2 = false;
+		if ( is_array( $key ) && in_array( $key['status'], array( 'trial', 'active', 'grace' ), true ) && ! empty( $key['last_used_at'] ) ) {
+			$v2 = $now_ts - strtotime( $key['last_used_at'] . ' UTC' ) <= 30 * DAY_IN_SECONDS;
+		}
+		$v3 = self::verified( $m['verify'], $now_ts );
+		if ( ! $v2 ) {
+			return 1;
+		}
+		if ( ! $v3 ) {
+			return 2;
+		}
+		$geo = '' !== (string) $m['lat'] && '' !== (string) $m['lng'];
+		return ( $geo && '' !== (string) $m['consent'] && 'active' === $m['status'] ) ? 4 : 3;
+	}
+
+	/** Public card of a V4 member: public fields only, coordinates rounded to 4 decimals (~11 m). */
+	public static function public_view( array $m, array $industry ) {
+		$ind = array();
+		foreach ( $industry['member_fields'] as $f ) {
+			if ( empty( $f['public'] ) ) {
+				continue;
+			}
+			$v = isset( $m['industry'][ $f['key'] ] ) ? $m['industry'][ $f['key'] ] : '';
+			if ( is_array( $v ) ) {
+				$v = array_values( array_map( function ( $x ) use ( $f ) { return isset( $f['options'][ $x ] ) ? $f['options'][ $x ] : $x; }, $v ) );
+			} elseif ( 'select' === $f['type'] && isset( $f['options'][ $v ] ) ) {
+				$v = $f['options'][ $v ];
+			}
+			if ( '' !== $v && array() !== $v && null !== $v ) {
+				$ind[] = array( 'key' => $f['key'], 'label' => $f['label'], 'type' => $f['type'], 'value' => $v );
+			}
+		}
+		return array(
+			'id'       => (int) $m['id'],
+			'title'    => $m['title'],
+			'segment'  => $m['segment'],
+			'seg_label' => isset( $industry['segments'][ $m['segment'] ] ) ? $industry['segments'][ $m['segment'] ] : '',
+			'province' => $m['province'],
+			'address'  => $m['address'],
+			'hours'    => $m['hours'],
+			'zalo'     => $m['contact_zalo'],
+			'site_url' => $m['site_url'],
+			'lat'      => round( (float) $m['lat'], 4 ),
+			'lng'      => round( (float) $m['lng'], 4 ),
+			'fields'   => $ind,
+		);
 	}
 
 	private static function str( $v, $max ) {
@@ -226,6 +301,8 @@ final class OHCL_Members {
 			'accepted_at' => (string) get_post_meta( $id, '_bzm_accepted_at', true ),
 			'joined_at'   => (string) get_post_meta( $id, '_bzm_joined_at', true ),
 			'verify'      => get_post_meta( $id, '_bzm_verify', true ),
+			'consent'     => (string) get_post_meta( $id, '_bzm_public_consent', true ), // ngày đồng ý, rỗng = chưa
+			'source'      => (string) get_post_meta( $id, '_bzm_source', true ),
 			'industry'    => array(),
 		);
 		$m['status'] = isset( self::STATUS[ $m['status'] ] ) ? $m['status'] : 'active';
@@ -279,6 +356,12 @@ final class OHCL_Members {
 				update_post_meta( $id, $f['meta'], $clean['industry'][ $f['key'] ] );
 			}
 		}
+		if ( array_key_exists( 'consent', $clean ) ) {
+			// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — đồng ý công khai lưu kèm ngày; bỏ đồng ý thì xoá (hồ sơ rời bản đồ ngay).
+			$had = (string) get_post_meta( $id, '_bzm_public_consent', true );
+			update_post_meta( $id, '_bzm_public_consent', $clean['consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
+		}
+		self::flush_public();
 		if ( ! get_post_meta( $id, '_bzm_joined_at', true ) ) {
 			update_post_meta( $id, '_bzm_joined_at', gmdate( 'Y-m-d H:i:s' ) );
 			update_post_meta( $id, '_bzm_status', 'active' );
@@ -290,6 +373,7 @@ final class OHCL_Members {
 	public static function link_key( $id, $key_id, $key_prefix ) {
 		update_post_meta( (int) $id, '_bzm_key_id', (int) $key_id );
 		update_post_meta( (int) $id, '_bzm_key_prefix', (string) $key_prefix );
+		self::flush_public();
 	}
 
 	public static function accept( $id ) {
@@ -304,7 +388,69 @@ final class OHCL_Members {
 			return OHCL_Error::make( 'ohcl_member_status_invalid', 'Trạng thái hội viên không hợp lệ.', 'Chọn Đang hoạt động, Tạm dừng hoặc Đã rời.', 400 );
 		}
 		update_post_meta( (int) $id, '_bzm_status', $status );
+		self::flush_public();
 		return true;
+	}
+
+	/**
+	 * Leader verification (V3). Caller checks capability.
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function verify( $id, array $evidence, $note, $months ) {
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — xác minh V3: người, ngày, hạn (mặc định 12 tháng, MAP-Q2), bằng chứng; bỏ xác minh = xoá.
+		$evidence = array_values( array_intersect( $evidence, array_keys( self::EVIDENCE ) ) );
+		if ( ! $evidence ) {
+			return OHCL_Error::make( 'ohcl_verify_evidence_required', 'Cần chọn ít nhất một bằng chứng.', 'Đánh dấu bằng chứng đã kiểm (giấy phép, chứng nhận, ghé thăm…) rồi xác minh lại.', 400 );
+		}
+		$months = max( 1, min( 36, (int) $months ) );
+		update_post_meta( (int) $id, '_bzm_verify', array( 'by' => get_current_user_id(), 'at' => gmdate( 'Y-m-d H:i:s' ), 'until' => gmdate( 'Y-m-d H:i:s', strtotime( '+' . $months . ' months' ) ), 'evidence' => $evidence, 'note' => self::str( $note, 300 ) ) );
+		self::flush_public();
+		return true;
+	}
+
+	public static function unverify( $id ) {
+		update_post_meta( (int) $id, '_bzm_verify', '' );
+		self::flush_public();
+	}
+
+	/**
+	 * Public V4 cards for the portal, cached 10 minutes (flushed on any member write).
+	 * Degraded core (keys unknown) ⇒ nobody is V2 ⇒ empty list, flagged so the page says why.
+	 *
+	 * @return array{items:array[], degraded:bool}
+	 */
+	public static function public_list() {
+		$c = get_transient( self::PUBLIC_CACHE );
+		if ( is_array( $c ) ) {
+			return $c;
+		}
+		$keys = OHCL_Overview::all_keys();
+		$deg  = is_wp_error( $keys );
+		$byid = array();
+		if ( ! $deg ) {
+			foreach ( $keys['items'] as $k ) {
+				$byid[ (int) $k['id'] ] = $k;
+			}
+		}
+		$ind = OHCL_Industry::current();
+		$now = time();
+		$out = array();
+		foreach ( self::all() as $m ) {
+			$k = $m['key_id'] && isset( $byid[ $m['key_id'] ] ) ? $byid[ $m['key_id'] ] : null;
+			if ( 4 === self::level( $m, $k, $now ) ) {
+				$out[] = self::public_view( $m, $ind );
+			}
+		}
+		$res = array( 'items' => $out, 'degraded' => $deg );
+		if ( ! $deg ) {
+			set_transient( self::PUBLIC_CACHE, $res, 10 * MINUTE_IN_SECONDS );
+		}
+		return $res;
+	}
+
+	public static function flush_public() {
+		delete_transient( self::PUBLIC_CACHE );
 	}
 
 	/** key_id => key view, from the cached key list (empty when the core is unreachable). */

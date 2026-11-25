@@ -21,7 +21,7 @@ final class OHCL_Admin_Members {
 	const PAGE = 'open-hub-members';
 
 	public static function boot() {
-		foreach ( array( 'save', 'accept', 'key', 'status' ) as $a ) {
+		foreach ( array( 'save', 'accept', 'key', 'status', 'verify', 'unverify' ) as $a ) {
 			add_action( 'admin_post_ohcl_member_' . $a, array( __CLASS__, 'handle_' . $a ) );
 		}
 	}
@@ -148,6 +148,8 @@ final class OHCL_Admin_Members {
 			$type = 'email' === $k ? 'email' : ( 'site_url' === $k ? 'url' : 'text' );
 			echo '<p><label>' . esc_html( $def[0] ) . '<br><input name="' . esc_attr( $k ) . '" type="' . esc_attr( $type ) . '" class="regular-text" maxlength="' . (int) $def[1] . '" value="' . esc_attr( $v( $k ) ) . '"></label></p>';
 		}
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — đồng ý hiện trên bản đồ / danh bạ (bắt buộc cho V4).
+		echo '<p><label class="ohcl-chk"><input type="checkbox" name="public_consent" value="1"' . checked( $m && '' !== $m['consent'], true, false ) . '> Cơ sở đã đồng ý hiện trên bản đồ và danh bạ công khai</label></p>';
 		if ( $cfg['member_fields'] ) {
 			echo '<h3>Thông tin ngành (' . esc_html( $cfg['name'] ) . ')</h3>';
 		}
@@ -193,6 +195,25 @@ final class OHCL_Admin_Members {
 		$lv   = OHCL_Members::journey( $m, $k, $now );
 		$ai   = OHCL_Members::ai_state( $k, $now );
 		$ver  = OHCL_Members::verified( $m['verify'], $now );
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — bậc bản đồ + lý do còn thiếu (chỉ V4 lên công khai).
+		$map_lv  = OHCL_Members::level( $m, $k, $now );
+		$missing = array();
+		if ( $map_lv < 2 ) {
+			$missing[] = 'khoá chạy và được dùng trong 30 ngày';
+		}
+		if ( ! $ver ) {
+			$missing[] = 'leader xác minh';
+		}
+		if ( '' === $m['lat'] || '' === $m['lng'] ) {
+			$missing[] = 'toạ độ';
+		}
+		if ( '' === $m['consent'] ) {
+			$missing[] = 'cơ sở đồng ý công khai';
+		}
+		if ( 'active' !== $m['status'] ) {
+			$missing[] = 'hội viên đang hoạt động';
+		}
+		$map_why = $missing ? 'còn thiếu: ' . implode( ', ', $missing ) : '';
 
 		OHCL_Admin::head(
 			'02 · Quản lý hội viên › Member 360°',
@@ -225,6 +246,7 @@ final class OHCL_Admin_Members {
 			. '<dt>Hội viên</dt><dd>' . esc_html( OHCL_Members::STATUS[ $m['status'] ] ) . ( $m['joined_at'] ? ' · vào ' . esc_html( substr( $m['joined_at'], 0, 10 ) ) : '' ) . '</dd>'
 			. '<dt>Trợ lý AI</dt><dd><span class="ohcl-st ' . esc_attr( $ai['code'] ) . '">' . esc_html( $ai['label'] ) . '</span>' . ( $k && $k['last_used_at'] ? ' · dùng gần nhất ' . esc_html( $k['last_used_at'] ) : '' ) . '</dd>'
 			. '<dt>Xác minh</dt><dd>' . ( $ver ? 'Verified · hạn ' . esc_html( substr( $m['verify']['until'], 0, 10 ) ) : 'Chưa <span class="mute">(module 06, Đ2)</span>' ) . '</dd>'
+			. '<dt>Bản đồ</dt><dd>' . esc_html( OHCL_Members::LEVELS[ $map_lv ] ) . ( 4 === $map_lv ? ' · <a href="' . esc_url( OHCL_Front::place_url( $m['id'], $m['title'] ) ) . '" target="_blank" rel="noopener">xem trang công khai</a>' : ' <span class="mute">— ' . esc_html( $map_why ) . '</span>' ) . '</dd>'
 			. '<dt>Coach</dt><dd>' . ( $m['coach'] ? esc_html( $m['coach'] ) : '<span class="mute">Chưa có</span>' ) . '</dd>'
 			. '<dt>Liên hệ</dt><dd>' . esc_html( implode( ' · ', array_filter( array( $m['phone'], $m['email'], $m['contact_zalo'] ) ) ) ?: '—' ) . '</dd>'
 			. '<dt>Website</dt><dd>' . ( $m['site_url'] ? esc_html( $m['site_url'] ) : '—' ) . '</dd></dl></div>';
@@ -266,6 +288,25 @@ final class OHCL_Admin_Members {
 			echo '<option value="' . esc_attr( $s ) . '"' . selected( $m['status'], $s, false ) . '>' . esc_html( $l ) . '</option>';
 		}
 		echo '</select></label> <button class="button">Lưu</button></p></form></div>';
+
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — xác minh V3 của leader (MAP-Q3: quản trị viên Hub, không vai riêng).
+		echo '<div class="ohcl-card"><h3>Xác minh (V3)</h3>';
+		if ( $ver ) {
+			$ev = array_map( function ( $x ) { return isset( OHCL_Members::EVIDENCE[ $x ] ) ? OHCL_Members::EVIDENCE[ $x ] : $x; }, (array) $m['verify']['evidence'] );
+			echo '<p><span class="ohcl-st ok">ĐÃ XÁC MINH</span> hạn ' . esc_html( substr( $m['verify']['until'], 0, 10 ) ) . '</p><p class="mute">Bằng chứng: ' . esc_html( implode( ', ', $ev ) ) . ( $m['verify']['note'] ? ' · ' . esc_html( $m['verify']['note'] ) : '' ) . '</p>';
+			self::form_open( 'ohcl_member_unverify', 'ohcl_member_unverify_' . $m['id'] );
+			echo '<input type="hidden" name="id" value="' . (int) $m['id'] . '"><p><button class="button">Bỏ xác minh</button> <span class="mute">Hồ sơ rời bản đồ công khai ngay.</span></p></form>';
+		} else {
+			self::form_open( 'ohcl_member_verify', 'ohcl_member_verify_' . $m['id'] );
+			echo '<input type="hidden" name="id" value="' . (int) $m['id'] . '"><p class="mute">Đánh dấu bằng chứng đã kiểm:</p>';
+			foreach ( OHCL_Members::EVIDENCE as $ek => $el ) {
+				echo '<label class="ohcl-chk"><input type="checkbox" name="evidence[]" value="' . esc_attr( $ek ) . '"> ' . esc_html( $el ) . '</label> ';
+			}
+			echo '<p><label>Hiệu lực (tháng)<br><input type="number" name="months" min="1" max="36" value="12" style="width:80px"></label></p>'
+				. '<p><label>Ghi chú<br><input name="note" class="regular-text" maxlength="300"></label></p>'
+				. '<p><button class="button button-primary">Xác minh</button></p></form>';
+		}
+		echo '</div>';
 
 		echo '<div class="ohcl-card"><h3>Hành trình</h3><ol class="ohcl-journey">';
 		foreach ( OHCL_Members::JOURNEY as $i => $l ) {
@@ -335,6 +376,31 @@ final class OHCL_Admin_Members {
 		OHCL_Overview::flush();
 		OHCL_Slots::emit( 'key_issued', array( 'key_id' => (int) $res['id'], 'key_prefix' => (string) $res['key_prefix'], 'member_id' => $id, 'label' => $m['title'], 'coach_ref' => $m['coach'] ) );
 		OHCL_Admin::flash_set( array( 'key' => (string) $res['key'], 'label' => $m['title'], 'plan_code' => (string) $res['plan_code'], 'plan_until' => (string) $res['plan_until'] ) );
+		self::back( array( 'id' => $id ) );
+	}
+
+	public static function handle_verify() {
+		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
+		OHCL_Admin::guard();
+		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+		check_admin_referer( 'ohcl_member_verify_' . $id );
+		$ev  = isset( $_POST['evidence'] ) && is_array( $_POST['evidence'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['evidence'] ) ) : array();
+		$res = OHCL_Members::get( $id ) ? OHCL_Members::verify( $id, $ev, isset( $_POST['note'] ) ? sanitize_text_field( wp_unslash( $_POST['note'] ) ) : '', isset( $_POST['months'] ) ? (int) $_POST['months'] : 12 ) : OHCL_Error::make( 'ohcl_member_not_found', 'Không tìm thấy hồ sơ.', 'Mở lại từ danh sách hội viên.', 404 );
+		if ( is_wp_error( $res ) ) {
+			OHCL_Admin::flash_set( OHCL_Admin::error_flash( $res ) );
+		} else {
+			OHCL_Slots::emit( 'member_verified', array( 'member_id' => $id ) );
+			OHCL_Admin::flash_set( array( 'ok' => 'Đã xác minh hồ sơ.' ) );
+		}
+		self::back( array( 'id' => $id ) );
+	}
+
+	public static function handle_unverify() {
+		OHCL_Admin::guard();
+		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+		check_admin_referer( 'ohcl_member_unverify_' . $id );
+		OHCL_Members::unverify( $id );
+		OHCL_Admin::flash_set( array( 'ok' => 'Đã bỏ xác minh; hồ sơ không còn trên bản đồ công khai.' ) );
 		self::back( array( 'id' => $id ) );
 	}
 

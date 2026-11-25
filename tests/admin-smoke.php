@@ -52,6 +52,8 @@ function selected( $a, $b, $e ) { return (string) $a === (string) $b ? ' selecte
 function sanitize_key( $s ) { return strtolower( preg_replace( '/[^a-z0-9_\-]/i', '', (string) $s ) ); }
 function number_format_i18n( $n ) { return number_format( (float) $n, 0, ',', '.' ); }
 function wp_kses_post( $s ) { return $s; }
+function home_url( $p = '/' ) { return 'https://hub.test' . $p; }
+function sanitize_title( $s ) { return strtolower( preg_replace( '/[^a-z0-9]+/i', '-', (string) $s ) ); }
 function check_admin_referer( $a ) { return true; }
 function wp_safe_redirect( $u ) { throw new Redirected( $u ); }
 function wp_insert_post( array $a ) { $id = count( $GLOBALS['posts'] ) + 101; $GLOBALS['posts'][ $id ] = (object) array( 'ID' => $id, 'post_type' => $a['post_type'], 'post_title' => $a['post_title'] ); return $id; }
@@ -63,7 +65,7 @@ function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; r
 function handle( $class, $fn, array $post ) { $_POST = $post; try { call_user_func( array( $class, $fn ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-admin', 'class-ohcl-admin-members' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';

@@ -276,6 +276,15 @@ final class OHCL_Admin {
 		}
 		echo '</tbody></table></div><p><button class="button button-primary">Lưu module</button> <span class="mute">Tắt module chỉ ẩn khỏi menu và trang; dữ liệu giữ nguyên.</span></p></form>';
 
+		// [2026-11-25 09:08 PM Johnny Chu - Chu Hoàng Anh] OHCL-F1 — công tắc trang công khai (thay trang chủ của theme).
+		echo '<div class="ohcl-card"><h3>Trang công khai của Hub</h3>';
+		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		wp_nonce_field( 'ohcl_settings' );
+		echo '<input type="hidden" name="action" value="ohcl_settings"><input type="hidden" name="part" value="front">'
+			. '<p><label><input type="checkbox" name="front_home" value="1"' . checked( OHCL_Front::home_on(), true, false ) . '> Dùng trang chủ cổng ngành của Hub thay trang chủ của theme</label></p>'
+			. '<p class="mute">Trang: <a href="' . esc_url( OHCL_Front::url() ) . '" target="_blank" rel="noopener">trang chủ</a> · <a href="' . esc_url( OHCL_Front::url( 'map' ) ) . '" target="_blank" rel="noopener">bản đồ</a> · <a href="' . esc_url( OHCL_Front::url( 'join' ) ) . '" target="_blank" rel="noopener">trở thành hội viên</a>. Chỉ hồ sơ V4 (đã xác minh, đồng ý công khai, có toạ độ, khoá đang dùng) hiện ra ngoài.</p>'
+			. '<p><button class="button">Lưu</button></p></form></div>';
+
 		// Báo cáo dữ liệu ngành
 		$r = OHCL_Industry::report();
 		$c = $r['config'];
@@ -332,6 +341,9 @@ final class OHCL_Admin {
 				}
 			}
 			self::flash_set( array( 'ok' => 'Đã lưu module.' ) );
+		} elseif ( 'front' === $part ) {
+			update_option( OHCL_Front::HOME_OPTION, empty( $_POST['front_home'] ) ? '0' : '1', false );
+			self::flash_set( array( 'ok' => empty( $_POST['front_home'] ) ? 'Đã trả trang chủ về theme.' : 'Trang chủ giờ là cổng ngành của Hub.' ) );
 		} elseif ( 'core' === $part ) {
 			$base = isset( $_POST['base_url'] ) ? untrailingslashit( esc_url_raw( wp_unslash( $_POST['base_url'] ) ) ) : '';
 			$hub  = isset( $_POST['hub'] ) ? sanitize_key( wp_unslash( $_POST['hub'] ) ) : '';
