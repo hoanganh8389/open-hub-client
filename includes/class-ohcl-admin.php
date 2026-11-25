@@ -321,6 +321,12 @@ final class OHCL_Admin {
 			$base = isset( $_POST['base_url'] ) ? untrailingslashit( esc_url_raw( wp_unslash( $_POST['base_url'] ) ) ) : '';
 			$hub  = isset( $_POST['hub'] ) ? sanitize_key( wp_unslash( $_POST['hub'] ) ) : '';
 			$sec  = isset( $_POST['secret'] ) ? trim( (string) wp_unslash( $_POST['secret'] ) ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- kiểm dạng ngay dưới.
+			// [2026-11-25 06:44 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR2 — dán mã ghép nối vào ô "Mã Hub" / "Bí mật" ⇒ hiểu là mã ghép nối và kết nối luôn (trước đây sanitize_key biến 7C72-39ZP thành mã Hub sai).
+			$raw_hub = isset( $_POST['hub'] ) ? trim( sanitize_text_field( wp_unslash( $_POST['hub'] ) ) ) : '';
+			$code    = OHCL_Admin::pair_code_in_manual_form( $raw_hub, $sec );
+			if ( '' !== $code ) {
+				self::finish_pair( OHCL_Core_Client::pair( $base ? $base : 'https://bizcity.vn', $code ) );
+			}
 			$test = OHCL_Core_Client::check_config( array( 'base_url' => $base, 'hub' => $hub ? $hub : 'xx', 'secret' => 'ohs_' . str_repeat( '0', 32 ) ) );
 			if ( true !== $test ) {
 				self::flash_set( self::error_flash( $test ) );
@@ -354,7 +360,32 @@ final class OHCL_Admin {
 		check_admin_referer( 'ohcl_pair' );
 		$base = isset( $_POST['base_url'] ) ? esc_url_raw( wp_unslash( $_POST['base_url'] ) ) : '';
 		$code = isset( $_POST['code'] ) ? sanitize_text_field( wp_unslash( $_POST['code'] ) ) : '';
-		$res  = OHCL_Core_Client::pair( $base, $code );
+		self::finish_pair( OHCL_Core_Client::pair( $base, $code ) );
+	}
+
+	/**
+	 * A pairing code pasted into the manual form. Pure.
+	 * Secret box: any pairing-code shape. Hub box: only the exact "XXXX-XXXX" shape and only when the
+	 * secret box holds no valid ohs_ secret — so a real slug like "vegan-hub" is never taken for a code.
+	 *
+	 * @return string the code, or ''
+	 */
+	public static function pair_code_in_manual_form( $hub_raw, $secret_raw ) {
+		// [2026-11-25 06:44 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR2 — nhận mã ghép nối dán nhầm ô, không nhầm mã Hub thật.
+		$secret_raw = trim( (string) $secret_raw );
+		if ( OHCL_Core_Client::looks_like_pair_code( $secret_raw ) ) {
+			return $secret_raw;
+		}
+		$valid_secret = (bool) preg_match( '/^ohs_[a-f0-9]{32}$/', $secret_raw );
+		if ( ! $valid_secret && preg_match( '/^[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$/i', trim( (string) $hub_raw ) ) ) {
+			return trim( (string) $hub_raw );
+		}
+		return '';
+	}
+
+	/** Flash the pairing result (+ the 4-step check) and go back to Settings. */
+	private static function finish_pair( $res ) {
+		// [2026-11-25 06:44 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR2 — một chỗ kết thúc ghép nối cho cả ô mã và form nhập tay.
 		if ( is_wp_error( $res ) ) {
 			self::flash_set( self::error_flash( $res ) );
 		} else {

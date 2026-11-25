@@ -90,6 +90,12 @@ check( 'Cài đặt: báo cáo ngành ĐẠT', false !== strpos( $s, 'ĐẠT</sp
 check( 'Cài đặt: đã kết nối ⇒ hiện Hub + nút "Kết nối lại", ô mã ghép nối, nhập tay nằm trong Nâng cao', false !== strpos( $s, 'ĐÃ KẾT NỐI</span> Hub <code>sample</code>' ) && false !== strpos( $s, 'Kết nối lại' ) && false !== strpos( $s, 'name="code"' ) && false !== strpos( $s, '<details class="ohcl-adv">' ) );
 check( 'Không trang nào in bí mật Hub', false === strpos( $o . $k . $kc . $k1 . $s, $secret ) );
 
+// [2026-11-25 06:44 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR2 — ca thật trên veganhub.net: dán mã ghép nối vào ô "Mã Hub".
+check( 'form tay: mã ghép nối dán vào ô Mã Hub ⇒ nhận là mã', '7C72-39ZP' === OHCL_Admin::pair_code_in_manual_form( '7C72-39ZP', '123456789' ) );
+check( 'form tay: mã ghép nối dán vào ô Bí mật ⇒ nhận là mã', 'abcd efgh' === OHCL_Admin::pair_code_in_manual_form( '', 'abcd efgh' ) );
+check( 'form tay: mã Hub thật (vegan, vegan-hub) không bị nhận nhầm', '' === OHCL_Admin::pair_code_in_manual_form( 'vegan', '' ) && '' === OHCL_Admin::pair_code_in_manual_form( 'vegan-hub', '' ) );
+check( 'form tay: có bí mật ohs_ hợp lệ ⇒ ô Mã Hub dạng XXXX-XXXX vẫn là mã Hub', '' === OHCL_Admin::pair_code_in_manual_form( 'abcd-efgh', 'ohs_' . str_repeat( 'a', 32 ) ) );
+
 OHCL_Core_Client::$config = array( 'base_url' => '', 'hub' => '', 'secret' => '' );
 $sn = page( 'page_settings' );
 check( 'Cài đặt: chưa kết nối ⇒ "CHƯA KẾT NỐI", 3 bước hướng dẫn, địa chỉ mặc định bizcity.vn', false !== strpos( $sn, 'CHƯA KẾT NỐI' ) && 3 === substr_count( $sn, '<li>' ) && false !== strpos( $sn, 'value="https://bizcity.vn"' ) );

@@ -115,7 +115,7 @@ final class OHCL_Core_Client {
 			return $check;
 		}
 		$code = strtoupper( preg_replace( '/[\s-]+/', '', (string) $code ) );
-		if ( ! preg_match( '/^[A-HJ-NP-Z2-9]{8}$/', $code ) ) {
+		if ( ! self::looks_like_pair_code( $code ) ) {
 			return OHCL_Error::make( 'ohcl_pair_code_format', 'Mã ghép nối gồm 8 ký tự, dạng ABCD-EFGH.', 'Dán đúng mã hiện ở bizcity.vn › Sổ Hub.', 400 );
 		}
 		if ( defined( 'OHCL_CORE_SECRET' ) ) {
@@ -144,6 +144,12 @@ final class OHCL_Core_Client {
 			'hub'      => array( 'slug' => $slug, 'name' => isset( $res['hub']['name'] ) ? (string) $res['hub']['name'] : $slug, 'industry' => isset( $res['hub']['industry'] ) ? (string) $res['hub']['industry'] : '' ),
 			'mismatch' => '' !== $ind['id'] && $ind['id'] !== $slug,
 		);
+	}
+
+	/** "ABCD-EFGH" / "abcd efgh" / "ABCDEFGH" from the core's pairing alphabet (no O/0/I/1). */
+	public static function looks_like_pair_code( $v ) {
+		// [2026-11-25 06:44 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR2 — nhận ra mã ghép nối dán nhầm ô.
+		return (bool) preg_match( '/^[A-HJ-NP-Z2-9]{8}$/', strtoupper( preg_replace( '/[\s-]+/', '', (string) $v ) ) );
 	}
 
 	/** Connection state for the settings card (never the secret). */
