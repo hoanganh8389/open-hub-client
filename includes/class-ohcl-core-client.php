@@ -232,6 +232,10 @@ final class OHCL_Core_Client {
 		}
 		// Core speaks R-ERROR-UX: {code, message, data{status, hint, help_code}}. Pass it through.
 		$d = isset( $data['data'] ) && is_array( $data['data'] ) ? $data['data'] : array();
+		// [2026-11-25 06:46 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR2 — 403 rest_forbidden không phải lỗi của lõi mà của lớp chặn REST POST trên site lõi: nói rõ việc cần làm.
+		if ( isset( $data['code'] ) && 'rest_forbidden' === $data['code'] ) {
+			return OHCL_Error::make( 'ohcl_core_post_blocked', 'Máy chủ lõi Bizcity đang chặn yêu cầu từ site Hub (REST POST bị chặn).', 'Báo Bizcity mở đường cho namespace open-hub-core/v1 trên site lõi rồi bấm lại; mã ghép nối chưa bị dùng.', 403, 'ohcl_core_post_blocked' );
+		}
 		return OHCL_Error::make(
 			isset( $data['code'] ) ? (string) $data['code'] : 'ohcl_core_http_' . (int) $res['status'],
 			isset( $data['message'] ) ? (string) $data['message'] : 'Lõi Bizcity từ chối yêu cầu (HTTP ' . (int) $res['status'] . ').',
