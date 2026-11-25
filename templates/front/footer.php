@@ -15,13 +15,30 @@ $ohcl_blog = OHCL_Front::blog_url();
 </main>
 <footer class="ftr"><div class="in">
 	<div class="brand"><span class="seal"><?php echo OHCL_Front::icon( 'leaf' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><b><?php echo esc_html( $ohcl_name ); ?></b><small><?php echo esc_html( $cfg['leader'] ? $cfg['leader'] : $persona['slogan'] ); ?></small></span></div>
-	<?php foreach ( OHCL_Front::menu() as $ohcl_g => $ohcl_items ) : ?>
-		<div><h4><?php echo esc_html( $ohcl_g ); ?></h4><ul>
-			<?php foreach ( $ohcl_items as $ohcl_k => $ohcl_it ) : ?>
-				<li><a href="<?php echo esc_url( OHCL_Front::url( $ohcl_k ) ); ?>"><?php echo esc_html( $ohcl_it['title'] ); ?></a></li>
+	<?php
+	// [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — chân trang theo cùng cây menu với đầu trang: nhóm có trang con thành cột; mục lẻ gom vào cột "Trang".
+	$ohcl_single = array();
+	foreach ( OHCL_Front::nav() as $ohcl_n ) :
+		if ( ! $ohcl_n['children'] ) {
+			if ( 'home' !== $ohcl_n['key'] && 'blog' !== $ohcl_n['key'] ) {
+				$ohcl_single[] = $ohcl_n;
+			}
+			continue;
+		}
+		?>
+		<div><h4><?php echo esc_html( $ohcl_n['title'] ); ?></h4><ul>
+			<?php foreach ( $ohcl_n['children'] as $ohcl_c ) : ?>
+				<li><a href="<?php echo esc_url( $ohcl_c['url'] ); ?>"><?php echo esc_html( $ohcl_c['title'] ); ?></a></li>
 			<?php endforeach; ?>
 		</ul></div>
 	<?php endforeach; ?>
+	<?php if ( $ohcl_single ) : ?>
+		<div><h4>Trang</h4><ul>
+			<?php foreach ( $ohcl_single as $ohcl_c ) : ?>
+				<li><a href="<?php echo esc_url( $ohcl_c['url'] ); ?>"><?php echo esc_html( $ohcl_c['title'] ); ?></a></li>
+			<?php endforeach; ?>
+		</ul></div>
+	<?php endif; ?>
 	<div><h4>Tài khoản</h4><ul>
 		<?php if ( is_user_logged_in() ) : ?>
 			<li><a href="<?php echo esc_url( OHCL_Front::myhub_url() ); ?>">My Hub</a></li>

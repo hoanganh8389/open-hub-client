@@ -35,6 +35,7 @@ php tests/admin-smoke.php  # ba màn quản trị với WordPress giả
 php tests/front-smoke.php  # 4 trang công khai + form đăng ký
 php tests/cert-smoke.php   # chứng nhận: cấp, gia hạn, thu hồi, tra cứu, phản ánh
 php tests/pages-smoke.php  # mọi trang, menu, khung WordPress, My Hub, ứng tuyển Coach
+php tests/menu-smoke.php   # trang WordPress + "Menu Hub"
 php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → mã ghép nối → kết nối → cấp khoá
 ```
 
@@ -50,6 +51,7 @@ php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → 
 | **Đ1a** | hợp đồng ngành `bizcity_industry_hub@2` + bộ kiểm · registry 14 module bật / tắt · ô mở rộng + sự kiện · `OHCL_Core_Client` (một cửa gọi lõi) · CLI `wp ohcl` · ngành mẫu `examples/wp-sample-hub` | **xong mã + test (43/43)**, chưa chạy trên site thật |
 | **Đ1b** | màn quản trị (mockup O0, O1): **Tổng quan** câu 2 + 5 từ khoá thật ở lõi · **Khoá dùng thử** cấp (hiện một lần) / danh sách / thu hồi hai bước · **Cài đặt** module, kết nối lõi + kiểm tra, báo cáo dữ liệu ngành | **xong mã + test** (49/49 + chạy thử màn 10/10), chưa chạy trên site thật |
 | **F1** | cổng cộng đồng: trang chủ ngành (thay trang chủ theme, có công tắc), `/ban-do/`, `/co-so/…`, `/tro-thanh-hoi-vien/`; xác minh V3 + bậc V1–V4 | **xong mã + test** (front-smoke 25/25) · chưa chạy trên site thật |
+| **F3** | mẫu trang "Open Hub — …", tự tạo trang WordPress, menu WordPress "Menu Hub" (đầu / chân trang đọc menu), chạy tự động một lần | **xong mã + test** (menu-smoke 21/21) · chưa chạy trên site thật |
 | **F2** | đủ trang sitemap §12 + My Hub (6 mục) + ứng tuyển Coach; sổ trang một chỗ; mặc định vẽ cả site trong khung Hub (giữ theme cho Woo shop / trang chọn) | **xong mã + test** (pages-smoke 41/41) · chưa chạy trên site thật |
 | **Đ2a** | xác minh & chứng nhận (module 06): cấp đủ tiêu chí, gia hạn, thu hồi, `/chung-nhan/` tra cứu mã / QR, phản ánh, bậc hành trình 6 | **xong mã + test** (cert-smoke 35/35) · chưa chạy trên site thật |
 | **Đ1c** | Member 360° (CPT `bz_hub_member`, trường ngành `_bzi_*`, tiếp nhận, cấp khoá từ hồ sơ) · Tổng quan câu 1 | **xong mã + test** (admin-smoke 30/30) · kết nối lõi đã chạy thật trên veganhub.net ↔ bizcity.vn (4/4) |

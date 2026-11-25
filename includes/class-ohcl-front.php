@@ -194,6 +194,12 @@ final class OHCL_Front {
 	/* ---------- URLs ---------- */
 
 	public static function url( $page = 'home', array $args = array() ) {
+		// [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — có trang WordPress dùng mẫu "Open Hub — …" đã đăng ⇒ link trỏ về trang đó.
+		$pid = 'home' !== $page && class_exists( 'OHCL_Pages' ) ? OHCL_Pages::page_id( $page ) : 0;
+		$pl  = $pid ? get_permalink( $pid ) : '';
+		if ( $pl ) {
+			return $args ? add_query_arg( $args, $pl ) : $pl;
+		}
 		$p    = self::pages();
 		$slug = isset( $p[ $page ] ) ? $p[ $page ]['slug'] : '';
 		$base = '' === $slug ? home_url( '/' ) : home_url( '/' . $slug . '/' );
@@ -206,7 +212,44 @@ final class OHCL_Front {
 	}
 
 	public static function myhub_url( $tab = '' ) {
+		$pid = class_exists( 'OHCL_Pages' ) ? OHCL_Pages::page_id( 'myhub' ) : 0;
+		$pl  = $pid ? get_permalink( $pid ) : '';
+		if ( $pl && untrailingslashit( $pl ) !== untrailingslashit( home_url( '/' . self::pages()['myhub']['slug'] ) ) ) {
+			return $tab ? add_query_arg( array( 'tab' => $tab ), $pl ) : $pl; // [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — trang My Hub đổi đường dẫn ⇒ mục qua ?tab=
+		}
 		return home_url( '/' . self::pages()['myhub']['slug'] . '/' . ( $tab ? $tab . '/' : '' ) );
+	}
+
+	/**
+	 * Header / footer tree: the WordPress menu "Menu Hub" when it exists (owner edits it in Giao diện › Menu),
+	 * else built from the page registry. [ {title, url, key, desc, children} ]
+	 */
+	public static function nav() {
+		// [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — đầu / chân trang đọc menu WordPress "Menu Hub"; chưa có menu thì dựng từ sổ trang.
+		if ( class_exists( 'OHCL_Pages' ) ) {
+			$t = OHCL_Pages::nav_tree();
+			if ( null !== $t ) {
+				return $t;
+			}
+		}
+		$t = array( array( 'title' => 'Trang chủ', 'url' => home_url( '/' ), 'key' => 'home', 'desc' => '', 'children' => array() ) );
+		foreach ( self::menu() as $g => $items ) {
+			$kids = array();
+			foreach ( $items as $k => $pg ) {
+				$kids[] = array( 'title' => $pg['title'], 'url' => self::url( $k ), 'key' => $k, 'desc' => isset( $pg['desc'] ) ? $pg['desc'] : '', 'children' => array() );
+			}
+			if ( 1 === count( $kids ) ) {
+				$kids[0]['title'] = $g;
+				$t[]              = $kids[0];
+			} else {
+				$t[] = array( 'title' => $g, 'url' => '#', 'key' => '', 'desc' => '', 'children' => $kids );
+			}
+		}
+		$blog = self::blog_url();
+		if ( $blog ) {
+			$t[] = array( 'title' => 'Tin tức', 'url' => $blog, 'key' => 'blog', 'desc' => '', 'children' => array() );
+		}
+		return $t;
 	}
 
 	/* ---------- routing ---------- */
@@ -215,6 +258,9 @@ final class OHCL_Front {
 		$p = (string) get_query_var( self::QV );
 		if ( '' === $p && is_front_page() && self::home_on() && ! is_paged() ) {
 			$p = 'home';
+		}
+		if ( '' === $p && class_exists( 'OHCL_Pages' ) && is_page() ) {
+			$p = OHCL_Pages::key_of( get_queried_object_id() ); // [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — trang WordPress dùng mẫu "Open Hub — …"
 		}
 		if ( '' === $p || ! self::page_on( $p ) ) {
 			return; // không phải trang Hub, hoặc module đang tắt ⇒ WordPress xử lý (404 / khung chung)
@@ -235,6 +281,9 @@ final class OHCL_Front {
 		if ( 'myhub' === $p ) {
 			nocache_headers(); // trang riêng của người đăng nhập
 			$data['tab'] = sanitize_key( (string) get_query_var( 'ohcl_tab' ) );
+			if ( '' === $data['tab'] && isset( $_GET['tab'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- chỉ chọn mục.
+				$data['tab'] = sanitize_key( wp_unslash( $_GET['tab'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			}
 		}
 		global $wp_query;
 		if ( $wp_query && 'place' !== $p ) {

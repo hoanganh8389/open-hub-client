@@ -11,10 +11,8 @@
 
 defined( 'ABSPATH' ) || exit;
 $ohcl_name  = $cfg['name'] ? $cfg['name'] : get_bloginfo( 'name' );
-$ohcl_menu  = OHCL_Front::menu();
-$ohcl_pages = OHCL_Front::pages();
-$ohcl_cur   = isset( $ohcl_pages[ $page ] ) ? $ohcl_pages[ $page ]['group'] : '';
-$ohcl_blog  = OHCL_Front::blog_url();
+$ohcl_nav   = OHCL_Front::nav(); // [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — cây menu (menu WordPress "Menu Hub" hoặc sổ trang)
+$ohcl_blogv = 'wp' === $page && ( is_home() || is_singular( 'post' ) || is_category() );
 ?><!doctype html>
 <html <?php language_attributes(); ?>>
 <head>
@@ -47,25 +45,20 @@ $ohcl_blog  = OHCL_Front::blog_url();
 	</nav>
 </div>
 <nav class="nav" aria-label="Menu chính"><div class="in">
-	<a class="top<?php echo 'home' === $page ? ' on' : ''; ?>" href="<?php echo esc_url( OHCL_Front::url() ); ?>">Trang chủ</a>
-	<?php foreach ( $ohcl_menu as $ohcl_g => $ohcl_items ) : ?>
-		<?php if ( 1 === count( $ohcl_items ) ) : ?>
-			<?php foreach ( $ohcl_items as $ohcl_k => $ohcl_it ) : ?>
-				<a class="top<?php echo $page === $ohcl_k ? ' on' : ''; ?>" href="<?php echo esc_url( OHCL_Front::url( $ohcl_k ) ); ?>"><?php echo esc_html( $ohcl_g ); ?></a>
-			<?php endforeach; ?>
+	<?php foreach ( $ohcl_nav as $ohcl_n ) : ?>
+		<?php if ( ! $ohcl_n['children'] ) : ?>
+			<a class="top<?php echo ( '' !== $ohcl_n['key'] && $page === $ohcl_n['key'] ) || ( 'blog' === $ohcl_n['key'] && $ohcl_blogv ) ? ' on' : ''; ?>" href="<?php echo esc_url( $ohcl_n['url'] ); ?>"><?php echo esc_html( $ohcl_n['title'] ); ?></a>
 		<?php else : ?>
-			<details class="dd<?php echo $ohcl_cur === $ohcl_g ? ' on' : ''; ?>"><summary class="top"><?php echo esc_html( $ohcl_g ); ?></summary>
+			<?php $ohcl_on = in_array( $page, array_column( $ohcl_n['children'], 'key' ), true ); ?>
+			<details class="dd<?php echo $ohcl_on ? ' on' : ''; ?>"><summary class="top"><?php echo esc_html( $ohcl_n['title'] ); ?></summary>
 				<div class="mega">
-					<?php foreach ( $ohcl_items as $ohcl_k => $ohcl_it ) : ?>
-						<a href="<?php echo esc_url( OHCL_Front::url( $ohcl_k ) ); ?>"<?php echo $page === $ohcl_k ? ' aria-current="page"' : ''; ?>><b><?php echo esc_html( $ohcl_it['title'] ); ?></b><?php echo ! empty( $ohcl_it['desc'] ) ? '<span>' . esc_html( $ohcl_it['desc'] ) . '</span>' : ''; ?></a>
+					<?php foreach ( $ohcl_n['children'] as $ohcl_c ) : ?>
+						<a href="<?php echo esc_url( $ohcl_c['url'] ); ?>"<?php echo '' !== $ohcl_c['key'] && $page === $ohcl_c['key'] ? ' aria-current="page"' : ''; ?>><b><?php echo esc_html( $ohcl_c['title'] ); ?></b><?php echo '' !== $ohcl_c['desc'] ? '<span>' . esc_html( $ohcl_c['desc'] ) . '</span>' : ''; ?></a>
 					<?php endforeach; ?>
 				</div>
 			</details>
 		<?php endif; ?>
 	<?php endforeach; ?>
-	<?php if ( $ohcl_blog ) : ?>
-		<a class="top<?php echo 'wp' === $page && ( is_home() || is_singular( 'post' ) || is_category() ) ? ' on' : ''; ?>" href="<?php echo esc_url( $ohcl_blog ); ?>">Tin tức</a>
-	<?php endif; ?>
 </div></nav>
 </header>
 <main id="ohcl-main">

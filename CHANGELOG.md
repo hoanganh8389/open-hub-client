@@ -1,5 +1,15 @@
 # Lịch sử phát hành
 
+## 0.8.0 — 2026-11-25 (F3: trang WordPress + menu, giống templates/v2 của router)
+
+- **Mẫu trang** "Open Hub — <tên trang>" (khoá `open-hub:<trang>`) cho 12 trang Hub. Trang WordPress dùng mẫu được Hub dựng, ở đường dẫn chủ Hub đặt; khi đã đăng, mọi link của Hub trỏ về trang đó (đệm 1 ngày, xoá khi lưu / xoá trang).
+- **Tự tạo trang còn thiếu** (đăng ngay hoặc nháp), chỉ cho module đang bật; chạy lại không tạo trùng.
+- **Menu WordPress "Menu Hub"**: Trang chủ · nhóm → trang con · Tin tức. Chỉ thêm mục còn thiếu, không xoá / không sắp lại mục chủ Hub đã sửa. Gán được vào vị trí menu của theme; **đầu trang và chân trang của Hub đọc menu này** (sửa một lần ở Giao diện › Menu). Module tắt ⇒ mục ẩn khỏi đầu trang, menu giữ nguyên.
+- **Chạy tự động một lần** khi chủ Hub vào wp-admin sau khi cài / cập nhật: tạo trang (đăng), dựng menu, gán vào vị trí menu **còn trống** đầu tiên của theme (không bao giờ đè menu đang dùng).
+- Màn mới **Hub › Trang & menu**: bảng trang (đã đăng / nháp / chưa có / module tắt), nút tạo, nút cập nhật menu + chọn vị trí.
+- My Hub đổi đường dẫn ⇒ các mục đi qua `?tab=`.
+- `tests/menu-smoke.php` 21/21 (cho phép đè vị trí menu đang dùng ⇒ FAIL; bỏ kiểm tra mục đã có ⇒ FAIL).
+
 ## 0.7.0 — 2026-11-25 (F2: đủ trang, mặc định thay toàn bộ giao diện theme)
 
 - **Sổ trang một chỗ** (`OHCL_Front::pages()`, filter `ohcl_front_pages`), giống `templates/v2` của router: thêm trang = một dòng + một tệp mẫu. Trang có module tắt biến khỏi menu, chân trang, đường dẫn.
