@@ -55,6 +55,7 @@ function wp_kses_post( $s ) { return $s; }
 function home_url( $p = '/' ) { return 'https://hub.test' . $p; }
 function sanitize_title( $s ) { return strtolower( preg_replace( '/[^a-z0-9]+/i', '-', (string) $s ) ); }
 function check_admin_referer( $a ) { return true; }
+function absint( $v ) { return abs( (int) $v ); }
 function wp_safe_redirect( $u ) { throw new Redirected( $u ); }
 function wp_insert_post( array $a ) { $id = count( $GLOBALS['posts'] ) + 101; $GLOBALS['posts'][ $id ] = (object) array( 'ID' => $id, 'post_type' => $a['post_type'], 'post_title' => $a['post_title'] ); return $id; }
 function wp_update_post( array $a ) { $GLOBALS['posts'][ $a['ID'] ]->post_title = $a['post_title']; return $a['ID']; }
@@ -65,7 +66,7 @@ function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; r
 function handle( $class, $fn, array $post ) { $_POST = $post; try { call_user_func( array( $class, $fn ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-certs', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs', 'class-ohcl-admin-coach' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -208,6 +209,23 @@ check( 'Thu hồi chưa tích xác nhận ⇒ lỗi, giấy vẫn hiệu lực',
 delete_transient( 'ohcl_flash_1' );
 handle( 'OHCL_Admin_Certs', 'handle_revoke', array( 'cert' => $cl[0]['id'], 'reason' => 'Bán hàng không rõ nguồn', 'confirm' => '1' ) );
 check( 'Thu hồi có xác nhận ⇒ Đã thu hồi; lọc "Đã thu hồi" thấy giấy', 'revoked' === OHCL_Certs::state( OHCL_Certs::get( $cl[0]['id'] ), time() ) && false !== strpos( cpage( array( 'st' => 'revoked' ) ), $code ) && false === strpos( cpage( array( 'st' => 'valid' ) ), $code ) );
+delete_transient( 'ohcl_flash_1' );
+
+/* ---- 04 · Coach + công tắc khung Hub (OHCL-F2) ---- */
+// [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — duyệt hồ sơ Coach; tắt / bật "vẽ cả site trong khung Hub", danh sách trang giữ theme.
+update_option( OHCL_Modules::OPTION, array( '04' => true ) );
+function kpage( array $get ) { $_GET = $get; ob_start(); OHCL_Admin_Coach::page(); return ob_get_clean(); }
+check( '04 · Coach trống ⇒ lời mời chia sẻ trang ứng tuyển', false !== strpos( kpage( array() ), 'Chưa có hồ sơ ứng tuyển' ) );
+$cid = OHCL_Coach::save( array( 'name' => 'Lan <i>x</i>', 'skills' => array( 'ke-toan' ), 'area' => 'Huế', 'years' => 5, 'contact' => 'lan@x.vn', 'note' => '' ) );
+$kp  = kpage( array() );
+check( '04 · Coach: hồ sơ hiện tên đã escape, chuyên môn theo nhãn ngành, nút Duyệt', false !== strpos( $kp, 'Lan &lt;i&gt;x&lt;/i&gt;' ) && false !== strpos( $kp, 'Kế toán cửa hàng' ) && false !== strpos( $kp, '>Duyệt</button>' ) );
+handle( 'OHCL_Admin_Coach', 'handle_decide', array( 'id' => $cid, 'status' => 'approved' ) );
+check( 'Duyệt hồ sơ Coach ⇒ trạng thái Đã duyệt', 'approved' === OHCL_Coach::all()[0]['status'] );
+delete_transient( 'ohcl_flash_1' );
+handle( 'OHCL_Admin', 'handle_settings', array( 'part' => 'front', 'front_home' => '1', 'keep_theme' => '12, abc, 7' ) );
+check( 'Cài đặt: bỏ tích "vẽ cả site" ⇒ tắt; ID trang giữ theme lọc số', ! OHCL_Front::takeover_on() && '12,7' === get_option( OHCL_Front::KEEP_OPTION ) );
+handle( 'OHCL_Admin', 'handle_settings', array( 'part' => 'front', 'front_home' => '1', 'front_takeover' => '1', 'keep_theme' => '' ) );
+check( 'Cài đặt: tích lại ⇒ bật', OHCL_Front::takeover_on() && false !== strpos( page( 'page_settings' ), 'name="front_takeover" value="1" checked' ) );
 delete_transient( 'ohcl_flash_1' );
 
 echo "\n$pass pass, $fail fail\n";

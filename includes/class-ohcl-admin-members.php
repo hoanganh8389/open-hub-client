@@ -250,7 +250,18 @@ final class OHCL_Admin_Members {
 			. '<dt>Bản đồ</dt><dd>' . esc_html( OHCL_Members::LEVELS[ $map_lv ] ) . ( 4 === $map_lv ? ' · <a href="' . esc_url( OHCL_Front::place_url( $m['id'], $m['title'] ) ) . '" target="_blank" rel="noopener">xem trang công khai</a>' : ' <span class="mute">— ' . esc_html( $map_why ) . '</span>' ) . '</dd>'
 			. '<dt>Coach</dt><dd>' . ( $m['coach'] ? esc_html( $m['coach'] ) : '<span class="mute">Chưa có</span>' ) . '</dd>'
 			. '<dt>Liên hệ</dt><dd>' . esc_html( implode( ' · ', array_filter( array( $m['phone'], $m['email'], $m['contact_zalo'] ) ) ) ?: '—' ) . '</dd>'
-			. '<dt>Website</dt><dd>' . ( $m['site_url'] ? esc_html( $m['site_url'] ) : '—' ) . '</dd></dl></div>';
+			. '<dt>Website</dt><dd>' . ( $m['site_url'] ? esc_html( $m['site_url'] ) : '—' ) . '</dd>'
+			. '<dt>Tài khoản My Hub</dt><dd>' . esc_html( self::user_label( $m['user'] ) ) . '</dd></dl></div>'; // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
+
+		// [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — yêu cầu hỗ trợ hội viên gửi từ My Hub.
+		$sup = get_post_meta( $m['id'], '_bzm_support', true );
+		if ( is_array( $sup ) && $sup ) {
+			echo '<div class="ohcl-card"><h3>Yêu cầu hỗ trợ từ My Hub</h3><ul class="ohcl-reports">';
+			foreach ( array_reverse( $sup ) as $x ) {
+				echo '<li><span class="mute">' . esc_html( substr( $x['at'], 0, 16 ) ) . '</span><br>' . esc_html( $x['text'] ) . '</li>';
+			}
+			echo '</ul></div>';
+		}
 
 		$cfg = OHCL_Industry::current();
 		if ( $cfg['member_fields'] ) {
@@ -319,6 +330,15 @@ final class OHCL_Admin_Members {
 		}
 		echo '</ol><p class="mute">Bậc 6 khi đã xác minh và có chứng nhận còn hiệu lực. Bậc 7–8 mở với module Marketing (Đ3).</p></div>';
 		echo '</div></div></div>';
+	}
+
+	/** Linked WordPress account, or how it will link. */
+	private static function user_label( $uid ) {
+		if ( ! $uid ) {
+			return 'Chưa gắn — tự gắn khi người dùng có email trùng hồ sơ đăng nhập My Hub';
+		}
+		$u = function_exists( 'get_userdata' ) ? get_userdata( (int) $uid ) : null;
+		return $u ? $u->display_name . ' (#' . (int) $uid . ')' : '#' . (int) $uid;
 	}
 
 	/* ---------- handlers ---------- */

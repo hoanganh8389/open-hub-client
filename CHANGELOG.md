@@ -1,5 +1,15 @@
 # Lịch sử phát hành
 
+## 0.7.0 — 2026-11-25 (F2: đủ trang, mặc định thay toàn bộ giao diện theme)
+
+- **Sổ trang một chỗ** (`OHCL_Front::pages()`, filter `ohcl_front_pages`), giống `templates/v2` của router: thêm trang = một dòng + một tệp mẫu. Trang có module tắt biến khỏi menu, chân trang, đường dẫn.
+- **Trang mới** theo sitemap §12: `/quyen-loi/` (8 trụ cột), `/cong-nghe-0d/`, `/giao-thuong/` (cơ sở V4 theo loại hình), `/su-kien/` (chương trình theo dịp + chuyên mục `su-kien`), `/hoc-vien/`, `/coach/`, `/tro-thanh-coach/` (form ứng tuyển), `/so-do-trang/`.
+- **My Hub** `/my-hub/<mục>/` (§13, mockup F5–F6): tổng quan, công nghệ của tôi, hồ sơ doanh nghiệp (hội viên tự sửa địa chỉ, giờ, website, Zalo, đồng ý công khai), chứng nhận của tôi (QR), lộ trình 90 ngày tính từ dữ liệu thật, gửi hỗ trợ. Gắn tài khoản theo `_bzm_user`, lần đầu theo email trùng **duy nhất**; trùng nhiều hồ sơ / đã thuộc tài khoản khác ⇒ không đoán, báo rõ. Số chưa đo hiện "—".
+- **Đầu trang hai tầng** + menu lớn (details: mở bằng chạm trên điện thoại, không JS), My Hub khi đã đăng nhập, Tin tức khi site có bài. **Chân trang** liệt kê đủ nhóm.
+- **Mặc định vẽ cả site trong khung Hub** (`template_include`): bài viết, trang, tin tức, chuyên mục, tìm kiếm, 404. Ở đó chỉ bỏ CSS / JS **của theme**; tài sản của plugin khác giữ nguyên (shortcode vẫn chạy). Cửa hàng / sản phẩm WooCommerce giữ theme. Công tắc + danh sách ID trang giữ theme ở 14 · Cài đặt; filter `ohcl_front_takeover`.
+- **Ứng tuyển Coach** (`OHCL_Coach`, CPT `bz_hub_coach_app`): nonce, bẫy bot, 3 lần / giờ / IP; màn **04 · Coach** duyệt / không phù hợp. Member 360° hiện tài khoản My Hub và yêu cầu hỗ trợ.
+- `tests/pages-smoke.php` 41/41 (gỡ điều kiện "email duy nhất" ⇒ FAIL; bỏ loại trừ WooCommerce ⇒ FAIL); `admin-smoke` 43/43.
+
 ## 0.6.0 — 2026-11-25 (Đ2 bước 1: xác minh & chứng nhận, module 06)
 
 - **Giấy chứng nhận ngành** (`OHCL_Certs`, CPT `bz_hub_cert`, không bảng mới): cấp theo bộ tiêu chuẩn của hợp đồng ngành, **chỉ khi đạt mọi tiêu chí**, có bằng chứng, cơ sở đã Verified (V3). Mã `<TIỀN TỐ>-CERT-<năm>-<số>`.

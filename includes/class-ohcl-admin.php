@@ -38,6 +38,9 @@ final class OHCL_Admin {
 			add_submenu_page( 'open-hub', 'Hội viên', '02 · Hội viên', self::CAP, 'open-hub-members', array( 'OHCL_Admin_Members', 'page' ) ); // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C
 		}
 		add_submenu_page( 'open-hub', 'Khoá dùng thử', '03 · Khoá dùng thử', self::CAP, 'open-hub-keys', array( __CLASS__, 'page_keys' ) );
+		if ( class_exists( 'OHCL_Admin_Coach' ) && OHCL_Admin_Coach::on() ) {
+			add_submenu_page( 'open-hub', 'Coach', '04 · Coach', self::CAP, OHCL_Admin_Coach::PAGE, array( 'OHCL_Admin_Coach', 'page' ) ); // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
+		}
 		if ( class_exists( 'OHCL_Admin_Certs' ) && OHCL_Admin_Certs::on() ) {
 			add_submenu_page( 'open-hub', 'Chứng nhận', '06 · Chứng nhận', self::CAP, OHCL_Admin_Certs::PAGE, array( 'OHCL_Admin_Certs', 'page' ) ); // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 		}
@@ -285,6 +288,8 @@ final class OHCL_Admin {
 		wp_nonce_field( 'ohcl_settings' );
 		echo '<input type="hidden" name="action" value="ohcl_settings"><input type="hidden" name="part" value="front">'
 			. '<p><label><input type="checkbox" name="front_home" value="1"' . checked( OHCL_Front::home_on(), true, false ) . '> Dùng trang chủ cổng ngành của Hub thay trang chủ của theme</label></p>'
+			. '<p><label><input type="checkbox" name="front_takeover" value="1"' . checked( OHCL_Front::takeover_on(), true, false ) . '> Vẽ cả site trong khung Hub (bài viết, trang, tin tức, tìm kiếm, 404) — bỏ giao diện theme</label></p>' // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
+			. '<p><label>Trang giữ giao diện theme (ID, cách nhau bằng dấu phẩy)<br><input name="keep_theme" class="regular-text" value="' . esc_attr( implode( ',', OHCL_Front::keep_theme_ids() ) ) . '"></label><br><span class="mute">Dùng cho trang dựng bằng trình dựng của theme (UX Builder…) cần CSS của theme. Cửa hàng / sản phẩm WooCommerce luôn giữ theme.</span></p>'
 			. '<p class="mute">Trang: <a href="' . esc_url( OHCL_Front::url() ) . '" target="_blank" rel="noopener">trang chủ</a> · <a href="' . esc_url( OHCL_Front::url( 'map' ) ) . '" target="_blank" rel="noopener">bản đồ</a> · <a href="' . esc_url( OHCL_Front::url( 'join' ) ) . '" target="_blank" rel="noopener">trở thành hội viên</a>. Chỉ hồ sơ V4 (đã xác minh, đồng ý công khai, có toạ độ, khoá đang dùng) hiện ra ngoài.</p>'
 			. '<p><button class="button">Lưu</button></p></form></div>';
 
@@ -346,6 +351,8 @@ final class OHCL_Admin {
 			self::flash_set( array( 'ok' => 'Đã lưu module.' ) );
 		} elseif ( 'front' === $part ) {
 			update_option( OHCL_Front::HOME_OPTION, empty( $_POST['front_home'] ) ? '0' : '1', false );
+			update_option( OHCL_Front::TAKE_OPTION, empty( $_POST['front_takeover'] ) ? '0' : '1', false ); // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
+			update_option( OHCL_Front::KEEP_OPTION, implode( ',', array_filter( array_map( 'absint', explode( ',', isset( $_POST['keep_theme'] ) ? sanitize_text_field( wp_unslash( $_POST['keep_theme'] ) ) : '' ) ) ) ), false );
 			self::flash_set( array( 'ok' => empty( $_POST['front_home'] ) ? 'Đã trả trang chủ về theme.' : 'Trang chủ giờ là cổng ngành của Hub.' ) );
 		} elseif ( 'core' === $part ) {
 			$base = isset( $_POST['base_url'] ) ? untrailingslashit( esc_url_raw( wp_unslash( $_POST['base_url'] ) ) ) : '';

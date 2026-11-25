@@ -326,6 +326,7 @@ final class OHCL_Members {
 			'verify'      => get_post_meta( $id, '_bzm_verify', true ),
 			'consent'     => (string) get_post_meta( $id, '_bzm_public_consent', true ), // ngày đồng ý, rỗng = chưa
 			'source'      => (string) get_post_meta( $id, '_bzm_source', true ),
+			'user'        => (int) get_post_meta( $id, '_bzm_user', true ), // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — tài khoản WordPress của hội viên (My Hub)
 			'certs'       => get_post_meta( $id, '_bzm_certs', true ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			'industry'    => array(),
 		);

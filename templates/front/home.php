@@ -39,7 +39,7 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 	<a href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>"><?php echo OHCL_Front::icon( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>Hội viên</a>
 	<a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>"><?php echo OHCL_Front::icon( 'factory' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>Doanh nghiệp</a>
 	<a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>"><?php echo OHCL_Front::icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>Địa điểm</a>
-	<a href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>"><?php echo OHCL_Front::icon( 'gift' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>Quyền lợi</a>
+	<a href="<?php echo esc_url( OHCL_Front::url( 'benefits' ) ); ?>"><?php echo OHCL_Front::icon( 'gift' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>Quyền lợi</a>
 	<?php if ( $ohcl_posts && $ohcl_blog ) : ?>
 		<a href="<?php echo esc_url( $ohcl_blog ); ?>"><?php echo OHCL_Front::icon( 'doc' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>Tin tức</a>
 	<?php endif; ?>
