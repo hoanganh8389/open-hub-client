@@ -1,0 +1,28 @@
+{
+  "schema": "bizcity_app@1",
+  "id": "open-hub-client",
+  "name": "Open Hub Client — nền tảng chung cho mọi Hub ngành",
+  "repo": "hoanganh8389/open-hub-client",
+  "public": true,
+  "runtime": "wordpress-php",
+  "license": "GPL-2.0-or-later",
+  "paid": false,
+  "axes": {
+    "owns": [
+      "hub_member",
+      "hub_module"
+    ],
+    "uses": [
+      "hub",
+      "api_key",
+      "plan"
+    ]
+  },
+  "contracts": [
+    "bizcity_industry_hub@2"
+  ],
+  "docs": {
+    "spec": "https://github.com/hoanganh8389/open-hub/blob/main/docs/canon/OPEN-HUB-CLIENT.md"
+  },
+  "notes": "Chạy trên mỗi site Hub ngành. Khoá, gói, tiền ở open-hub-core; plugin ngành chỉ cấu hình qua hợp đồng @2."
+}

@@ -8,13 +8,29 @@
 
 ```text
 bizcity.vn:      open-hub-core   khoá 1API · gói · doanh thu khoá · chia · hoa hồng · đối soát
-                     ▲ API có chữ ký Hub
+                     ▲ API open-hub-core/v1, Bearer bí mật Hub — chỉ qua OHCL_Core_Client
 site Hub ngành:  open-hub-client (repo này)  +  wp-<ngành>-hub (chỉ cấu hình; case đầu: wp-vegan-hub)
 ```
 
 ## 14 module chuẩn (bật / tắt theo Hub)
 
 Tổng quan Hub · Quản lý hội viên (Member 360°) · Công nghệ & gói tặng (tài nguyên & quyền lợi theo GitHub) · Coach & chuyên gia (tuyển Coach, affiliate, My Coach) · Học viện Hub · Xác minh & chứng nhận (4 loại ghi nhận, tra cứu QR) · Danh bạ & bản đồ ngành · Marketing & thị trường · Sự kiện & cộng đồng · Đối tác & nhà tài trợ · Kho tri thức ngành · Kinh doanh & doanh thu (Woo) · Báo cáo & tác động · Cài đặt & phân quyền. Hội viên có **My Hub**; Coach có **My Coach**.
+
+<!-- [2026-11-25 05:38 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1 — hướng dẫn làm Hub ngành mới + nối lõi. -->
+## Làm Hub cho một ngành mới (dev ngành)
+
+1. Chép `examples/wp-sample-hub/` thành `wp-<ngành>-hub/`, đổi dữ liệu trong hàm trả mảng: `contract`, `id` (= mã Hub ở lõi), `brand.accent`, `terms`, `segments`, `member_fields`, `standards`…
+2. Muốn hiển thị thêm: móc vào ô `ohcl_member360_tabs`, `ohcl_dashboard_cards`, `ohcl_myhub_cards`, `ohcl_public_profile_blocks`, `ohcl_persona_pages`; nghe sự kiện chỉ đọc `ohcl_member_stage_changed`, `ohcl_member_verified`, `ohcl_key_issued`, `ohcl_cert_issued`, `ohcl_pack_granted`.
+3. Không: khoá, tiền, bảng mới, gọi `open-hub-core` / Cell / Zalo / LLM, sửa repo này cho riêng một ngành (R-HUB-14, R-HUB-15).
+4. Kiểm: `wp ohcl validate-industry` phải PASS; đủ bộ shots R-HUB-11 / R-HUB-12.
+
+Chủ Hub nối lõi: đặt `define( 'OHCL_CORE_SECRET', 'ohs_…' );` trong `wp-config.php`, option `ohcl_core` = `{ "base_url": "https://bizcity.vn" }`, rồi chạy `wp ohcl core-ping` (bốn bước: cấu hình · liên lạc · Hub có trong sổ · bí mật được nhận).
+
+## Test
+
+```bash
+php tests/run.php
+```
 
 ## Tài liệu và mockup
 
@@ -25,7 +41,8 @@ Tổng quan Hub · Quản lý hội viên (Member 360°) · Công nghệ & gói 
 
 | Đợt | Nội dung | Trạng thái |
 |---|---|---|
-| Đ1 | registry 14 module + bật / tắt · Member 360° · Tổng quan câu 1, 2, 5 · cấp khoá qua `open-hub-core` | chưa — bắt đầu sau `open-hub-core` Đ1 (đã xong) |
+| **Đ1a** | hợp đồng ngành `bizcity_industry_hub@2` + bộ kiểm · registry 14 module bật / tắt · ô mở rộng + sự kiện · `OHCL_Core_Client` (một cửa gọi lõi) · CLI `wp ohcl` · ngành mẫu `examples/wp-sample-hub` | **xong mã + test (43/43)**, chưa chạy trên site thật |
+| Đ1b | màn quản trị theo mockup đã duyệt: Tổng quan câu 1, 2, 5 · Member 360° · Cài đặt & kết nối lõi · cấp khoá | chưa |
 | Đ2 | Tài nguyên & quyền lợi (GitHub) · My Hub · Xác minh & chứng nhận + tra cứu QR | chưa |
 | Đ3 | Coach + affiliate + My Coach · Marketing (JSONL + rollup) · Doanh thu (core + Woo) · tài sản cộng đồng | chưa |
 
