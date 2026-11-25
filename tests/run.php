@@ -29,7 +29,7 @@ function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['o
 function update_option( $k, $v, $autoload = null ) { $GLOBALS['opt_writes']++; $GLOBALS['opts'][ $k ] = $v; return true; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 
@@ -115,12 +115,12 @@ OHCL_Core_Client::$transport = function ( $m, $u, $h, $b ) use ( &$calls ) {
 	$calls[] = compact( 'm', 'u', 'h', 'b' );
 	if ( false !== strpos( $u, '/hubs' ) ) { return array( 'status' => 200, 'body' => '{"success":true,"hubs":[{"slug":"sample","name":"Sample Hub","industry":"Ngành mẫu"}]}' ); }
 	if ( false !== strpos( $u, '/revoke' ) ) { return array( 'status' => 404, 'body' => '{"code":"ohc_key_not_found","message":"Không thấy khoá này trong Hub.","data":{"status":404,"hint":"Tải lại danh sách khoá.","help_code":"ohc_key_not_found"}}' ); }
-	if ( 'POST' === $m ) { return array( 'status' => 201, 'body' => '{"success":true,"key_id":3,"key":"biz-' . str_repeat( 'c', 32 ) . '","key_prefix":"biz-…cccc"}' ); }
+	if ( 'POST' === $m ) { return array( 'status' => 201, 'body' => '{"success":true,"id":3,"key":"biz-' . str_repeat( 'c', 32 ) . '","key_prefix":"biz-…cccc"}' ); }
 	return array( 'status' => 200, 'body' => '{"success":true,"items":[],"page":1}' );
 };
 $k = OHCL_Core_Client::issue_key( 'Cửa hàng A', 'https://a.vn', 'coach-a' );
 $last = end( $calls );
-check( 'core: cấp khoá gửi X-OHC-Hub + Bearer, thân JSON', 3 === $k['key_id'] && 'sample' === $last['h']['X-OHC-Hub'] && 'Bearer ' . $secret === $last['h']['Authorization'] && 'https://bizcity.vn/wp-json/open-hub-core/v1/hub/keys' === $last['u'] && 'coach-a' === json_decode( $last['b'], true )['coach_ref'] );
+check( 'core: cấp khoá gửi X-OHC-Hub + Bearer, thân JSON', 3 === $k['id'] && 'sample' === $last['h']['X-OHC-Hub'] && 'Bearer ' . $secret === $last['h']['Authorization'] && 'https://bizcity.vn/wp-json/open-hub-core/v1/hub/keys' === $last['u'] && 'coach-a' === json_decode( $last['b'], true )['coach_ref'] );
 check( 'core: thiếu tên cơ sở ⇒ lỗi trước khi gọi mạng', 'ohcl_key_label_required' === code_of( OHCL_Core_Client::issue_key( ' ' ) ) && count( $calls ) === 1 );
 $rv = OHCL_Core_Client::revoke_key( 99 );
 check( 'core: lỗi của lõi đi nguyên bốn trường', 'ohc_key_not_found' === code_of( $rv ) && 'Tải lại danh sách khoá.' === $rv->get_error_data()['hint'] && 404 === $rv->get_error_data()['status'] );
@@ -139,6 +139,27 @@ OHCL_Core_Client::$config = array( 'base_url' => 'http://bizcity.vn', 'hub' => '
 check( 'core: http (không phải https) bị từ chối', 'ohcl_core_not_configured' === code_of( OHCL_Core_Client::list_keys() ) );
 OHCL_Core_Client::$config = array( 'base_url' => 'https://bizcity.vn', 'hub' => 'sample', 'secret' => 'sai' );
 check( 'core: bí mật sai dạng ⇒ chưa cấu hình, không gọi mạng', 'ohcl_core_not_configured' === code_of( OHCL_Core_Client::list_keys() ) && ! OHCL_Core_Client::ping()['ok'] );
+
+/* ---- 4b. Tổng quan từ khoá thật (OHCL-D1B) ---- */
+if ( ! defined( 'DAY_IN_SECONDS' ) ) { define( 'DAY_IN_SECONDS', 86400 ); }
+$now  = '2026-11-25 12:00:00';
+$keys = array(
+	array( 'status' => 'trial', 'plan_code' => 'trial', 'plan_until' => '2026-11-28 00:00:00', 'last_used_at' => '2026-11-24 10:00:00', 'created_at' => '2026-11-01 00:00:00' ),
+	array( 'status' => 'trial', 'plan_code' => 'trial', 'plan_until' => '2026-12-20 00:00:00', 'last_used_at' => null, 'created_at' => '2026-11-10 00:00:00' ),
+	array( 'status' => 'trial', 'plan_code' => 'trial', 'plan_until' => '2026-12-24 00:00:00', 'last_used_at' => null, 'created_at' => '2026-11-24 00:00:00' ),
+	array( 'status' => 'active', 'plan_code' => 'ai_std', 'plan_until' => '2027-01-01 00:00:00', 'last_used_at' => '2026-09-01 00:00:00', 'created_at' => '2026-08-01 00:00:00' ),
+	array( 'status' => 'revoked', 'plan_code' => 'trial', 'plan_until' => '2026-12-01 00:00:00', 'last_used_at' => '2026-11-20 00:00:00', 'created_at' => '2026-10-01 00:00:00' ),
+	array( 'status' => 'expired', 'plan_code' => 'trial', 'plan_until' => '2026-11-01 00:00:00', 'last_used_at' => null, 'created_at' => '2026-10-01 00:00:00' ),
+);
+$s = OHCL_Overview::from_keys( $keys, $now );
+check( 'tổng quan: đếm đúng cấp / còn dùng / đã dùng / 30 ngày / trả phí', 6 === $s['issued'] && 4 === $s['live'] && 2 === $s['used_ever'] && 1 === $s['used_30d'] && 1 === $s['paid'] && 1 === $s['revoked'] && 1 === $s['expired'] );
+check( 'tổng quan: sắp hết hạn 7 ngày = 1; nhận ≥ 7 ngày chưa dùng = 1 (khoá mới hôm qua không tính)', 1 === $s['expiring_7d'] && 1 === $s['unused_7d'] );
+$fn = OHCL_Overview::funnel( $s );
+check( 'phễu: 5 bậc, % theo số đã cấp', 5 === count( $fn ) && 100 === $fn[0]['pct'] && 67 === $fn[1]['pct'] && 17 === $fn[4]['pct'] );
+check( 'phễu: không khoá ⇒ 0%, không chia 0', 0 === OHCL_Overview::funnel( OHCL_Overview::from_keys( array(), $now ) )[0]['pct'] );
+$todo = OHCL_Overview::todo( $s, array( 'ok' => true, 'errors' => array(), 'warnings' => array() ), false );
+check( 'việc cần làm: lõi chưa kết nối đứng đầu, kèm hết hạn + chưa dùng', 'open-hub-settings' === $todo[0]['page'] && 3 === count( $todo ) );
+check( 'việc cần làm: không có gì ⇒ rỗng (không bịa việc)', array() === OHCL_Overview::todo( OHCL_Overview::from_keys( array(), $now ), array( 'ok' => true, 'errors' => array(), 'warnings' => array() ), true ) );
 
 /* ---- 5. Ranh giới mã (R-HUB-14, R-HUB-15) ---- */
 $src = '';

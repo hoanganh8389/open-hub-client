@@ -1,0 +1,28 @@
+/* [2026-11-25 06:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1B — màn quản trị Hub theo mockup owner-center: một màu nhấn ngành (--a), Manrope + IBM Plex Mono nếu máy có, viền mảnh, không gradient (R-HUB-13). */
+.ohcl{--a:#c8102e;--line:#e3e4e6;--mute:#646970;--ok:#1a7f37;--bad:#b42318;--warn:#9a6700;--f:Manrope,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--m:"IBM Plex Mono",ui-monospace,Consolas,monospace;font-family:var(--f);max-width:1240px}
+.ohcl h1{font:800 22px/1.25 var(--f);padding:0;margin:2px 0 0}
+.ohcl h2{font:800 16px var(--f);margin:0}.ohcl h3{font:800 14px var(--f);margin:0 0 8px}
+.ohcl .mute{color:var(--mute);font-size:12px}
+.ohcl-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin:10px 0 14px;flex-wrap:wrap}
+.ohcl-kick{font:600 11px var(--m);letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0}
+.ohcl-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin:0 0 12px}
+.ohcl-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ohcl-split{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;align-items:start}
+.ohcl-kpi span{font-size:12px;color:var(--mute)}.ohcl-kpi b{display:block;font-size:26px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}.ohcl-kpi small{font-size:12px;color:var(--mute)}
+.ohcl-q{display:flex;align-items:baseline;gap:10px;margin:22px 0 10px}.ohcl-q i{font:600 11px var(--m);color:#fff;background:var(--a);border-radius:5px;padding:2px 7px;font-style:normal}
+.ohcl-funnel>div{display:grid;grid-template-columns:240px 1fr 60px;gap:10px;align-items:center;margin:7px 0;font-size:13px}
+.ohcl-funnel i{display:block;height:10px;background:#f0f0f1;border-radius:99px;overflow:hidden}.ohcl-funnel em{display:block;height:100%;background:var(--a)}
+.ohcl-funnel b{text-align:right;font-variant-numeric:tabular-nums}
+.ohcl-todo a{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;text-decoration:none;color:inherit}.ohcl-todo a:last-child{border:0}.ohcl-todo a b{color:var(--a)}
+.ohcl-tw{overflow:auto;border:1px solid var(--line);border-radius:12px;background:#fff;margin:0 0 12px}
+.ohcl-t{width:100%;border-collapse:collapse;font-size:13px}.ohcl-t th{text-align:left;font:600 11px var(--m);text-transform:uppercase;letter-spacing:.04em;color:var(--mute);padding:9px 12px;border-bottom:1px solid var(--line)}
+.ohcl-t td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}.ohcl-t tr:last-child td{border:0}
+.ohcl-st{font:600 11px var(--m);border:1px solid var(--line);border-radius:99px;padding:2px 8px;white-space:nowrap}
+.ohcl-st.ok,.ohcl-st.active{color:var(--ok);border-color:var(--ok)}.ohcl-st.trial{color:var(--a);border-color:var(--a)}
+.ohcl-st.grace{color:var(--warn);border-color:var(--warn)}.ohcl-st.bad,.ohcl-st.expired,.ohcl-st.revoked,.ohcl-st.hub_inactive{color:var(--bad);border-color:var(--bad)}
+.ohcl-note{border:1px solid var(--line);border-left:3px solid var(--a);background:#fff;border-radius:8px;padding:12px 14px;margin:0 0 12px;font-size:13px}
+.ohcl-note.ok{border-left-color:var(--ok)}.ohcl-note.bad{border-left-color:var(--bad)}.ohcl-note code{font-family:var(--m)}
+.ohcl-key{display:block;font:600 15px var(--m);background:#f6f7f7;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:8px 0;user-select:all;word-break:break-all}
+.ohcl-confirm{border-color:var(--bad)}.ohcl .ohcl-danger{background:var(--bad);border-color:var(--bad)}
+.ohcl .req{color:var(--bad)}
+@media (max-width:960px){.ohcl-split,.ohcl-g3{grid-template-columns:1fr}.ohcl-funnel>div{grid-template-columns:1fr 60px}.ohcl-funnel i{grid-column:1/-1;order:3}}

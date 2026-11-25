@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Hub Client
  * Description:       Nền tảng chung cho mọi site Hub ngành của Bizcity Open: 14 module bật / tắt, hợp đồng ngành bizcity_industry_hub@2, ô mở rộng cho plugin ngành, một cửa gọi open-hub-core. Đặc tả: canon open-hub OPEN-HUB-CLIENT.md.
- * Version:           0.1.0
+ * Version:           0.2.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Johnny Chu – Chu Hoàng Anh
@@ -19,10 +19,10 @@ if ( defined( 'OHCL_VERSION' ) ) {
 	return;
 }
 
-define( 'OHCL_VERSION', '0.1.0' );
+define( 'OHCL_VERSION', '0.2.0' );
 define( 'OHCL_DIR', __DIR__ . '/' );
 
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client' ) as $ohcl_f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview' ) as $ohcl_f ) {
 	$ohcl_p = OHCL_DIR . 'includes/' . $ohcl_f . '.php';
 	if ( ! is_file( $ohcl_p ) || ! is_readable( $ohcl_p ) ) {
 		return; // a missing artifact disables the plugin quietly instead of a fatal.
@@ -48,6 +48,12 @@ add_action(
 			. ' <em>Chạy <code>wp ohcl validate-industry</code> để xem đủ.</em></p></div>';
 	}
 );
+
+// [2026-11-25 06:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1B — màn quản trị chỉ nạp trong wp-admin.
+if ( is_admin() && is_file( OHCL_DIR . 'includes/class-ohcl-admin.php' ) && is_readable( OHCL_DIR . 'includes/class-ohcl-admin.php' ) ) {
+	require_once OHCL_DIR . 'includes/class-ohcl-admin.php';
+	OHCL_Admin::boot();
+}
 
 if ( defined( 'WP_CLI' ) && WP_CLI && is_file( OHCL_DIR . 'includes/class-ohcl-cli.php' ) ) {
 	require_once OHCL_DIR . 'includes/class-ohcl-cli.php';
