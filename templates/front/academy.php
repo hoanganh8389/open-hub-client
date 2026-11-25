@@ -15,7 +15,7 @@ $ohcl_types = array( 'template' => 'Mẫu', 'sop' => 'Quy trình (SOP)', 'ai_ski
 	<h1>Học viện <?php echo esc_html( $cfg['name'] ); ?></h1>
 	<p class="lead">Lộ trình học cho chủ cơ sở và nhân viên, cùng kho mẫu dùng ngay của ngành.</p></div></div>
 <div class="in">
-	<h2 class="sec">Lộ trình học</h2>
+	<h2 class="sec-h">Lộ trình học</h2>
 	<?php if ( $cfg['academy_tracks'] ) : ?>
 		<div class="apps">
 			<?php foreach ( $cfg['academy_tracks'] as $ohcl_i => $ohcl_t ) : ?>
@@ -25,7 +25,7 @@ $ohcl_types = array( 'template' => 'Mẫu', 'sop' => 'Quy trình (SOP)', 'ai_ski
 	<?php else : ?>
 		<div class="pnl state"><b>Chưa có lộ trình học</b>Ban điều hành đang soạn.</div>
 	<?php endif; ?>
-	<h2 class="sec">Kho mẫu của ngành</h2>
+	<h2 class="sec-h">Kho mẫu của ngành</h2>
 	<?php if ( $cfg['knowledge_assets'] ) : ?>
 		<div class="apps">
 			<?php foreach ( $cfg['knowledge_assets'] as $ohcl_a ) : ?>

@@ -34,7 +34,7 @@ $ohcl_any   = '' !== $ohcl_q['q'] || '' !== $ohcl_q['seg'] || '' !== $ohcl_q['pr
 
 	<div class="pnl">
 		<?php if ( $ohcl_pub['degraded'] ) : ?>
-			<div class="state err"><b>Không tải được danh bạ</b>Thử lại sau ít phút.<br><small>Mã: ohcl_directory_unavailable</small></div>
+			<div class="state err"><b>Không tải được danh bạ</b>Thử lại sau ít phút.<br><small>Mã: ohcl_directory_unavailable<?php echo current_user_can( 'manage_options' ) && get_transient( 'ohcl_dir_error' ) ? ' · lõi: ' . esc_html( get_transient( 'ohcl_dir_error' ) ) . ' (chỉ quản trị viên thấy)' : ''; // [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 ?></small></div>
 		<?php elseif ( ! $ohcl_items ) : ?>
 			<div class="state"><b><?php echo $ohcl_any ? 'Chưa có cơ sở nào khớp bộ lọc' : 'Danh bạ đang chờ cơ sở đầu tiên'; ?></b>
 				<?php echo $ohcl_any ? 'Bỏ bớt điều kiện lọc, hoặc mời cơ sở của bạn tham gia.' : 'Chỉ cơ sở đã được ban điều hành xác minh và đồng ý công khai mới hiện ở đây.'; ?>

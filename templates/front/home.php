@@ -45,8 +45,18 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 	<?php endif; ?>
 </nav></div>
 
+<?php // [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — bản đồ lớn ngay dưới phần "Cùng kiến tạo"; luôn hiện nền bản đồ, chưa có cơ sở thì phủ một dòng giải thích. ?>
+<section class="in mapband"><div class="pnl"><h2><span><span class="num">1</span>Bản đồ <?php echo esc_html( $ohcl_ind ); ?></span><a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">Xem bản đồ đầy đủ</a></h2>
+	<div class="mapwrap">
+		<div class="map big" data-ohcl-map data-pins="<?php echo esc_attr( OHCL_Front::pins_json( $ohcl_pub['items'] ) ); ?>"></div>
+		<?php if ( ! $ohcl_pub['items'] ) : ?>
+			<div class="map-note"><b>Bản đồ đang chờ cơ sở đầu tiên</b>Cơ sở được ban điều hành xác minh và đồng ý công khai sẽ hiện ở đây.<a class="btn g sm" href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đăng ký cơ sở</a></div>
+		<?php endif; ?>
+	</div>
+</div></section>
+
 <div class="in row">
-	<div class="pnl"><h2><span><span class="num">1</span>Tìm kiếm nhanh</span></h2>
+	<div class="pnl"><h2><span><span class="num">2</span>Tìm kiếm nhanh</span></h2>
 		<form method="get" action="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">
 			<input class="fld" name="q" placeholder="Từ khoá…" aria-label="Từ khoá">
 			<select class="fld" name="seg" aria-label="Loại hình"><option value="">Mọi loại hình</option>
@@ -58,14 +68,20 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 			<button class="btn g" style="width:100%">Tìm kiếm</button>
 		</form>
 	</div>
-	<div class="pnl wide"><h2><span><span class="num">2</span>Bản đồ <?php echo esc_html( $ohcl_ind ); ?></span><a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">Xem bản đồ đầy đủ</a></h2>
-		<?php if ( $ohcl_pub['items'] ) : ?>
-			<div class="map" data-ohcl-map data-pins="<?php echo esc_attr( OHCL_Front::pins_json( $ohcl_pub['items'] ) ); ?>"></div>
+	<div class="pnl wide"><h2><span><span class="num">3</span>Danh mục</span><a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">Tất cả</a></h2>
+	<div class="cats">
+		<?php if ( $persona['categories'] ) : ?>
+			<?php foreach ( $persona['categories'] as $ohcl_c ) : ?>
+				<a class="cat" href="<?php echo esc_url( OHCL_Front::url( 'map', $ohcl_c['segment'] ? array( 'seg' => $ohcl_c['segment'] ) : array() ) ); ?>"><span class="ph"><?php echo OHCL_Front::icon( $ohcl_c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $ohcl_c['label'] ); ?></span></a>
+			<?php endforeach; ?>
 		<?php else : ?>
-			<div class="map state"><b>Bản đồ đang chờ cơ sở đầu tiên</b>Chỉ cơ sở đã được ban điều hành xác minh và đồng ý công khai mới hiện ở đây.</div>
+			<?php foreach ( array_slice( $ohcl_segs, 0, 8, true ) as $ohcl_s => $ohcl_l ) : ?>
+				<a class="cat" href="<?php echo esc_url( OHCL_Front::url( 'map', array( 'seg' => $ohcl_s ) ) ); ?>"><span class="ph"><?php echo OHCL_Front::icon( 'store' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $ohcl_l ); ?></span></a>
+			<?php endforeach; ?>
 		<?php endif; ?>
 	</div>
-	<div class="pnl"><h2><span><span class="num">3</span>Tin tức</span></h2>
+	</div>
+	<div class="pnl"><h2><span><span class="num">4</span>Tin tức</span></h2>
 		<?php if ( $ohcl_posts ) : ?>
 			<?php foreach ( $ohcl_posts as $ohcl_p ) : ?>
 				<a class="news" href="<?php echo esc_url( get_permalink( $ohcl_p ) ); ?>">
@@ -82,22 +98,6 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 		<?php endif; ?>
 	</div>
 </div>
-
-<?php if ( $persona['categories'] || $ohcl_segs ) : ?>
-<div class="in sec"><div class="pnl"><h2><span><span class="num">4</span>Danh mục</span></h2>
-	<div class="cats">
-		<?php if ( $persona['categories'] ) : ?>
-			<?php foreach ( $persona['categories'] as $ohcl_c ) : ?>
-				<a class="cat" href="<?php echo esc_url( OHCL_Front::url( 'map', $ohcl_c['segment'] ? array( 'seg' => $ohcl_c['segment'] ) : array() ) ); ?>"><span class="ph"><?php echo OHCL_Front::icon( $ohcl_c['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $ohcl_c['label'] ); ?></span></a>
-			<?php endforeach; ?>
-		<?php else : ?>
-			<?php foreach ( array_slice( $ohcl_segs, 0, 8, true ) as $ohcl_s => $ohcl_l ) : ?>
-				<a class="cat" href="<?php echo esc_url( OHCL_Front::url( 'map', array( 'seg' => $ohcl_s ) ) ); ?>"><span class="ph"><?php echo OHCL_Front::icon( 'store' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><span><?php echo esc_html( $ohcl_l ); ?></span></a>
-			<?php endforeach; ?>
-		<?php endif; ?>
-	</div>
-</div></div>
-<?php endif; ?>
 
 <section class="stats"><div class="in">
 	<div class="st"><i><?php echo OHCL_Front::icon( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( number_format_i18n( $ohcl_members['active'] ) ); ?></b><span><?php echo esc_html( ucfirst( OHCL_Industry::term( 'member' ) ) ); ?></span></div></div>

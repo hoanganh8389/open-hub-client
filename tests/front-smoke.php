@@ -57,6 +57,7 @@ function wp_footer() { echo '<!--wp_footer-->'; }
 function wp_body_open() {}
 function body_class( $c ) { echo 'class="' . $c . '"'; }
 function is_user_logged_in() { return false; }
+function current_user_can( $c ) { return false; }
 function wp_login_url( $r ) { return 'https://hub.test/wp-login.php'; }
 function get_posts( array $a ) { if ( isset( $a['post_type'] ) && 'post' === $a['post_type'] ) { return $GLOBALS['wp_posts']; } return array_reverse( array_values( array_filter( $GLOBALS['posts'], function ( $p ) use ( $a ) { return $p->post_type === $a['post_type']; } ) ) ); }
 function get_post( $id ) { return isset( $GLOBALS['posts'][ $id ] ) ? $GLOBALS['posts'][ $id ] : null; }

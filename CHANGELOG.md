@@ -1,5 +1,14 @@
 # Lịch sử phát hành
 
+## 0.8.3 — 2026-11-26 (góp ý trên veganhub.net)
+
+- **Màu chọn không lưu**: ô "Dùng màu của plugin ngành" được tích sẵn nên màu bị bỏ. Nay là ô "Trả về màu của plugin ngành", mặc định không tích.
+- **Trang chủ**: bản đồ lớn ngay dưới phần "Cùng kiến tạo"; luôn có nền bản đồ Việt Nam, chưa có cơ sở thì phủ một khung giải thích + nút đăng ký. Hàng giữa: Tìm kiếm · Danh mục · Tin tức.
+- **Khối Danh mục lệch trái**: lớp CSS `sec` (tiêu đề, F2) trùng lớp khung trang chủ — đổi thành `sec-h`.
+- **"Không tải được danh bạ" khi chưa có hội viên**: danh bạ chỉ hỏi lõi khi có hội viên đã có khoá; lõi lỗi thì quản trị viên thấy mã lỗi thật trên trang.
+- Dòng ghi nguồn bản đồ (Leaflet / OpenStreetMap) giữ cỡ chữ nhỏ.
+- Bài test: fix-smoke 13/13, admin-smoke 46/46.
+
 ## 0.8.2 — 2026-11-26
 
 - **Màu nhấn của Hub** ở 14 · Cài đặt: chủ Hub đặt màu (ô chọn màu) hoặc dùng màu của plugin ngành; thứ tự chủ Hub > plugin ngành > mặc định. Màu sai dạng bị bỏ.

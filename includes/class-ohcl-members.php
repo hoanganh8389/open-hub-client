@@ -450,8 +450,14 @@ final class OHCL_Members {
 		if ( is_array( $c ) ) {
 			return $c;
 		}
-		$keys = OHCL_Overview::all_keys();
-		$deg  = is_wp_error( $keys );
+		// [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — chưa hội viên nào có khoá thì không cần hỏi lõi (không ai đạt V2) ⇒ không báo lỗi danh bạ.
+		$members = self::all();
+		$need    = (bool) array_filter( $members, function ( $m ) { return (int) $m['key_id'] > 0; } );
+		$keys    = $need ? OHCL_Overview::all_keys() : array( 'items' => array() );
+		$deg     = is_wp_error( $keys );
+		if ( $deg ) {
+			set_transient( 'ohcl_dir_error', $keys->get_error_code(), 10 * MINUTE_IN_SECONDS );
+		}
 		$byid = array();
 		if ( ! $deg ) {
 			foreach ( $keys['items'] as $k ) {
@@ -461,7 +467,7 @@ final class OHCL_Members {
 		$ind = OHCL_Industry::current();
 		$now = time();
 		$out = array();
-		foreach ( self::all() as $m ) {
+		foreach ( $members as $m ) {
 			$k = $m['key_id'] && isset( $byid[ $m['key_id'] ] ) ? $byid[ $m['key_id'] ] : null;
 			if ( 4 === self::level( $m, $k, $now ) ) {
 				$out[] = self::public_view( $m, $ind );

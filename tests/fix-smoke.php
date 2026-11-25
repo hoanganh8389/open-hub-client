@@ -127,5 +127,23 @@ update_option( OHCL_Industry::ACCENT_OPTION, '' );
 $e = OHCL_Industry::validate( array() );
 check( 'không plugin ngành nào cấp dữ liệu ⇒ lỗi nói rõ cần bật plugin ngành', ! $e['ok'] && false !== strpos( $e['errors'][0], 'bật plugin ngành' ) );
 
+/* danh bạ khi chưa ai có khoá (OHCL-FIX3, veganhub.net "Không tải được danh bạ") */
+// [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3
+$GLOBALS['core_calls'] = 0;
+OHCL_Core_Client::$config    = array( 'base_url' => 'https://bizcity.test', 'hub' => 'sample', 'secret' => 'ohs_' . str_repeat( 'a', 32 ) );
+OHCL_Core_Client::$transport = function () { $GLOBALS['core_calls']++; return new WP_Error( 'x', 'down' ); };
+OHCL_Members::flush_public(); OHCL_Overview::flush();
+$mid = wp_insert_post( array( 'post_type' => 'bz_hub_member', 'post_title' => 'Chưa có khoá' ) );
+update_post_meta( $mid, '_bzm_status', 'active' );
+$pl = OHCL_Members::public_list();
+check( 'chưa hội viên nào có khoá ⇒ không hỏi lõi, danh bạ không báo lỗi', ! $pl['degraded'] && 0 === $GLOBALS['core_calls'] );
+update_post_meta( $mid, '_bzm_key_id', 9 );
+OHCL_Members::flush_public();
+$pl = OHCL_Members::public_list();
+check( 'có hội viên có khoá mà lõi lỗi ⇒ báo lỗi, ghi mã lỗi cho quản trị viên', $pl['degraded'] && $GLOBALS['core_calls'] > 0 && 0 === strpos( (string) get_transient( 'ohcl_dir_error' ), 'ohcl_' ) );
+$h = OHCL_Front::html( 'home', array() );
+check( 'trang chủ: bản đồ lớn ngay sau lối tắt, luôn có khung bản đồ (data-ohcl-map) + lời giải thích khi trống', false !== strpos( $h, 'class="in mapband"' ) && strpos( $h, 'class="in mapband"' ) < strpos( $h, 'class="in row"' ) && false !== strpos( $h, 'class="map big" data-ohcl-map' ) && false !== strpos( $h, 'Bản đồ đang chờ cơ sở đầu tiên' ) );
+check( 'không còn lớp "in sec" làm lệch khối danh mục', false === strpos( $h, 'class="in sec"' ) );
+
 echo "\n$pass pass, $fail fail\n";
 exit( $fail ? 1 : 0 );

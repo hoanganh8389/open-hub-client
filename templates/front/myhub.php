@@ -93,7 +93,7 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 			<div class="pnl"><h2>Trợ lý AI trên Zalo</h2><p><span class="tag <?php echo esc_attr( in_array( $ohcl_ai['code'], array( 'trial', 'active' ), true ) ? 'ok' : 'idle' ); ?>"><?php echo esc_html( $ohcl_ai['label'] ); ?></span>
 				<?php echo $ohcl_m['key_prefix'] ? ' · khoá <span class="mono">' . esc_html( $ohcl_m['key_prefix'] ) . '</span>' : ''; ?><?php echo $ohcl_key && $ohcl_key['last_used_at'] ? ' · dùng gần nhất ' . esc_html( substr( $ohcl_key['last_used_at'], 0, 10 ) ) : ''; ?></p>
 				<p class="note">Khoá đầy đủ chỉ hiện một lần lúc cấp và nằm trong site của bạn. Mất khoá thì nhắn ban điều hành cấp lại.</p></div>
-			<h2 class="sec">Bộ công nghệ của tôi</h2>
+			<h2 class="sec-h">Bộ công nghệ của tôi</h2>
 			<div class="apps">
 				<?php foreach ( $ohcl_apps as $ohcl_k ) : ?>
 					<div class="pnl app"><span class="ic"><?php echo OHCL_Front::icon( $ohcl_cat[ $ohcl_k ][2] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><b><?php echo esc_html( $ohcl_cat[ $ohcl_k ][0] ); ?></b><p><?php echo esc_html( $ohcl_cat[ $ohcl_k ][1] ); ?></p></div>
@@ -122,7 +122,7 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 
 		<?php elseif ( 'chung-nhan' === $ohcl_tab ) : ?>
 			<div class="pnl"><h2>Xác minh</h2><?php echo $ohcl_ver ? '<p><span class="tag ok">' . esc_html( $cfg['name'] ) . ' Verified</span> hạn ' . esc_html( substr( $ohcl_m['verify']['until'], 0, 10 ) ) . '</p>' : '<p class="note">Chưa xác minh. Ban điều hành xác minh khi đã tiếp nhận và kiểm giấy tờ.</p>'; ?></div>
-			<h2 class="sec">Chứng nhận của tôi</h2>
+			<h2 class="sec-h">Chứng nhận của tôi</h2>
 			<?php $ohcl_certs = class_exists( 'OHCL_Certs' ) ? OHCL_Certs::for_member( $ohcl_m['id'] ) : array(); ?>
 			<?php if ( $ohcl_certs ) : ?>
 				<div class="apps">

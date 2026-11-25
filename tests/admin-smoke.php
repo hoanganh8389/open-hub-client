@@ -228,5 +228,14 @@ handle( 'OHCL_Admin', 'handle_settings', array( 'part' => 'front', 'front_home' 
 check( 'Cài đặt: tích lại ⇒ bật', OHCL_Front::takeover_on() && false !== strpos( page( 'page_settings' ), 'name="front_takeover" value="1" checked' ) );
 delete_transient( 'ohcl_flash_1' );
 
+/* màu nhấn (OHCL-FIX3: chọn màu rồi Lưu phải giữ màu) */
+// [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3
+handle( 'OHCL_Admin', 'handle_settings', array( 'part' => 'front', 'front_home' => '1', 'front_takeover' => '1', 'accent' => '#1F7A3A' ) );
+check( 'chọn màu xanh, không tích "trả về" ⇒ lưu màu xanh', '#1f7a3a' === OHCL_Industry::owner_accent() && '#1f7a3a' === OHCL_Industry::current()['brand']['accent'] );
+check( 'ô "Trả về màu của plugin ngành" không tích sẵn', false === strpos( page( 'page_settings' ), 'name="accent_reset" value="1" checked' ) );
+handle( 'OHCL_Admin', 'handle_settings', array( 'part' => 'front', 'front_home' => '1', 'front_takeover' => '1', 'accent' => '#1f7a3a', 'accent_reset' => '1' ) );
+check( 'tích "trả về" ⇒ bỏ màu riêng', '' === OHCL_Industry::owner_accent() );
+delete_transient( 'ohcl_flash_1' );
+
 echo "\n$pass pass, $fail fail\n";
 exit( $fail ? 1 : 0 );

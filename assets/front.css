@@ -166,7 +166,7 @@
 .ohcl-front .mega a{display:block;padding:10px 12px;border-radius:10px}.ohcl-front .mega a:hover,.ohcl-front .mega a[aria-current]{background:var(--g-s)}
 .ohcl-front .mega b{display:block;font-size:14px}.ohcl-front .mega span{display:block;font-size:12px;color:var(--mute);margin-top:2px}
 @media (min-width:721px){.ohcl-front .nav .in{overflow:visible}}
-.ohcl-front .sec{font:800 20px/1.2 var(--f);margin:26px 0 12px}
+.ohcl-front .sec-h{font:800 20px/1.2 var(--f);margin:26px 0 12px}
 .ohcl-front .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
 .ohcl-front .tile,.ohcl-front .app{position:relative}
 .ohcl-front .tile .ic,.ohcl-front .app .ic,.ohcl-front .who .ic{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:11px;background:var(--g-s);color:var(--g)}
@@ -219,3 +219,14 @@
 
 /* [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1 — lưới an toàn: khung ẩn của theme (lightbox, menu điện thoại) không bao giờ lộ ra trên trang Hub. */
 body.ohcl-front .mfp-hide,body.ohcl-front .hidden,body.ohcl-front #main-menu.mobile-sidebar,body.ohcl-front .mobile-sidebar,body.ohcl-front #login-form-popup{display:none!important}
+
+/* [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — bản đồ lớn dưới hero; danh mục vào hàng giữa; bản đồ luôn có nền. */
+.ohcl-front .mapband{margin-top:20px}
+.ohcl-front .mapwrap{position:relative}
+.ohcl-front .map.big{min-height:420px}
+.ohcl-front .map-note{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:500;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 22px;max-width:380px;text-align:center;box-shadow:0 18px 40px -24px rgba(0,0,0,.35);color:var(--mute);font-size:14px}
+.ohcl-front .map-note b{display:block;color:var(--ink);font-size:16px;margin-bottom:6px}.ohcl-front .map-note .btn{margin-top:12px}
+.ohcl-front .row .wide .cats{grid-template-columns:repeat(3,1fr)}
+@media (max-width:720px){.ohcl-front .map.big{min-height:320px}.ohcl-front .row .wide .cats{grid-template-columns:repeat(2,1fr)}}
+/* [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — dòng ghi nguồn bản đồ giữ cỡ chữ nhỏ (luật svg/a chung của Hub làm nó phình to). */
+.ohcl-front .leaflet-control-attribution{font:11px/1.4 var(--f)!important;padding:2px 6px!important}.ohcl-front .leaflet-control-attribution a{color:#0078a8}.ohcl-front .leaflet-control-attribution svg{display:inline!important;width:12px!important;height:8px!important;vertical-align:baseline}

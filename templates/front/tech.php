@@ -19,7 +19,7 @@ $ohcl_more = array_values( array_diff( array_keys( $ohcl_cat ), $ohcl_on ) );
 <div class="in">
 	<div class="gift0 pnl"><span class="kick">Bản quyền phần mềm</span><b>0 đ</b><p><?php echo (int) count( $ohcl_on ); ?> ứng dụng bật sẵn cho ngành · trợ lý AI dùng thử <?php echo (int) $cfg['trial_days']; ?> ngày, sau đó tính theo mức dùng</p></div>
 	<?php if ( $ohcl_on ) : ?>
-		<h2 class="sec">Bật sẵn cho <?php echo esc_html( $cfg['industry'] ? $cfg['industry'] : 'ngành' ); ?></h2>
+		<h2 class="sec-h">Bật sẵn cho <?php echo esc_html( $cfg['industry'] ? $cfg['industry'] : 'ngành' ); ?></h2>
 		<div class="apps">
 			<?php foreach ( $ohcl_on as $ohcl_k ) : ?>
 				<div class="pnl app"><span class="ic"><?php echo OHCL_Front::icon( $ohcl_cat[ $ohcl_k ][2] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><b><?php echo esc_html( $ohcl_cat[ $ohcl_k ][0] ); ?></b><p><?php echo esc_html( $ohcl_cat[ $ohcl_k ][1] ); ?></p><span class="tag ok">Bật sẵn</span></div>
@@ -27,7 +27,7 @@ $ohcl_more = array_values( array_diff( array_keys( $ohcl_cat ), $ohcl_on ) );
 		</div>
 	<?php endif; ?>
 	<?php if ( $ohcl_more ) : ?>
-		<h2 class="sec">Thêm khi cần</h2>
+		<h2 class="sec-h">Thêm khi cần</h2>
 		<div class="apps">
 			<?php foreach ( $ohcl_more as $ohcl_k ) : ?>
 				<div class="pnl app"><span class="ic"><?php echo OHCL_Front::icon( $ohcl_cat[ $ohcl_k ][2] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span><b><?php echo esc_html( $ohcl_cat[ $ohcl_k ][0] ); ?></b><p><?php echo esc_html( $ohcl_cat[ $ohcl_k ][1] ); ?></p></div>

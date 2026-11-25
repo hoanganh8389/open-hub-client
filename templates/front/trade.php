@@ -20,7 +20,7 @@ foreach ( $ohcl_pub['items'] as $ohcl_it ) {
 	<p class="lead">Tìm nguồn cung, nhà sản xuất, đối tác trong cộng đồng <?php echo esc_html( $cfg['name'] ); ?>. Mọi cơ sở dưới đây đã được xác minh.</p></div></div>
 <div class="in">
 	<?php if ( $ohcl_pub['degraded'] ) : ?>
-		<div class="pnl state err" style="margin:20px 0 32px"><b>Không tải được danh sách</b>Thử lại sau ít phút.<br><small>Mã: ohcl_directory_unavailable</small></div>
+		<div class="pnl state err" style="margin:20px 0 32px"><b>Không tải được danh sách</b>Thử lại sau ít phút.<br><small>Mã: ohcl_directory_unavailable<?php echo current_user_can( 'manage_options' ) && get_transient( 'ohcl_dir_error' ) ? ' · lõi: ' . esc_html( get_transient( 'ohcl_dir_error' ) ) . ' (chỉ quản trị viên thấy)' : ''; // [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 ?></small></div>
 	<?php elseif ( ! $ohcl_group ) : ?>
 		<div class="pnl state" style="margin:20px 0 32px"><b>Chưa có cơ sở công khai</b>Cơ sở được ban điều hành xác minh và đồng ý công khai sẽ hiện ở đây, xếp theo loại hình.<div style="margin-top:12px"><a class="btn g sm" href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đăng ký cơ sở</a></div></div>
 	<?php else : ?>
