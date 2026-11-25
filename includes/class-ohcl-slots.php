@@ -19,7 +19,7 @@ final class OHCL_Slots {
 
 	const SLOTS = array( 'member360_tabs', 'dashboard_cards', 'myhub_cards', 'public_profile_blocks', 'persona_pages' );
 
-	const EVENTS = array( 'member_stage_changed', 'member_verified', 'key_issued', 'cert_issued', 'pack_granted' );
+	const EVENTS = array( 'member_stage_changed', 'member_verified', 'key_issued', 'cert_issued', 'cert_revoked', 'pack_granted' ); // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — thêm cert_revoked (chỉ đọc)
 
 	/** Keys that must never travel in an event payload. */
 	const SECRET_KEYS = array( 'key', 'plain_key', 'secret', 'key_hash', 'password', 'token' );

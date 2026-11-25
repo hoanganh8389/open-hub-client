@@ -47,7 +47,7 @@ final class OHCL_Industry {
 	/** Script / decorative fonts that break Vietnamese diacritics (R-HUB-13). */
 	const FORBIDDEN_FONTS = '/caveat|dancing\s*script|pacifico|great\s*vibes|lobster|satisfy|sacramento|kaushan/i';
 
-	const KNOWN_KEYS = array( 'contract', 'id', 'name', 'industry', 'leader', 'brand', 'modules', 'terms', 'segments', 'member_fields', 'standards', 'coach_skills', 'academy_tracks', 'campaign_templates', 'apps', 'trial_days', 'knowledge_assets', 'persona', 'plugin', 'version' );
+	const KNOWN_KEYS = array( 'contract', 'id', 'name', 'industry', 'leader', 'brand', 'modules', 'terms', 'segments', 'member_fields', 'standards', 'coach_skills', 'academy_tracks', 'campaign_templates', 'apps', 'trial_days', 'knowledge_assets', 'persona', 'cert_prefix', 'plugin', 'version' );
 
 	/** Line icons a persona may use (same set as the mockup). */
 	const ICONS = array( 'leaf', 'heart', 'globe', 'users', 'factory', 'bag', 'pin', 'gift', 'cal', 'doc', 'book', 'store', 'truck', 'chat', 'search' );
@@ -76,6 +76,7 @@ final class OHCL_Industry {
 			'trial_days'         => 30,
 			'knowledge_assets'   => array(),
 			'persona'            => self::default_persona(),
+			'cert_prefix'        => '', // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — tiền tố mã chứng nhận (tuỳ chọn, @2 bản nhỏ)
 			'plugin'             => '',
 			'version'            => '',
 		);
@@ -226,6 +227,14 @@ final class OHCL_Industry {
 		$cfg['leader']   = isset( $raw['leader'] ) ? self::str( $raw['leader'], 120 ) : '';
 		$cfg['plugin']   = isset( $raw['plugin'] ) ? self::str( $raw['plugin'], 60 ) : '';
 		$cfg['version']  = isset( $raw['version'] ) ? self::str( $raw['version'], 20 ) : '';
+		// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — cert_prefix: 2–6 chữ in hoa; sai thì bỏ (mã lấy từ id Hub).
+		if ( isset( $raw['cert_prefix'] ) ) {
+			if ( is_string( $raw['cert_prefix'] ) && preg_match( '/^[A-Z]{2,6}$/', $raw['cert_prefix'] ) ) {
+				$cfg['cert_prefix'] = $raw['cert_prefix'];
+			} else {
+				$warnings[] = 'cert_prefix: cần 2–6 chữ in hoa A–Z, bỏ (mã chứng nhận lấy từ id)';
+			}
+		}
 		$cfg['brand']    = array(
 			'accent' => $accent,
 			'logo'   => isset( $brand['logo'] ) && self::is_url( $brand['logo'] ) ? (string) $brand['logo'] : '',

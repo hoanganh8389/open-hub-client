@@ -1,5 +1,17 @@
 # Lịch sử phát hành
 
+## 0.6.0 — 2026-11-25 (Đ2 bước 1: xác minh & chứng nhận, module 06)
+
+- **Giấy chứng nhận ngành** (`OHCL_Certs`, CPT `bz_hub_cert`, không bảng mới): cấp theo bộ tiêu chuẩn của hợp đồng ngành, **chỉ khi đạt mọi tiêu chí**, có bằng chứng, cơ sở đã Verified (V3). Mã `<TIỀN TỐ>-CERT-<năm>-<số>`.
+- **Gia hạn** = cấp lại cùng chuẩn: giữ mã, lưu kỳ cũ. **Thu hồi** hai bước, lý do công khai; cấp lại sau thu hồi là giấy mới.
+- **Trang `/chung-nhan/`** (mockup F3): bốn loại ghi nhận, bộ tiêu chuẩn, tra cứu theo mã / QR với bốn kết quả (còn hiệu lực · hết hạn · đã thu hồi · không tìm thấy), gửi phản ánh (nonce, bẫy bot, 3 lần / giờ / IP). Có `?ma=` (quét QR) ⇒ kết quả lên đầu trang.
+- **Màn 06 · Chứng nhận** (mockup O8): số liệu, lọc trạng thái, phản ánh, giấy in có QR; cấp / gia hạn ngay trong Member 360°.
+- Hành trình **bậc 6 "Đạt chuẩn chuyên ngành"**; huy hiệu "Certified · <chuẩn>" trên hồ sơ công khai.
+- QR: qrcode-generator 1.4.4 (MIT) đóng gói trong plugin (`assets/vendor/qrcode`), không gọi dịch vụ ngoài.
+- Hợp đồng ngành @2: khoá tuỳ chọn `cert_prefix`; sự kiện chỉ đọc mới `cert_revoked`.
+- Module 06 tắt ⇒ không menu, không trang, không huy hiệu; dữ liệu giữ nguyên.
+- `tests/cert-smoke.php` 35/35 (gỡ điều kiện "đủ tiêu chí" ⇒ FAIL; để lộ ghi chú ra tra cứu ⇒ FAIL); `admin-smoke` thêm 8 bước (38/38).
+
 ## 0.5.0 — 2026-11-25 (cổng cộng đồng P1–P4)
 
 - **Cổng cộng đồng** (`OHCL_Front`, mockup persona P1–P4), khung riêng, bỏ CSS của theme trên các trang Hub:

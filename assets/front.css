@@ -122,3 +122,33 @@
 .ohcl-front .hero h1,.ohcl-front .page-h h1{overflow-wrap:anywhere}
 .ohcl-front .ohcl-pin{width:22px!important;height:22px!important;margin:-22px 0 0 -11px!important;border-radius:50% 50% 50% 0;background:var(--g);transform:rotate(-45deg);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25)}
 @media (max-width:720px){.ohcl-front .hdr .in{gap:10px}.ohcl-front .brand small{display:none}.ohcl-front .hero h1{font-size:30px}.ohcl-front .btn{padding:10px 14px}.ohcl-front .cats{grid-template-columns:repeat(2,1fr)}}
+/* [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — trang xác minh & chứng nhận: bốn loại ghi nhận, tra cứu (bốn kết quả), QR, bộ tiêu chuẩn, phản ánh. */
+.ohcl-front .page-h .lead{color:var(--mute);margin-top:6px;max-width:640px}
+.ohcl-front .kinds{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}
+.ohcl-front .kind .ic{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:10px;background:var(--g-s);color:var(--g)}
+.ohcl-front .kind .ic svg{width:20px;height:20px}
+.ohcl-front .kind b{display:block;margin:10px 0 4px;font-size:15px}
+.ohcl-front .kind p{font-size:13px;margin:0}
+.ohcl-front .cert-row{gap:16px;align-items:start}
+.ohcl-front .lookup{display:flex;gap:8px;align-items:center}.ohcl-front .lookup .fld{margin:0;font-family:var(--m);min-width:0}.ohcl-front .lookup .btn{flex:0 0 auto;white-space:nowrap}
+.ohcl-front .result{border-top:1px solid var(--line);margin-top:14px;padding-top:14px}
+.ohcl-front .cert-card{display:flex;gap:16px;align-items:flex-start}
+.ohcl-front .cert-card h3{font-size:17px;margin:8px 0 2px}.ohcl-front .cert-card p{margin:2px 0;font-size:13px}
+.ohcl-front .qr{flex:0 0 auto;width:112px;height:112px;background:#fff;border:1px solid var(--line);border-radius:8px;display:grid;place-items:center}
+.ohcl-front .qr svg{width:100%;height:100%}
+.ohcl-front .mono{font-family:var(--m);letter-spacing:.02em}
+.ohcl-front .tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 8px;white-space:nowrap}
+.ohcl-front .tag.ok{background:var(--g-s);color:var(--g-d)}.ohcl-front .tag.soon{background:#fff4df;color:#8a5300}
+.ohcl-front .tag.bad{background:var(--bad-s);color:var(--bad)}.ohcl-front .tag.idle{background:#eef0ef;color:var(--mute)}
+.ohcl-front .bad-txt{color:var(--bad);font-weight:600}
+.ohcl-front .states{list-style:none;margin:0;padding:0;display:grid;gap:10px;font-size:14px}
+.ohcl-front .stds{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.ohcl-front .std{border:1px solid var(--line);border-radius:10px;padding:12px}
+.ohcl-front .crit{margin:8px 0 0;padding-left:18px;font-size:13px}
+.ohcl-front .report textarea.fld{resize:vertical}
+.ohcl-front .kinds>*,.ohcl-front .stds>*,.ohcl-front .cert-row>*{min-width:0}
+@media (max-width:1080px){.ohcl-front .kinds{grid-template-columns:1fr 1fr}.ohcl-front .stds{grid-template-columns:1fr 1fr}}
+@media (max-width:720px){.ohcl-front .kinds,.ohcl-front .stds{grid-template-columns:1fr}.ohcl-front .cert-card{flex-direction:column}}
+@media print{.ohcl-front .hdr,.ohcl-front .ftr,.ohcl-front #phan-anh{display:none}}
+/* [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — quét QR / có ?ma= ⇒ kết quả tra cứu lên đầu trang. */
+.ohcl-front .certpage{display:flex;flex-direction:column}.ohcl-front .certpage.has-lookup .cert-row{order:-1;margin-top:18px}.ohcl-front .certpage.has-lookup .kinds{margin-top:16px}

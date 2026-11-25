@@ -38,6 +38,9 @@ final class OHCL_Admin {
 			add_submenu_page( 'open-hub', 'Hội viên', '02 · Hội viên', self::CAP, 'open-hub-members', array( 'OHCL_Admin_Members', 'page' ) ); // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C
 		}
 		add_submenu_page( 'open-hub', 'Khoá dùng thử', '03 · Khoá dùng thử', self::CAP, 'open-hub-keys', array( __CLASS__, 'page_keys' ) );
+		if ( class_exists( 'OHCL_Admin_Certs' ) && OHCL_Admin_Certs::on() ) {
+			add_submenu_page( 'open-hub', 'Chứng nhận', '06 · Chứng nhận', self::CAP, OHCL_Admin_Certs::PAGE, array( 'OHCL_Admin_Certs', 'page' ) ); // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
+		}
 		add_submenu_page( 'open-hub', 'Cài đặt', '14 · Cài đặt', self::CAP, 'open-hub-settings', array( __CLASS__, 'page_settings' ) );
 	}
 
@@ -136,7 +139,7 @@ final class OHCL_Admin {
 		echo '<div class="ohcl-q"><i>1</i><h2>Cộng đồng của tôi đang phát triển thế nào?</h2></div>';
 		// [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — câu 1 đếm từ hồ sơ hội viên thật + khoá ở lõi.
 		$mc = OHCL_Members::counts( OHCL_Members::all(), $ok ? array_column( $keys['items'], null, 'id' ) : array(), time() );
-		echo '<div class="ohcl-g3">' . self::kpi( 'Tổng hội viên', number_format_i18n( $mc['total'] ), 'hồ sơ ở 02 · Hội viên' ) . self::kpi( 'Hội viên hoạt động', number_format_i18n( $mc['active'] ), $mc['total'] ? round( 100 * $mc['active'] / $mc['total'] ) . '% tổng' : '' ) . self::kpi( 'Đã xác minh', number_format_i18n( $mc['verified'] ), 'module 06 mở ở Đ2' ) . '</div>'; // phpcs:ignore
+		echo '<div class="ohcl-g3">' . self::kpi( 'Tổng hội viên', number_format_i18n( $mc['total'] ), 'hồ sơ ở 02 · Hội viên' ) . self::kpi( 'Hội viên hoạt động', number_format_i18n( $mc['active'] ), $mc['total'] ? round( 100 * $mc['active'] / $mc['total'] ) . '% tổng' : '' ) . self::kpi( 'Đã xác minh', number_format_i18n( $mc['verified'] ), 'Verified còn hạn' ) . '</div>'; // phpcs:ignore
 		if ( $mc['total'] ) {
 			echo '<div class="ohcl-card ohcl-funnel"><h3>Theo phân khúc</h3>';
 			$cfg_s = OHCL_Industry::current()['segments'];

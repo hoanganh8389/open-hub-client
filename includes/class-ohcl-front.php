@@ -6,6 +6,8 @@
  *   /ban-do/               P2 directory + map — V4 members only (R-MAP)
  *   /co-so/<id>-<slug>/    P3 member profile — V4 only, else 404
  *   /tro-thanh-hoi-vien/   P4 benefits + registration form ⇒ a member record in Hub › 02 · Hội viên
+ *   /chung-nhan/?ma=…      F3 four kinds of recognition + certificate lookup (QR target) + report form;
+ *                          only while module 06 is on
  *
  * Own full-page templates (theme styles are dropped on these pages; wp_head / wp_footer kept for the
  * admin bar and SEO plugins). Map: Leaflet bundled in the plugin + OpenStreetMap tiles (MAP-Q1).
@@ -20,7 +22,7 @@ defined( 'ABSPATH' ) || exit;
 final class OHCL_Front {
 
 	const QV          = 'ohcl_page';
-	const REWRITE_VER = '1';
+	const REWRITE_VER = '2'; // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — thêm /chung-nhan/
 	const HOME_OPTION = 'ohcl_front_home';
 	const JOIN_LIMIT  = 5; // đăng ký / giờ / IP
 
@@ -28,7 +30,7 @@ final class OHCL_Front {
 	private static $page = '';
 
 	public static function slugs() {
-		return apply_filters( 'ohcl_front_slugs', array( 'map' => 'ban-do', 'place' => 'co-so', 'join' => 'tro-thanh-hoi-vien' ) );
+		return apply_filters( 'ohcl_front_slugs', array( 'map' => 'ban-do', 'place' => 'co-so', 'join' => 'tro-thanh-hoi-vien', 'cert' => 'chung-nhan' ) );
 	}
 
 	public static function boot() {
@@ -38,6 +40,8 @@ final class OHCL_Front {
 		add_action( 'template_redirect', array( __CLASS__, 'route' ), 1 );
 		add_action( 'admin_post_nopriv_ohcl_join', array( __CLASS__, 'handle_join' ) );
 		add_action( 'admin_post_ohcl_join', array( __CLASS__, 'handle_join' ) );
+		add_action( 'admin_post_nopriv_ohcl_cert_report', array( __CLASS__, 'handle_report' ) );
+		add_action( 'admin_post_ohcl_cert_report', array( __CLASS__, 'handle_report' ) );
 	}
 
 	public static function rewrites() {
@@ -45,6 +49,7 @@ final class OHCL_Front {
 		add_rewrite_rule( '^' . preg_quote( $s['map'], '/' ) . '/?$', 'index.php?' . self::QV . '=map', 'top' );
 		add_rewrite_rule( '^' . preg_quote( $s['place'], '/' ) . '/([0-9]+)(?:-[^/]*)?/?$', 'index.php?' . self::QV . '=place&ohcl_id=$matches[1]', 'top' );
 		add_rewrite_rule( '^' . preg_quote( $s['join'], '/' ) . '/?$', 'index.php?' . self::QV . '=join', 'top' );
+		add_rewrite_rule( '^' . preg_quote( $s['cert'], '/' ) . '/?$', 'index.php?' . self::QV . '=cert', 'top' );
 	}
 
 	public static function query_vars( $v ) {
@@ -59,6 +64,11 @@ final class OHCL_Front {
 			flush_rewrite_rules( false );
 			update_option( 'ohcl_rewrite_ver', self::REWRITE_VER . '|' . implode( ',', self::slugs() ), false );
 		}
+	}
+
+	/** Certification page exists only while module 06 is on and the certificate class is loaded. */
+	public static function cert_on() {
+		return class_exists( 'OHCL_Certs' ) && OHCL_Modules::enabled( '06' );
 	}
 
 	public static function home_on() {
@@ -86,10 +96,18 @@ final class OHCL_Front {
 		if ( '' === $p && is_front_page() && self::home_on() && ! is_paged() ) {
 			$p = 'home';
 		}
-		if ( ! in_array( $p, array( 'home', 'map', 'place', 'join' ), true ) ) {
+		if ( ! in_array( $p, array( 'home', 'map', 'place', 'join', 'cert' ), true ) ) {
 			return;
 		}
+		if ( 'cert' === $p && ! self::cert_on() ) {
+			return; // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — module 06 tắt ⇒ WordPress trả 404 như trang không có
+		}
 		$data = array();
+		if ( 'cert' === $p && isset( $_GET['ma'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- tra cứu công khai, chỉ đọc; normalize() chỉ nhận đúng dạng mã.
+			$data['lookup'] = OHCL_Certs::lookup( sanitize_text_field( wp_unslash( $_GET['ma'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			$data['asked']  = sanitize_text_field( wp_unslash( $_GET['ma'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			nocache_headers();
+		}
 		if ( 'place' === $p ) {
 			$data['place'] = self::find_place( (int) get_query_var( 'ohcl_id' ) );
 			if ( ! $data['place'] ) {
@@ -150,6 +168,7 @@ final class OHCL_Front {
 		// Bỏ CSS / JS của theme trên trang Hub; giữ thanh quản trị và tài sản của plugin này.
 		global $wp_styles, $wp_scripts;
 		$keep_css = array( 'admin-bar', 'dashicons', 'ohcl-front', 'ohcl-leaflet', 'ohcl-fonts' );
+		$keep_js  = array( 'admin-bar', 'ohcl-front', 'ohcl-leaflet', 'ohcl-qrlib', 'ohcl-qr' ); // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 		if ( $wp_styles instanceof WP_Styles ) {
 			foreach ( (array) $wp_styles->queue as $h ) {
 				if ( ! in_array( $h, $keep_css, true ) ) {
@@ -159,7 +178,7 @@ final class OHCL_Front {
 		}
 		if ( $wp_scripts instanceof WP_Scripts ) {
 			foreach ( (array) $wp_scripts->queue as $h ) {
-				if ( ! in_array( $h, array( 'admin-bar', 'ohcl-front', 'ohcl-leaflet' ), true ) ) {
+				if ( ! in_array( $h, $keep_js, true ) ) {
 					wp_dequeue_script( $h );
 				}
 			}
@@ -189,6 +208,16 @@ final class OHCL_Front {
 			wp_enqueue_script( 'ohcl-leaflet', $u . 'vendor/leaflet/leaflet.js', array(), '1.9.4', true );
 			wp_enqueue_script( 'ohcl-front', $u . 'front.js', array( 'ohcl-leaflet' ), OHCL_VERSION, true );
 		}
+		if ( 'cert' === $page ) {
+			self::enqueue_qr();
+		}
+	}
+
+	/** QR renderer (qrcode-generator 1.4.4, MIT, bundled) for the lookup page and the printable certificate. */
+	public static function enqueue_qr() {
+		$u = plugins_url( 'assets/', OHCL_DIR . 'open-hub-client.php' );
+		wp_enqueue_script( 'ohcl-qrlib', $u . 'vendor/qrcode/qrcode.js', array(), '1.4.4', true );
+		wp_enqueue_script( 'ohcl-qr', $u . 'qr.js', array( 'ohcl-qrlib' ), OHCL_VERSION, true );
 	}
 
 	public static function title( $page, array $data ) {
@@ -199,6 +228,8 @@ final class OHCL_Front {
 				return 'Bản đồ & danh bạ · ' . $hub;
 			case 'join':
 				return 'Trở thành hội viên · ' . $hub;
+			case 'cert':
+				return 'Xác minh & chứng nhận · ' . $hub;
 			case 'place':
 				return ! empty( $data['place'] ) ? $data['place']['title'] . ' · ' . $hub : 'Không tìm thấy · ' . $hub;
 		}
@@ -237,6 +268,10 @@ final class OHCL_Front {
 			'store'   => '<path d="M4 9l1.5-5h13L20 9M4 9h16v1.5a2.7 2.7 0 01-5.3 0 2.7 2.7 0 01-5.4 0A2.7 2.7 0 014 10.5zM5 13v7h14v-7"/>',
 			'truck'   => '<path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/>',
 			'chat'    => '<path d="M4 5h16v11H9l-5 4z"/>',
+			// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — biểu tượng bốn loại ghi nhận.
+			'check'   => '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 10"/>',
+			'shield'  => '<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+			'star'    => '<path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.6l1-5.8-4.3-4.1 5.9-.9z"/>',
 		);
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . ( isset( $I[ $k ] ) ? $I[ $k ] : $I['leaf'] ) . '</svg>';
 	}
@@ -312,6 +347,37 @@ final class OHCL_Front {
 		exit;
 	}
 
+	/* ---------- F3 phản ánh ---------- */
+
+	public static function handle_report() {
+		// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — phản ánh công khai về một cơ sở / giấy chứng nhận: nonce, bẫy bot, 3 lần / giờ / IP; chỉ quản trị viên đọc.
+		$back = self::url( 'cert' );
+		if ( ! self::cert_on() ) {
+			wp_safe_redirect( self::url() );
+			exit;
+		}
+		if ( ! isset( $_POST['_ohcl_report'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ohcl_report'] ) ), 'ohcl_cert_report' ) ) {
+			wp_safe_redirect( add_query_arg( array( 'err' => 'ohcl_join_expired' ), $back ) . '#phan-anh' );
+			exit;
+		}
+		$ip  = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+		$tk  = 'ohcl_report_' . md5( $ip );
+		$cnt = (int) get_transient( $tk );
+		if ( $cnt >= OHCL_Certs::REPORT_LIMIT ) {
+			wp_safe_redirect( add_query_arg( array( 'err' => 'ohcl_report_rate_limited' ), $back ) . '#phan-anh' );
+			exit;
+		}
+		set_transient( $tk, $cnt + 1, HOUR_IN_SECONDS );
+		$clean = OHCL_Certs::clean_report( wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- clean_report() bỏ thẻ, cắt độ dài, chuẩn hoá mã.
+		if ( is_wp_error( $clean ) ) {
+			wp_safe_redirect( add_query_arg( array( 'err' => $clean->get_error_code() ), $back ) . '#phan-anh' );
+			exit;
+		}
+		OHCL_Certs::add_report( $clean );
+		wp_safe_redirect( add_query_arg( array( 'reported' => 1 ), $back ) . '#phan-anh' );
+		exit;
+	}
+
 	/** Error code ⇒ four-field message for the join page (codes from the query string only). */
 	public static function join_error( $code ) {
 		$map = array(
@@ -324,6 +390,9 @@ final class OHCL_Front {
 			'ohcl_member_segment_invalid' => array( 'Loại hình không có trong danh sách.', 'Chọn loại hình trong ô chọn.' ),
 			'ohcl_member_email_invalid'   => array( 'Email không đúng dạng.', 'Sửa email hoặc để trống.' ),
 			'ohcl_member_save_failed'     => array( 'Chưa lưu được đăng ký.', 'Thử lại sau ít phút.' ),
+			'ohcl_report_rejected'        => array( 'Chưa gửi được phản ánh.', 'Tải lại trang rồi gửi lại.' ),
+			'ohcl_report_too_short'       => array( 'Phản ánh quá ngắn.', 'Viết rõ cơ sở nào, việc gì (ít nhất 10 ký tự).' ),
+			'ohcl_report_rate_limited'    => array( 'Đã gửi quá nhiều phản ánh từ mạng này.', 'Thử lại sau 1 giờ.' ),
 		);
 		$code = (string) $code;
 		return isset( $map[ $code ] ) ? array( 'code' => $code, 'message' => $map[ $code ][0], 'hint' => $map[ $code ][1] ) : null;

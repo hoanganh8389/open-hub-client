@@ -25,6 +25,11 @@ $ohcl_zalo = preg_replace( '/[^0-9]/', '', (string) $ohcl_p['zalo'] );
 		<h1><?php echo esc_html( $ohcl_p['title'] ); ?></h1>
 		<?php if ( $ohcl_p['seg_label'] ) : ?><span class="badge"><?php echo esc_html( $ohcl_p['seg_label'] ); ?></span><?php endif; ?>
 		<span class="badge mem">Đã xác minh</span>
+		<?php if ( ! empty( $ohcl_p['certs'] ) && OHCL_Front::cert_on() ) : // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — huy hiệu chứng nhận còn hiệu lực, bấm để tra cứu. ?>
+			<?php foreach ( $ohcl_p['certs'] as $ohcl_code => $ohcl_lab ) : ?>
+				<a class="badge mem" href="<?php echo esc_url( OHCL_Certs::lookup_url( $ohcl_code ) ); ?>" title="<?php echo esc_attr( $ohcl_code ); ?>">Certified · <?php echo esc_html( $ohcl_lab ); ?></a>
+			<?php endforeach; ?>
+		<?php endif; ?>
 		<dl class="kv">
 			<?php if ( $ohcl_p['address'] ) : ?><dt>Địa chỉ</dt><dd><?php echo esc_html( $ohcl_p['address'] ); ?></dd><?php endif; ?>
 			<?php if ( $ohcl_p['hours'] ) : ?><dt>Giờ mở cửa</dt><dd><?php echo esc_html( $ohcl_p['hours'] ); ?></dd><?php endif; ?>

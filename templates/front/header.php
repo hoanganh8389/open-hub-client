@@ -32,6 +32,9 @@ $ohcl_name = $cfg['name'] ? $cfg['name'] : get_bloginfo( 'name' );
 	</form>
 	<nav class="hlinks" aria-label="Tài khoản">
 		<a class="txt" href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">Bản đồ</a>
+		<?php if ( OHCL_Front::cert_on() ) : // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — tra cứu chứng nhận (module 06). ?>
+			<a class="txt" href="<?php echo esc_url( OHCL_Front::url( 'cert' ) ); ?>">Chứng nhận</a>
+		<?php endif; ?>
 		<?php if ( is_user_logged_in() ) : ?>
 			<a class="txt" href="<?php echo esc_url( admin_url() ); ?>">Tài khoản</a>
 		<?php else : ?>

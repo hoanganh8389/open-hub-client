@@ -245,7 +245,8 @@ final class OHCL_Admin_Members {
 			. '<dt>Hành trình</dt><dd>' . esc_html( OHCL_Members::JOURNEY[ $lv ] ) . ' (' . (int) $lv . '/8)</dd>'
 			. '<dt>Hội viên</dt><dd>' . esc_html( OHCL_Members::STATUS[ $m['status'] ] ) . ( $m['joined_at'] ? ' · vào ' . esc_html( substr( $m['joined_at'], 0, 10 ) ) : '' ) . '</dd>'
 			. '<dt>Trợ lý AI</dt><dd><span class="ohcl-st ' . esc_attr( $ai['code'] ) . '">' . esc_html( $ai['label'] ) . '</span>' . ( $k && $k['last_used_at'] ? ' · dùng gần nhất ' . esc_html( $k['last_used_at'] ) : '' ) . '</dd>'
-			. '<dt>Xác minh</dt><dd>' . ( $ver ? 'Verified · hạn ' . esc_html( substr( $m['verify']['until'], 0, 10 ) ) : 'Chưa <span class="mute">(module 06, Đ2)</span>' ) . '</dd>'
+			. '<dt>Xác minh</dt><dd>' . ( $ver ? 'Verified · hạn ' . esc_html( substr( $m['verify']['until'], 0, 10 ) ) : 'Chưa' ) . '</dd>'
+			. '<dt>Chứng nhận</dt><dd>' . esc_html( implode( ', ', OHCL_Members::valid_certs( $m, $now ) ) ?: '—' ) . '</dd>' // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			. '<dt>Bản đồ</dt><dd>' . esc_html( OHCL_Members::LEVELS[ $map_lv ] ) . ( 4 === $map_lv ? ' · <a href="' . esc_url( OHCL_Front::place_url( $m['id'], $m['title'] ) ) . '" target="_blank" rel="noopener">xem trang công khai</a>' : ' <span class="mute">— ' . esc_html( $map_why ) . '</span>' ) . '</dd>'
 			. '<dt>Coach</dt><dd>' . ( $m['coach'] ? esc_html( $m['coach'] ) : '<span class="mute">Chưa có</span>' ) . '</dd>'
 			. '<dt>Liên hệ</dt><dd>' . esc_html( implode( ' · ', array_filter( array( $m['phone'], $m['email'], $m['contact_zalo'] ) ) ) ?: '—' ) . '</dd>'
@@ -308,11 +309,15 @@ final class OHCL_Admin_Members {
 		}
 		echo '</div>';
 
+		if ( class_exists( 'OHCL_Admin_Certs' ) && OHCL_Admin_Certs::on() ) {
+			OHCL_Admin_Certs::member_card( $m ); // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — cấp / gia hạn chứng nhận ngay trong Member 360°
+		}
+
 		echo '<div class="ohcl-card"><h3>Hành trình</h3><ol class="ohcl-journey">';
 		foreach ( OHCL_Members::JOURNEY as $i => $l ) {
 			echo '<li class="' . ( $i <= $lv ? 'done' : '' ) . ( $i === $lv ? ' now' : '' ) . '">' . esc_html( $l ) . '</li>';
 		}
-		echo '</ol><p class="mute">Bậc 6–8 mở khi có module Xác minh &amp; chứng nhận, Marketing (Đ2, Đ3).</p></div>';
+		echo '</ol><p class="mute">Bậc 6 khi đã xác minh và có chứng nhận còn hiệu lực. Bậc 7–8 mở với module Marketing (Đ3).</p></div>';
 		echo '</div></div></div>';
 	}
 

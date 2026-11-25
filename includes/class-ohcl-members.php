@@ -104,8 +104,26 @@ final class OHCL_Members {
 		return is_array( $verify ) && ! empty( $verify['until'] ) && strtotime( $verify['until'] . ' UTC' ) >= $now_ts;
 	}
 
+	/** Holds at least one certificate that is neither revoked nor expired? (`_bzm_certs` short copy). */
+	public static function certified( array $m, $now_ts ) {
+		return (bool) self::valid_certs( $m, $now_ts );
+	}
+
+	/** Valid certificates from the member's short copy: code => label. */
+	public static function valid_certs( array $m, $now_ts ) {
+		// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — chứng nhận còn hiệu lực đọc từ bản sao ngắn trên hồ sơ (không truy vấn từng giấy).
+		$out = array();
+		foreach ( isset( $m['certs'] ) && is_array( $m['certs'] ) ? $m['certs'] : array() as $code => $c ) {
+			if ( empty( $c['revoked'] ) && ! empty( $c['until'] ) && strtotime( $c['until'] . ' UTC' ) >= $now_ts ) {
+				$out[ $code ] = $c['label'];
+			}
+		}
+		return $out;
+	}
+
 	/**
-	 * Journey level 1..5 computed from the other states (6–8 need modules 06/08, later waves).
+	 * Journey level 1..6 computed from the other states (6 = verified + a valid certificate, module 06;
+	 * 7–8 need module 08, later wave).
 	 *
 	 * @param array      $m   member array from to_array().
 	 * @param array|null $key key view or null.
@@ -124,6 +142,10 @@ final class OHCL_Members {
 				$level = 4;
 				if ( self::verified( $m['verify'], $now_ts ) ) {
 					$level = 5;
+					// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — bậc 6 "Đạt chuẩn chuyên ngành" khi có chứng nhận còn hiệu lực.
+					if ( self::certified( $m, $now_ts ) ) {
+						$level = 6;
+					}
 				}
 			}
 		}
@@ -275,6 +297,7 @@ final class OHCL_Members {
 			'lat'      => round( (float) $m['lat'], 4 ),
 			'lng'      => round( (float) $m['lng'], 4 ),
 			'fields'   => $ind,
+			'certs'    => self::valid_certs( $m, time() ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — huy hiệu chứng nhận trên trang công khai
 		);
 	}
 
@@ -303,6 +326,7 @@ final class OHCL_Members {
 			'verify'      => get_post_meta( $id, '_bzm_verify', true ),
 			'consent'     => (string) get_post_meta( $id, '_bzm_public_consent', true ), // ngày đồng ý, rỗng = chưa
 			'source'      => (string) get_post_meta( $id, '_bzm_source', true ),
+			'certs'       => get_post_meta( $id, '_bzm_certs', true ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			'industry'    => array(),
 		);
 		$m['status'] = isset( self::STATUS[ $m['status'] ] ) ? $m['status'] : 'active';

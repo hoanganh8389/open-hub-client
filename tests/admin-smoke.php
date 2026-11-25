@@ -65,7 +65,7 @@ function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; r
 function handle( $class, $fn, array $post ) { $_POST = $post; try { call_user_func( array( $class, $fn ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-certs', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -180,6 +180,35 @@ $l2 = mpage( array( 'stage' => 1 ) );
 check( 'Danh sách: lọc chặng 4 có hồ sơ, chặng 1 rỗng', false !== strpos( $l1, 'Cửa hàng Bình An' ) && false === strpos( $l2, 'Cửa hàng Bình An' ) );
 $ov = page( 'page_overview' );
 check( 'Tổng quan câu 1: 1 hội viên, 1 hoạt động, theo phân khúc "Cửa hàng"', false !== strpos( $ov, '<span>Tổng hội viên</span><b>1</b>' ) && false !== strpos( $ov, '<span>Cửa hàng</span>' ) );
+
+/* ---- 06 · Chứng nhận (OHCL-D2A) ---- */
+// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — Member 360° → xác minh → cấp chứng nhận (đủ tiêu chí) → màn 06 → giấy in có QR → thu hồi hai bước.
+if ( ! function_exists( 'get_userdata' ) ) { function get_userdata( $id ) { return (object) array( 'display_name' => 'Leader ' . $id ); } }
+function cpage( array $get ) { $_GET = $get; ob_start(); OHCL_Admin_Certs::page(); return ob_get_clean(); }
+delete_transient( 'ohcl_flash_1' );
+check( 'Member 360°: chưa xác minh ⇒ thẻ chứng nhận nhắc xác minh trước', false !== strpos( mpage( array( 'id' => $mid ) ), 'Xác minh hồ sơ (V3) trước' ) );
+handle( 'OHCL_Admin_Members', 'handle_verify', array( 'id' => $mid, 'evidence' => array( 'gpkd' ), 'months' => 12 ) );
+delete_transient( 'ohcl_flash_1' );
+$one3 = mpage( array( 'id' => $mid ) );
+check( 'Member 360°: đã xác minh ⇒ form cấp theo từng bộ tiêu chuẩn, đủ ô tiêu chí', false !== strpos( $one3, 'Cấp · Hàng chính hãng' ) && 2 === substr_count( $one3, 'name="criteria[]"' ) );
+handle( 'OHCL_Admin_Certs', 'handle_issue', array( 'id' => $mid, 'standard' => 'hang-chinh-hang', 'criteria' => array( '0' ), 'evidence' => array( '0' ) ) );
+check( 'Cấp thiếu tiêu chí ⇒ lỗi bốn trường, không có giấy', 'ohcl_cert_criteria_incomplete' === get_transient( 'ohcl_flash_1' )['error']['code'] && array() === OHCL_Certs::all() );
+delete_transient( 'ohcl_flash_1' );
+handle( 'OHCL_Admin_Certs', 'handle_issue', array( 'id' => $mid, 'standard' => 'hang-chinh-hang', 'criteria' => array( '0', '1' ), 'evidence' => array( '0' ), 'months' => '6', 'note' => 'đã xem kho' ) );
+$cl   = OHCL_Certs::all();
+$code = $cl ? $cl[0]['code'] : '';
+check( 'Cấp đủ tiêu chí ⇒ thông báo mã, hành trình bậc 6', 1 === count( $cl ) && false !== strpos( get_transient( 'ohcl_flash_1' )['ok'], $code ) && false !== strpos( mpage( array( 'id' => $mid ) ), 'Đạt chuẩn chuyên ngành (6/8)' ) );
+delete_transient( 'ohcl_flash_1' );
+$list = cpage( array() );
+check( 'Màn 06: bảng có mã, cơ sở, Còn hiệu lực; ô số liệu đúng', false !== strpos( $list, $code ) && false !== strpos( $list, 'Cửa hàng Bình An' ) && false !== strpos( $list, 'ok">Còn hiệu lực' ) && false !== strpos( $list, '<span>Còn hiệu lực</span><b>1</b>' ) );
+$sheet = cpage( array( 'cert' => $cl[0]['id'] ) );
+check( 'Giấy in: QR trỏ trang tra cứu, đủ tiêu chí, hồ sơ thẩm định riêng tư', false !== strpos( $sheet, 'data-ohcl-qr="https://hub.test/chung-nhan/?ma=' . $code . '"' ) && false !== strpos( $sheet, 'Có tem truy xuất' ) && false !== strpos( $sheet, 'đã xem kho' ) && false !== strpos( $sheet, 'Thu hồi giấy chứng nhận' ) );
+handle( 'OHCL_Admin_Certs', 'handle_revoke', array( 'cert' => $cl[0]['id'], 'reason' => 'Bán hàng không rõ nguồn' ) );
+check( 'Thu hồi chưa tích xác nhận ⇒ lỗi, giấy vẫn hiệu lực', 'ohcl_cert_revoke_unconfirmed' === get_transient( 'ohcl_flash_1' )['error']['code'] && 'valid' === OHCL_Certs::state( OHCL_Certs::get( $cl[0]['id'] ), time() ) );
+delete_transient( 'ohcl_flash_1' );
+handle( 'OHCL_Admin_Certs', 'handle_revoke', array( 'cert' => $cl[0]['id'], 'reason' => 'Bán hàng không rõ nguồn', 'confirm' => '1' ) );
+check( 'Thu hồi có xác nhận ⇒ Đã thu hồi; lọc "Đã thu hồi" thấy giấy', 'revoked' === OHCL_Certs::state( OHCL_Certs::get( $cl[0]['id'] ), time() ) && false !== strpos( cpage( array( 'st' => 'revoked' ) ), $code ) && false === strpos( cpage( array( 'st' => 'valid' ) ), $code ) );
+delete_transient( 'ohcl_flash_1' );
 
 echo "\n$pass pass, $fail fail\n";
 exit( $fail ? 1 : 0 );

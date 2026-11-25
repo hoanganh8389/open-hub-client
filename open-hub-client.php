@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Hub Client
  * Description:       Nền tảng chung cho mọi site Hub ngành của Bizcity Open: 14 module bật / tắt, hợp đồng ngành bizcity_industry_hub@2, ô mở rộng cho plugin ngành, một cửa gọi open-hub-core. Đặc tả: canon open-hub OPEN-HUB-CLIENT.md.
- * Version:           0.5.0
+ * Version:           0.6.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Johnny Chu – Chu Hoàng Anh
@@ -19,10 +19,10 @@ if ( defined( 'OHCL_VERSION' ) ) {
 	return;
 }
 
-define( 'OHCL_VERSION', '0.5.0' );
+define( 'OHCL_VERSION', '0.6.0' );
 define( 'OHCL_DIR', __DIR__ . '/' );
 
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-front' ) as $ohcl_f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-certs', 'class-ohcl-front' ) as $ohcl_f ) {
 	$ohcl_p = OHCL_DIR . 'includes/' . $ohcl_f . '.php';
 	if ( ! is_file( $ohcl_p ) || ! is_readable( $ohcl_p ) ) {
 		return; // a missing artifact disables the plugin quietly instead of a fatal.
@@ -33,6 +33,7 @@ unset( $ohcl_f, $ohcl_p );
 
 // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — hồ sơ hội viên là CPT trên site Hub (không bảng mới).
 add_action( 'init', array( 'OHCL_Members', 'register' ) );
+add_action( 'init', array( 'OHCL_Certs', 'register' ) ); // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — giấy chứng nhận là CPT bz_hub_cert.
 
 // [2026-11-25 09:08 PM Johnny Chu - Chu Hoàng Anh] OHCL-F1 — cổng cộng đồng (trang chủ, bản đồ, hồ sơ cơ sở, trở thành hội viên); xả quy tắc đường dẫn một lần khi kích hoạt.
 OHCL_Front::boot();
@@ -71,6 +72,11 @@ if ( is_admin() && is_file( OHCL_DIR . 'includes/class-ohcl-admin.php' ) && is_r
 	if ( is_file( OHCL_DIR . 'includes/class-ohcl-admin-members.php' ) ) {
 		require_once OHCL_DIR . 'includes/class-ohcl-admin-members.php';
 		OHCL_Admin_Members::boot();
+	}
+	// [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — màn 06 · Chứng nhận.
+	if ( is_file( OHCL_DIR . 'includes/class-ohcl-admin-certs.php' ) ) {
+		require_once OHCL_DIR . 'includes/class-ohcl-admin-certs.php';
+		OHCL_Admin_Certs::boot();
 	}
 }
 
