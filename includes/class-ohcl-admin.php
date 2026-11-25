@@ -54,7 +54,7 @@ final class OHCL_Admin {
 		if ( false === strpos( (string) $hook, 'open-hub' ) ) {
 			return;
 		}
-		wp_enqueue_style( 'ohcl-admin', plugins_url( 'assets/admin.css', OHCL_DIR . 'open-hub-client.php' ), array(), OHCL_VERSION );
+		wp_enqueue_style( 'ohcl-admin', OHCL_Front::asset( plugins_url( 'assets/admin.css', OHCL_DIR . 'open-hub-client.php' ) ), array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1 phiên bản trong ?ohcl=
 		$cfg = OHCL_Industry::current();
 		wp_add_inline_style( 'ohcl-admin', '.ohcl{--a:' . $cfg['brand']['accent'] . '}' ); // accent đã kiểm #rrggbb
 	}

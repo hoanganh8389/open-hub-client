@@ -411,21 +411,85 @@ final class OHCL_Front {
 			20
 		);
 		add_action( 'wp_enqueue_scripts', array( __CLASS__, 'assets' ), 9999 );
+		add_action( 'wp_head', array( __CLASS__, 'strip_theme_hooks' ), 0 ); // [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1
 	}
 
 	public static function enqueue_now( $page ) {
 		$u = plugins_url( 'assets/', OHCL_DIR . 'open-hub-client.php' );
 		wp_enqueue_style( 'ohcl-fonts', 'https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap', array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
-		wp_enqueue_style( 'ohcl-front', $u . 'front.css', array(), OHCL_VERSION );
+		wp_enqueue_style( 'ohcl-front', self::asset( $u . 'front.css' ), array(), null ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion -- phiên bản nằm trong ?ohcl= (xem asset()).
 		$cfg = OHCL_Industry::current();
 		wp_add_inline_style( 'ohcl-front', '.ohcl-front{--g:' . $cfg['brand']['accent'] . '}' );
 		if ( in_array( $page, array( 'home', 'map', 'place', 'trade' ), true ) ) {
 			wp_enqueue_style( 'ohcl-leaflet', $u . 'vendor/leaflet/leaflet.css', array(), '1.9.4' );
 			wp_enqueue_script( 'ohcl-leaflet', $u . 'vendor/leaflet/leaflet.js', array(), '1.9.4', true );
-			wp_enqueue_script( 'ohcl-front', $u . 'front.js', array( 'ohcl-leaflet' ), OHCL_VERSION, true );
+			wp_enqueue_script( 'ohcl-front', self::asset( $u . 'front.js' ), array( 'ohcl-leaflet' ), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 		}
 		if ( 'cert' === $page || 'myhub' === $page ) {
 			self::enqueue_qr();
+		}
+	}
+
+	/**
+	 * Asset URL with the plugin version in its own query key. Some sites strip "?ver=" and Cloudflare keeps
+	 * static files a year (veganhub.net), so an update would never reach visitors without this.
+	 */
+	public static function asset( $url ) {
+		// [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1 — giữ phiên bản tài sản qua plugin xoá ?ver= và bộ đệm Cloudflare 1 năm.
+		return add_query_arg( array( 'ohcl' => defined( 'OHCL_VERSION' ) ? OHCL_VERSION : '0' ), $url );
+	}
+
+	/**
+	 * Remove what the THEME prints through wp_body_open / wp_footer (Flatsome: mobile menu, account
+	 * lightbox, language flags…). Its CSS is gone on Hub pages, so that markup would show as raw lists.
+	 * Plugins' hooks stay. Runs from wp_head (before both hooks fire).
+	 */
+	public static function strip_theme_hooks() {
+		// [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1 — veganhub.net: menu điện thoại, cờ ngôn ngữ, hộp đăng nhập của Flatsome lộ ra cuối trang Hub.
+		global $wp_filter;
+		$dirs = array_filter( array( function_exists( 'get_template_directory' ) ? wp_normalize_path( get_template_directory() ) : '', function_exists( 'get_stylesheet_directory' ) ? wp_normalize_path( get_stylesheet_directory() ) : '' ) );
+		if ( ! $dirs ) {
+			return 0;
+		}
+		$removed = 0;
+		foreach ( array( 'wp_body_open', 'wp_footer' ) as $hook ) {
+			if ( empty( $wp_filter[ $hook ] ) || ! is_object( $wp_filter[ $hook ] ) ) {
+				continue;
+			}
+			foreach ( $wp_filter[ $hook ]->callbacks as $prio => $cbs ) {
+				foreach ( $cbs as $cb ) {
+					$file = self::callback_file( $cb['function'] );
+					foreach ( $dirs as $d ) {
+						if ( '' !== $file && 0 === strpos( wp_normalize_path( $file ), trailingslashit( $d ) ) ) {
+							remove_action( $hook, $cb['function'], $prio );
+							$removed++;
+							break;
+						}
+					}
+				}
+			}
+		}
+		return $removed;
+	}
+
+	/** File that defines a callback ('' when unknown). */
+	public static function callback_file( $fn ) {
+		try {
+			if ( is_string( $fn ) && false !== strpos( $fn, '::' ) ) {
+				$fn = explode( '::', $fn, 2 );
+			}
+			if ( is_array( $fn ) && 2 === count( $fn ) ) {
+				$r = new ReflectionMethod( $fn[0], $fn[1] );
+			} elseif ( is_string( $fn ) || $fn instanceof Closure ) {
+				$r = new ReflectionFunction( $fn );
+			} elseif ( is_object( $fn ) && method_exists( $fn, '__invoke' ) ) {
+				$r = new ReflectionMethod( $fn, '__invoke' );
+			} else {
+				return '';
+			}
+			return (string) $r->getFileName();
+		} catch ( Exception $e ) {
+			return '';
 		}
 	}
 
@@ -433,7 +497,7 @@ final class OHCL_Front {
 	public static function enqueue_qr() {
 		$u = plugins_url( 'assets/', OHCL_DIR . 'open-hub-client.php' );
 		wp_enqueue_script( 'ohcl-qrlib', $u . 'vendor/qrcode/qrcode.js', array(), '1.4.4', true );
-		wp_enqueue_script( 'ohcl-qr', $u . 'qr.js', array( 'ohcl-qrlib' ), OHCL_VERSION, true );
+		wp_enqueue_script( 'ohcl-qr', self::asset( $u . 'qr.js' ), array( 'ohcl-qrlib' ), null, true ); // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
 	}
 
 	/** Document title of a Hub page; '' for WordPress views (their own title stays). */

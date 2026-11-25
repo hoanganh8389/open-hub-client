@@ -1,5 +1,13 @@
 # Lịch sử phát hành
 
+## 0.8.1 — 2026-11-26 (sửa lỗi giao diện trên veganhub.net)
+
+- **Chữ trang chủ trống**: bản đệm dữ liệu ngành của client cũ (0.4, chưa có `persona`) bị dùng lại. Khoá đệm nay tính cả phiên bản client; cấu hình đọc ra luôn được bù đủ khoá từ mặc định.
+- **Menu điện thoại, cờ ngôn ngữ, hộp đăng nhập của theme lộ ra cuối trang Hub**: trên trang Hub, hook `wp_body_open` / `wp_footer` của theme bị gỡ (hook của plugin giữ nguyên); thêm lưới CSS ẩn khung lightbox / menu điện thoại của Flatsome.
+- **CSS mới không tới khách**: site xoá `?ver=` và Cloudflare giữ tệp tĩnh 1 năm ⇒ tài sản của plugin nay mang `?ohcl=<phiên bản>`.
+- Dòng chẩn đoán trong mã nguồn trang: `<!-- open-hub-client 0.8.1 · ngành: … -->` (đang dùng dữ liệu ngành nào, hay mặc định).
+- `tests/fix-smoke.php` 6/6 (trả khoá đệm về kiểu cũ ⇒ FAIL).
+
 ## 0.8.0 — 2026-11-25 (F3: trang WordPress + menu, giống templates/v2 của router)
 
 - **Mẫu trang** "Open Hub — <tên trang>" (khoá `open-hub:<trang>`) cho 12 trang Hub. Trang WordPress dùng mẫu được Hub dựng, ở đường dẫn chủ Hub đặt; khi đã đăng, mọi link của Hub trỏ về trang đó (đệm 1 ngày, xoá khi lưu / xoá trang).

@@ -395,6 +395,14 @@ final class OHCL_Industry {
 	 *
 	 * @return array config
 	 */
+	/** Every key of defaults() present (and persona complete), whatever the cache held. */
+	public static function fill( $cfg ) {
+		$d   = self::defaults();
+		$cfg = is_array( $cfg ) ? array_merge( $d, $cfg ) : $d;
+		$cfg['persona'] = is_array( $cfg['persona'] ) ? array_merge( $d['persona'], $cfg['persona'] ) : $d['persona'];
+		return $cfg;
+	}
+
 	public static function current() {
 		$r = self::report();
 		return $r['config'];
@@ -406,14 +414,17 @@ final class OHCL_Industry {
 			return self::$current;
 		}
 		$raw    = apply_filters( self::FILTER, array() );
-		$hash   = md5( (string) wp_json_encode( $raw ) );
+		// [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1 — veganhub.net: bản đệm của client 0.4 (chưa có persona) bị dùng lại ⇒ chữ trang chủ trống. Khoá đệm tính cả phiên bản client; cấu hình đọc ra luôn trộn với mặc định.
+		$hash   = md5( ( defined( 'OHCL_VERSION' ) ? OHCL_VERSION : '' ) . '|' . (string) wp_json_encode( $raw ) );
 		$stored = get_option( self::OPTION );
 		if ( is_array( $stored ) && isset( $stored['hash'], $stored['report'] ) && $stored['hash'] === $hash ) {
-			self::$current = $stored['report'];
+			self::$current           = $stored['report'];
+			self::$current['config'] = self::fill( self::$current['config'] );
 			return self::$current;
 		}
-		$report        = self::validate( $raw );
-		self::$current = $report;
+		$report           = self::validate( $raw );
+		$report['config'] = self::fill( $report['config'] );
+		self::$current    = $report;
 		update_option( self::OPTION, array( 'hash' => $hash, 'report' => $report, 'at' => gmdate( 'Y-m-d H:i:s' ) ), false );
 		return $report;
 	}

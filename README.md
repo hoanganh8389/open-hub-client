@@ -36,6 +36,7 @@ php tests/front-smoke.php  # 4 trang công khai + form đăng ký
 php tests/cert-smoke.php   # chứng nhận: cấp, gia hạn, thu hồi, tra cứu, phản ánh
 php tests/pages-smoke.php  # mọi trang, menu, khung WordPress, My Hub, ứng tuyển Coach
 php tests/menu-smoke.php   # trang WordPress + "Menu Hub"
+php tests/fix-smoke.php    # lỗi đã gặp trên site thật
 php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → mã ghép nối → kết nối → cấp khoá
 ```
 

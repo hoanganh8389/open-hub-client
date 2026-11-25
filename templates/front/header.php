@@ -18,6 +18,8 @@ $ohcl_blogv = 'wp' === $page && ( is_home() || is_singular( 'post' ) || is_categ
 <head>
 <meta charset="<?php bloginfo( 'charset' ); ?>">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<?php $ohcl_rep = OHCL_Industry::report(); // [2026-11-26 12:09 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX1 — dòng chẩn đoán: site đang dùng dữ liệu ngành nào (không có bí mật). ?>
+<!-- open-hub-client <?php echo esc_html( defined( 'OHCL_VERSION' ) ? OHCL_VERSION : '' ); ?> · ngành: <?php echo esc_html( $ohcl_rep['ok'] ? $cfg['id'] . ' (' . $cfg['plugin'] . ' ' . $cfg['version'] . ')' : 'mặc định — dữ liệu ngành ' . ( $ohcl_rep['errors'] ? 'chưa đạt' : 'không có' ) ); ?> -->
 <?php wp_head(); ?>
 </head>
 <body <?php body_class( 'ohcl-front ohcl-p-' . $page ); ?>>
