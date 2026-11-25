@@ -1,5 +1,11 @@
 # Lịch sử phát hành
 
+## 0.8.2 — 2026-11-26
+
+- **Màu nhấn của Hub** ở 14 · Cài đặt: chủ Hub đặt màu (ô chọn màu) hoặc dùng màu của plugin ngành; thứ tự chủ Hub > plugin ngành > mặc định. Màu sai dạng bị bỏ.
+- Khi không plugin ngành nào cấp dữ liệu, thông báo wp-admin nói rõ: bật plugin ngành (ví dụ WP Vegan Hub). Màu đỏ `#c8102e` là màu mặc định của Bizcity trong trường hợp này.
+- `tests/fix-smoke.php` 9/9.
+
 ## 0.8.1 — 2026-11-26 (sửa lỗi giao diện trên veganhub.net)
 
 - **Chữ trang chủ trống**: bản đệm dữ liệu ngành của client cũ (0.4, chưa có `persona`) bị dùng lại. Khoá đệm nay tính cả phiên bản client; cấu hình đọc ra luôn được bù đủ khoá từ mặc định.

@@ -178,7 +178,7 @@ final class OHCL_Industry {
 		$cfg      = self::defaults();
 
 		if ( ! is_array( $raw ) || array() === $raw ) {
-			return array( 'ok' => false, 'config' => $cfg, 'errors' => array( 'no_industry: chưa có plugin ngành nào trả dữ liệu qua filter ' . self::FILTER ), 'warnings' => array(), 'ignored' => array() );
+			return array( 'ok' => false, 'config' => $cfg, 'errors' => array( 'no_industry: chưa có plugin ngành nào cấp dữ liệu (filter ' . self::FILTER . ' rỗng) — vào Plugin, bật plugin ngành của Hub (ví dụ WP Vegan Hub)' ), 'warnings' => array(), 'ignored' => array() );
 		}
 
 		foreach ( array_keys( $raw ) as $k ) {
@@ -403,9 +403,23 @@ final class OHCL_Industry {
 		return $cfg;
 	}
 
+	const ACCENT_OPTION = 'ohcl_accent';
+
+	/** Owner's accent (#rrggbb) or ''. Owner > industry > default, same order as modules. */
+	public static function owner_accent() {
+		$a = strtolower( (string) get_option( self::ACCENT_OPTION, '' ) );
+		return preg_match( '/^#[0-9a-f]{6}$/', $a ) ? $a : '';
+	}
+
 	public static function current() {
-		$r = self::report();
-		return $r['config'];
+		$r   = self::report();
+		$cfg = $r['config'];
+		// [2026-11-26 12:51 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX2 — chủ Hub tự đặt màu nhấn (veganhub.net hiện đỏ mặc định vì plugin ngành không cấp dữ liệu).
+		$own = self::owner_accent();
+		if ( '' !== $own ) {
+			$cfg['brand']['accent'] = $own;
+		}
+		return $cfg;
 	}
 
 	/** Full report of the current industry (config + errors / warnings). */

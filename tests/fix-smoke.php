@@ -116,5 +116,16 @@ foreach ( $GLOBALS['wp_filter']['wp_footer']->callbacks as $cbs ) { foreach ( $c
 check( 'gỡ hook wp_footer của theme (menu điện thoại…), giữ hook của plugin', 1 === $n && ! in_array( 'ohcl_fake_theme_mobile_menu', $left, true ) && in_array( 'ohcl_fake_plugin_chat', $left, true ) && in_array( 'closure', $left, true ) );
 check( 'tài sản mang ?ohcl=<phiên bản> (qua được plugin xoá ?ver= và Cloudflare)', false !== strpos( OHCL_Front::asset( 'https://hub.test/a/front.css' ), '?ohcl=' ) );
 
+/* màu nhấn (OHCL-FIX2) */
+// [2026-11-26 12:51 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX2 — chủ Hub đặt màu > màu plugin ngành > mặc định.
+$ind_accent = OHCL_Industry::report()['config']['brand']['accent'];
+update_option( OHCL_Industry::ACCENT_OPTION, '#1F7A3A' );
+check( 'chủ Hub đặt màu xanh ⇒ cổng dùng màu đó (không phân biệt hoa / thường)', '#1f7a3a' === OHCL_Industry::current()['brand']['accent'] );
+update_option( OHCL_Industry::ACCENT_OPTION, 'red;}body{display:none' );
+check( 'màu sai dạng bị bỏ ⇒ về màu của plugin ngành (không chèn được CSS)', $ind_accent === OHCL_Industry::current()['brand']['accent'] );
+update_option( OHCL_Industry::ACCENT_OPTION, '' );
+$e = OHCL_Industry::validate( array() );
+check( 'không plugin ngành nào cấp dữ liệu ⇒ lỗi nói rõ cần bật plugin ngành', ! $e['ok'] && false !== strpos( $e['errors'][0], 'bật plugin ngành' ) );
+
 echo "\n$pass pass, $fail fail\n";
 exit( $fail ? 1 : 0 );
