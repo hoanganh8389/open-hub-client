@@ -100,6 +100,59 @@ final class OHCL_Core_Client {
 	}
 
 	/**
+	 * Connect this Hub site with a pairing code from bizcity.vn › Sổ Hub (no person copies the secret).
+	 * The core rotates the Hub secret and returns it once, server to server; we store base URL, the Hub
+	 * slug the core answered and the secret (option, not autoloaded). Refused when OHCL_CORE_SECRET is
+	 * set in wp-config.php, because the constant would win over the new secret.
+	 *
+	 * @return array|WP_Error { hub: {slug, name, industry}, mismatch: bool }
+	 */
+	public static function pair( $base_url, $code ) {
+		// [2026-11-25 06:17 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR — kết nối lõi bằng mã ghép nối; bí mật đi thẳng máy chủ → máy chủ, không qua người.
+		$base_url = rtrim( trim( (string) $base_url ), '/' );
+		$check    = self::check_config( array( 'base_url' => $base_url, 'hub' => 'xx', 'secret' => 'ohs_' . str_repeat( '0', 32 ) ) );
+		if ( true !== $check ) {
+			return $check;
+		}
+		$code = strtoupper( preg_replace( '/[\s-]+/', '', (string) $code ) );
+		if ( ! preg_match( '/^[A-HJ-NP-Z2-9]{8}$/', $code ) ) {
+			return OHCL_Error::make( 'ohcl_pair_code_format', 'Mã ghép nối gồm 8 ký tự, dạng ABCD-EFGH.', 'Dán đúng mã hiện ở bizcity.vn › Sổ Hub.', 400 );
+		}
+		if ( defined( 'OHCL_CORE_SECRET' ) ) {
+			return OHCL_Error::make( 'ohcl_pair_locked_by_constant', 'Site đang khoá bí mật Hub bằng OHCL_CORE_SECRET trong wp-config.php.', 'Xoá dòng OHCL_CORE_SECRET khỏi wp-config.php rồi kết nối lại bằng mã.', 409 );
+		}
+		$prev          = self::$config;
+		self::$config  = array( 'base_url' => $base_url, 'hub' => 'xx', 'secret' => '' );
+		$res           = self::call( 'POST', '/hub/pair', array( 'code' => $code ), false );
+		self::$config  = $prev;
+		if ( is_wp_error( $res ) ) {
+			return $res;
+		}
+		$slug   = isset( $res['hub']['slug'] ) ? (string) $res['hub']['slug'] : '';
+		$secret = isset( $res['secret'] ) ? (string) $res['secret'] : '';
+		if ( ! preg_match( '/^[a-z0-9-]{2,20}$/', $slug ) || ! preg_match( '/^ohs_[a-f0-9]{32}$/', $secret ) ) {
+			return OHCL_Error::make( 'ohcl_core_bad_response', 'Lõi Bizcity trả về kết quả ghép nối không đọc được.', 'Tạo mã mới ở bizcity.vn rồi thử lại; nếu còn lỗi, báo Bizcity.', 200, '', array( '_degraded' => true ) );
+		}
+		if ( ! is_array( self::$config ) ) {
+			update_option( self::OPTION, array( 'base_url' => $base_url, 'hub' => $slug ), false );
+			update_option( self::SECRET_OPTION, $secret, false );
+		} else {
+			self::$config = array( 'base_url' => $base_url, 'hub' => $slug, 'secret' => $secret ); // test mode
+		}
+		$ind = OHCL_Industry::current();
+		return array(
+			'hub'      => array( 'slug' => $slug, 'name' => isset( $res['hub']['name'] ) ? (string) $res['hub']['name'] : $slug, 'industry' => isset( $res['hub']['industry'] ) ? (string) $res['hub']['industry'] : '' ),
+			'mismatch' => '' !== $ind['id'] && $ind['id'] !== $slug,
+		);
+	}
+
+	/** Connection state for the settings card (never the secret). */
+	public static function state() {
+		$c = self::config();
+		return array( 'base_url' => $c['base_url'], 'hub' => $c['hub'], 'has_secret' => '' !== $c['secret'], 'by_constant' => defined( 'OHCL_CORE_SECRET' ) );
+	}
+
+	/**
 	 * Connection check for the settings screen: config, reachability, Hub listed, auth accepted.
 	 *
 	 * @return array{ok:bool, steps:array[]}

@@ -26,6 +26,7 @@ final class OHCL_Admin {
 		add_action( 'admin_post_ohcl_revoke', array( __CLASS__, 'handle_revoke' ) );
 		add_action( 'admin_post_ohcl_settings', array( __CLASS__, 'handle_settings' ) );
 		add_action( 'admin_post_ohcl_ping', array( __CLASS__, 'handle_ping' ) );
+		add_action( 'admin_post_ohcl_pair', array( __CLASS__, 'handle_pair' ) );
 	}
 
 	public static function menu() {
@@ -271,22 +272,36 @@ final class OHCL_Admin {
 		echo '<p class="mute">' . (int) count( $c['segments'] ) . ' phân khúc · ' . (int) count( $c['member_fields'] ) . ' trường hồ sơ · ' . (int) count( $c['standards'] ) . ' tiêu chuẩn · ' . (int) count( $c['knowledge_assets'] ) . ' tài sản tri thức. Kiểm lại: <code>wp ohcl validate-industry</code></p></div>';
 		echo '</div>';
 
-		// Kết nối lõi
-		$o        = get_option( OHCL_Core_Client::OPTION );
-		$o        = is_array( $o ) ? $o : array();
-		$by_const = defined( 'OHCL_CORE_SECRET' );
-		$has      = $by_const || '' !== (string) get_option( OHCL_Core_Client::SECRET_OPTION, '' );
-		echo '<div class="ohcl-card"><h3>Kết nối lõi Bizcity</h3><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+		// [2026-11-25 06:17 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR — kết nối lõi bằng mã ghép nối (3 bước, không ai chép bí mật); dán bí mật tay chỉ còn ở "Nâng cao".
+		$st   = OHCL_Core_Client::state();
+		$post = esc_url( admin_url( 'admin-post.php' ) );
+		echo '<div class="ohcl-card ohcl-pair"><h3>Kết nối lõi Bizcity</h3>';
+		if ( $st['has_secret'] && $st['base_url'] ) {
+			echo '<p><span class="ohcl-st ok">ĐÃ KẾT NỐI</span> Hub <code>' . esc_html( $st['hub'] ) . '</code> tại ' . esc_html( $st['base_url'] ) . '</p>';
+		} else {
+			echo '<p><span class="ohcl-st bad">CHƯA KẾT NỐI</span> chưa cấp được khoá cho cơ sở.</p>';
+		}
+		echo '<ol class="ohcl-steps"><li>Nhờ Bizcity (hoặc tự vào <b>bizcity.vn › Open Hub Core › Sổ Hub</b>) bấm <b>Tạo mã ghép nối</b> cho Hub này.</li><li>Dán mã 8 ký tự vào ô dưới (mã sống 10 phút, dùng một lần).</li><li>Bấm <b>Kết nối</b>. Site tự nhận bí mật từ lõi và tự kiểm tra.</li></ol>'
+			. '<form method="post" action="' . $post . '">';
+		wp_nonce_field( 'ohcl_pair' );
+		echo '<input type="hidden" name="action" value="ohcl_pair">'
+			. '<p><label>Địa chỉ lõi<br><input name="base_url" type="url" class="regular-text" required value="' . esc_attr( $st['base_url'] ? $st['base_url'] : 'https://bizcity.vn' ) . '"></label></p>'
+			. '<p><label>Mã ghép nối<br><input name="code" class="ohcl-code" required maxlength="9" autocomplete="off" spellcheck="false" placeholder="ABCD-EFGH"' . disabled( $st['by_constant'], true, false ) . '></label></p>'
+			. '<p><button class="button button-primary"' . disabled( $st['by_constant'], true, false ) . '>' . ( $st['has_secret'] ? 'Kết nối lại' : 'Kết nối' ) . '</button></p></form>';
+		if ( $st['by_constant'] ) {
+			echo '<p class="mute">Bí mật đang khoá bằng OHCL_CORE_SECRET trong wp-config.php. Xoá dòng đó để kết nối bằng mã.</p>';
+		}
+		echo '<form method="post" action="' . $post . '">';
+		wp_nonce_field( 'ohcl_ping' );
+		echo '<input type="hidden" name="action" value="ohcl_ping"><button class="button">Kiểm tra kết nối</button></form>';
+
+		echo '<details class="ohcl-adv"><summary>Nâng cao: nhập tay</summary><form method="post" action="' . $post . '">';
 		wp_nonce_field( 'ohcl_settings' );
 		echo '<input type="hidden" name="action" value="ohcl_settings"><input type="hidden" name="part" value="core">'
-			. '<p><label>Địa chỉ lõi (https)<br><input name="base_url" type="url" class="regular-text" placeholder="https://bizcity.vn" value="' . esc_attr( isset( $o['base_url'] ) ? $o['base_url'] : '' ) . '"></label></p>'
-			. '<p><label>Mã Hub ở lõi<br><input name="hub" class="regular-text" pattern="[a-z0-9-]{2,20}" placeholder="' . esc_attr( OHCL_Industry::current()['id'] ) . '" value="' . esc_attr( isset( $o['hub'] ) ? $o['hub'] : '' ) . '"></label><br><span class="mute">Để trống: dùng mã của plugin ngành.</span></p>'
-			. '<p><label>Bí mật Hub<br><input name="secret" type="password" class="regular-text" autocomplete="off"' . disabled( $by_const, true, false ) . ' placeholder="' . esc_attr( $has ? 'đã đặt — nhập để thay' : 'ohs_…' ) . '"></label><br><span class="mute">'
-			. ( $by_const ? 'Đang đặt bằng OHCL_CORE_SECRET trong wp-config.php.' : 'Nên đặt bằng hằng OHCL_CORE_SECRET trong wp-config.php. Không bao giờ hiện lại.' ) . '</span></p>'
-			. '<p><button class="button button-primary">Lưu kết nối</button></p></form>';
-		echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
-		wp_nonce_field( 'ohcl_ping' );
-		echo '<input type="hidden" name="action" value="ohcl_ping"><button class="button">Kiểm tra kết nối</button></form></div>';
+			. '<p><label>Địa chỉ lõi (https)<br><input name="base_url" type="url" class="regular-text" placeholder="https://bizcity.vn" value="' . esc_attr( $st['base_url'] ) . '"></label></p>'
+			. '<p><label>Mã Hub ở lõi<br><input name="hub" class="regular-text" pattern="[a-z0-9-]{2,20}" placeholder="' . esc_attr( OHCL_Industry::current()['id'] ) . '" value="' . esc_attr( $st['hub'] ) . '"></label></p>'
+			. '<p><label>Bí mật Hub<br><input name="secret" type="password" class="regular-text" autocomplete="off"' . disabled( $st['by_constant'], true, false ) . ' placeholder="' . esc_attr( $st['has_secret'] ? 'đã đặt — nhập để thay' : 'ohs_…' ) . '"></label></p>'
+			. '<p><button class="button">Lưu</button> <span class="mute">Không bao giờ hiện lại bí mật.</span></p></form></details></div>';
 		echo '</div></div>';
 	}
 
@@ -329,6 +344,28 @@ final class OHCL_Admin {
 		check_admin_referer( 'ohcl_ping' );
 		$r = OHCL_Core_Client::ping();
 		self::flash_set( array( 'ok' => $r['ok'] ? 'Kết nối lõi đạt.' : '', 'steps' => $r['steps'] ) );
+		wp_safe_redirect( self::url( 'open-hub-settings' ) );
+		exit;
+	}
+
+	public static function handle_pair() {
+		// [2026-11-25 06:17 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR — dán mã ⇒ lõi trả bí mật ⇒ lưu ⇒ tự kiểm 4 bước.
+		self::guard();
+		check_admin_referer( 'ohcl_pair' );
+		$base = isset( $_POST['base_url'] ) ? esc_url_raw( wp_unslash( $_POST['base_url'] ) ) : '';
+		$code = isset( $_POST['code'] ) ? sanitize_text_field( wp_unslash( $_POST['code'] ) ) : '';
+		$res  = OHCL_Core_Client::pair( $base, $code );
+		if ( is_wp_error( $res ) ) {
+			self::flash_set( self::error_flash( $res ) );
+		} else {
+			OHCL_Overview::flush();
+			$ping = OHCL_Core_Client::ping();
+			$msg  = 'Đã kết nối Hub ' . $res['hub']['name'] . ' (' . $res['hub']['slug'] . ').';
+			if ( $res['mismatch'] ) {
+				$msg .= ' Lưu ý: mã Hub ở lõi khác mã của plugin ngành (' . OHCL_Industry::current()['id'] . '); site dùng mã ở lõi.';
+			}
+			self::flash_set( array( 'ok' => $msg, 'steps' => $ping['steps'] ) );
+		}
 		wp_safe_redirect( self::url( 'open-hub-settings' ) );
 		exit;
 	}

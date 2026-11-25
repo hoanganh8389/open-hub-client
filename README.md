@@ -24,13 +24,15 @@ Tổng quan Hub · Quản lý hội viên (Member 360°) · Công nghệ & gói 
 3. Không: khoá, tiền, bảng mới, gọi `open-hub-core` / Cell / Zalo / LLM, sửa repo này cho riêng một ngành (R-HUB-14, R-HUB-15).
 4. Kiểm: `wp ohcl validate-industry` phải PASS; đủ bộ shots R-HUB-11 / R-HUB-12.
 
-Chủ Hub nối lõi: đặt `define( 'OHCL_CORE_SECRET', 'ohs_…' );` trong `wp-config.php`, option `ohcl_core` = `{ "base_url": "https://bizcity.vn" }`, rồi chạy `wp ohcl core-ping` (bốn bước: cấu hình · liên lạc · Hub có trong sổ · bí mật được nhận).
+<!-- [2026-11-25 06:23 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR -->
+Chủ Hub nối lõi **trên giao diện**: nhận mã ghép nối từ bizcity.vn › Sổ Hub → **Hub › 14 · Cài đặt › Kết nối lõi Bizcity** → dán mã → **Kết nối**. Site tự nhận bí mật từ lõi (máy chủ → máy chủ) và tự kiểm bốn bước: cấu hình · liên lạc · Hub có trong sổ · bí mật được nhận. Nhập tay hoặc hằng `OHCL_CORE_SECRET` chỉ còn ở mục Nâng cao.
 
 ## Test
 
 ```bash
 php tests/run.php          # dịch vụ, hợp đồng, ranh giới
 php tests/admin-smoke.php  # ba màn quản trị với WordPress giả
+php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → mã ghép nối → kết nối → cấp khoá
 ```
 
 ## Tài liệu và mockup

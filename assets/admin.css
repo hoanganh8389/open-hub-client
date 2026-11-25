@@ -26,3 +26,7 @@
 .ohcl-confirm{border-color:var(--bad)}.ohcl .ohcl-danger{background:var(--bad);border-color:var(--bad)}
 .ohcl .req{color:var(--bad)}
 @media (max-width:960px){.ohcl-split,.ohcl-g3{grid-template-columns:1fr}.ohcl-funnel>div{grid-template-columns:1fr 60px}.ohcl-funnel i{grid-column:1/-1;order:3}}
+/* [2026-11-25 06:17 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR — ô mã ghép nối, các bước, mục nâng cao. */
+.ohcl-steps{margin:8px 0 12px 18px;font-size:13px}.ohcl-steps li{margin:4px 0}
+.ohcl .ohcl-code{font:700 20px var(--m);letter-spacing:.14em;text-transform:uppercase;width:13ch}
+.ohcl-adv{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}.ohcl-adv summary{cursor:pointer;color:var(--mute);font-size:12px}

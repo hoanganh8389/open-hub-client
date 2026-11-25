@@ -86,7 +86,14 @@ check( 'Khoá thô hiện đúng một lần', false !== strpos( $k1, 'biz-' . s
 $s = page( 'page_settings' );
 check( 'Cài đặt: 14 module, 5 ô bắt buộc bị khoá, module 09 tắt theo ngành', 14 === substr_count( $s, 'name="mod[' ) && 5 === substr_count( $s, ' disabled>' ) && false !== strpos( $s, 'mặc định ngành' ) );
 check( 'Cài đặt: báo cáo ngành ĐẠT', false !== strpos( $s, 'ĐẠT</span> Sample Hub' ) );
+// [2026-11-25 06:17 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR — màn kết nối bằng mã ghép nối.
+check( 'Cài đặt: đã kết nối ⇒ hiện Hub + nút "Kết nối lại", ô mã ghép nối, nhập tay nằm trong Nâng cao', false !== strpos( $s, 'ĐÃ KẾT NỐI</span> Hub <code>sample</code>' ) && false !== strpos( $s, 'Kết nối lại' ) && false !== strpos( $s, 'name="code"' ) && false !== strpos( $s, '<details class="ohcl-adv">' ) );
 check( 'Không trang nào in bí mật Hub', false === strpos( $o . $k . $kc . $k1 . $s, $secret ) );
+
+OHCL_Core_Client::$config = array( 'base_url' => '', 'hub' => '', 'secret' => '' );
+$sn = page( 'page_settings' );
+check( 'Cài đặt: chưa kết nối ⇒ "CHƯA KẾT NỐI", 3 bước hướng dẫn, địa chỉ mặc định bizcity.vn', false !== strpos( $sn, 'CHƯA KẾT NỐI' ) && 3 === substr_count( $sn, '<li>' ) && false !== strpos( $sn, 'value="https://bizcity.vn"' ) );
+OHCL_Core_Client::$config = array( 'base_url' => 'https://bizcity.test', 'hub' => 'sample', 'secret' => $secret );
 
 OHCL_Core_Client::$transport = function () { return new WP_Error( 'x', 'down' ); };
 OHCL_Overview::flush();
