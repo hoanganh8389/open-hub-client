@@ -34,6 +34,9 @@ final class OHCL_Admin {
 		$name = $cfg['name'] ? $cfg['name'] : 'Hub';
 		add_menu_page( $name, $name, self::CAP, 'open-hub', array( __CLASS__, 'page_overview' ), 'dashicons-networking', 3 );
 		add_submenu_page( 'open-hub', 'Tổng quan', '01 · Tổng quan', self::CAP, 'open-hub', array( __CLASS__, 'page_overview' ) );
+		if ( class_exists( 'OHCL_Admin_Members' ) ) {
+			add_submenu_page( 'open-hub', 'Hội viên', '02 · Hội viên', self::CAP, 'open-hub-members', array( 'OHCL_Admin_Members', 'page' ) ); // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C
+		}
 		add_submenu_page( 'open-hub', 'Khoá dùng thử', '03 · Khoá dùng thử', self::CAP, 'open-hub-keys', array( __CLASS__, 'page_keys' ) );
 		add_submenu_page( 'open-hub', 'Cài đặt', '14 · Cài đặt', self::CAP, 'open-hub-settings', array( __CLASS__, 'page_settings' ) );
 	}
@@ -49,7 +52,7 @@ final class OHCL_Admin {
 
 	/* ---------- helpers ---------- */
 
-	private static function url( $page, array $args = array() ) {
+	public static function url( $page, array $args = array() ) {
 		return add_query_arg( array_merge( array( 'page' => $page ), $args ), admin_url( 'admin.php' ) );
 	}
 
@@ -57,11 +60,11 @@ final class OHCL_Admin {
 		return 'ohcl_flash_' . get_current_user_id();
 	}
 
-	private static function flash_set( array $f ) {
+	public static function flash_set( array $f ) {
 		set_transient( self::flash_key(), $f, 2 * MINUTE_IN_SECONDS );
 	}
 
-	private static function error_flash( WP_Error $e ) {
+	public static function error_flash( WP_Error $e ) {
 		$d = (array) $e->get_error_data();
 		return array(
 			'error' => array(
@@ -73,7 +76,7 @@ final class OHCL_Admin {
 		);
 	}
 
-	private static function flash() {
+	public static function flash() {
 		$f = get_transient( self::flash_key() );
 		if ( ! is_array( $f ) ) {
 			return;
@@ -97,25 +100,25 @@ final class OHCL_Admin {
 		}
 	}
 
-	private static function error_box( array $e ) {
+	public static function error_box( array $e ) {
 		echo '<div class="ohcl-note bad"><b>' . esc_html( $e['message'] ) . '</b> ' . esc_html( $e['hint'] )
 			. ' <code>' . esc_html( $e['code'] ) . '</code>'
 			. ( ! empty( $e['help_code'] ) && $e['help_code'] !== $e['code'] ? ' <code>' . esc_html( $e['help_code'] ) . '</code>' : '' ) . '</div>';
 	}
 
-	private static function head( $kick, $title, $right = '' ) {
+	public static function head( $kick, $title, $right = '' ) {
 		echo '<div class="wrap ohcl"><div class="ohcl-top"><div><p class="ohcl-kick">' . esc_html( $kick ) . '</p><h1>' . esc_html( $title ) . '</h1></div>'
 			. '<div class="mute">' . $right . '</div></div>'; // phpcs:ignore WordPress.Security.EscapeOutput -- $right đã escape ở nơi gọi.
 		self::flash();
 	}
 
-	private static function guard() {
+	public static function guard() {
 		if ( ! current_user_can( self::CAP ) ) {
 			wp_die( esc_html__( 'Bạn không có quyền quản trị Hub.', 'open-hub-client' ), 403 );
 		}
 	}
 
-	private static function kpi( $label, $value, $note = '' ) {
+	public static function kpi( $label, $value, $note = '' ) {
 		return '<div class="ohcl-card ohcl-kpi"><span>' . esc_html( $label ) . '</span><b>' . esc_html( $value ) . '</b>' . ( $note ? '<small>' . esc_html( $note ) . '</small>' : '' ) . '</div>';
 	}
 
@@ -131,7 +134,19 @@ final class OHCL_Admin {
 		$s    = OHCL_Overview::from_keys( $ok ? $keys['items'] : array(), gmdate( 'Y-m-d H:i:s' ) );
 
 		echo '<div class="ohcl-q"><i>1</i><h2>Cộng đồng của tôi đang phát triển thế nào?</h2></div>';
-		echo '<div class="ohcl-g3">' . self::kpi( 'Tổng hội viên', '—', 'có ở bản Member 360° (Đ1c)' ) . self::kpi( 'Hội viên hoạt động', '—', 'chưa có nguồn đếm' ) . self::kpi( 'Đã xác minh', '—', 'chưa có nguồn đếm' ) . '</div>'; // phpcs:ignore
+		// [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — câu 1 đếm từ hồ sơ hội viên thật + khoá ở lõi.
+		$mc = OHCL_Members::counts( OHCL_Members::all(), $ok ? array_column( $keys['items'], null, 'id' ) : array(), time() );
+		echo '<div class="ohcl-g3">' . self::kpi( 'Tổng hội viên', number_format_i18n( $mc['total'] ), 'hồ sơ ở 02 · Hội viên' ) . self::kpi( 'Hội viên hoạt động', number_format_i18n( $mc['active'] ), $mc['total'] ? round( 100 * $mc['active'] / $mc['total'] ) . '% tổng' : '' ) . self::kpi( 'Đã xác minh', number_format_i18n( $mc['verified'] ), 'module 06 mở ở Đ2' ) . '</div>'; // phpcs:ignore
+		if ( $mc['total'] ) {
+			echo '<div class="ohcl-card ohcl-funnel"><h3>Theo phân khúc</h3>';
+			$cfg_s = OHCL_Industry::current()['segments'];
+			foreach ( array_slice( $mc['by_segment'], 0, 8, true ) as $sg => $n ) {
+				echo '<div><span>' . esc_html( isset( $cfg_s[ $sg ] ) ? $cfg_s[ $sg ] : $sg ) . '</span><i><em style="width:' . (int) round( 100 * $n / $mc['total'] ) . '%"></em></i><b>' . (int) $n . '</b></div>';
+			}
+			echo '</div>';
+		} else {
+			echo '<p class="mute">Chưa có hồ sơ nào. <a href="' . esc_url( self::url( 'open-hub-members', array( 'view' => 'new' ) ) ) . '">Thêm hội viên đầu tiên</a>.</p>';
+		}
 
 		echo '<div class="ohcl-q"><i>2</i><h2>Bao nhiêu hội viên thực sự dùng công nghệ?</h2></div>';
 		if ( ! $ok ) {

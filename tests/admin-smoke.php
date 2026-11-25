@@ -45,9 +45,25 @@ function get_current_user_id() { return 1; }
 function sanitize_text_field( $s ) { return trim( strip_tags( (string) $s ) ); }
 function wp_unslash( $s ) { return $s; }
 function wp_die( $m ) { throw new RuntimeException( 'wp_die: ' . $m ); }
+// [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — bài viết / meta giả cho Member 360°; chuyển trang ném ngoại lệ để test tiếp tục.
+class Redirected extends RuntimeException {}
+$GLOBALS['posts'] = array(); $GLOBALS['meta'] = array();
+function selected( $a, $b, $e ) { return (string) $a === (string) $b ? ' selected' : ''; }
+function sanitize_key( $s ) { return strtolower( preg_replace( '/[^a-z0-9_\-]/i', '', (string) $s ) ); }
+function number_format_i18n( $n ) { return number_format( (float) $n, 0, ',', '.' ); }
+function wp_kses_post( $s ) { return $s; }
+function check_admin_referer( $a ) { return true; }
+function wp_safe_redirect( $u ) { throw new Redirected( $u ); }
+function wp_insert_post( array $a ) { $id = count( $GLOBALS['posts'] ) + 101; $GLOBALS['posts'][ $id ] = (object) array( 'ID' => $id, 'post_type' => $a['post_type'], 'post_title' => $a['post_title'] ); return $id; }
+function wp_update_post( array $a ) { $GLOBALS['posts'][ $a['ID'] ]->post_title = $a['post_title']; return $a['ID']; }
+function get_post( $id ) { return isset( $GLOBALS['posts'][ $id ] ) ? $GLOBALS['posts'][ $id ] : null; }
+function get_posts( array $a ) { return array_reverse( array_values( array_filter( $GLOBALS['posts'], function ( $p ) use ( $a ) { return $p->post_type === $a['post_type']; } ) ) ); }
+function get_post_meta( $id, $k, $single ) { return isset( $GLOBALS['meta'][ $id ][ $k ] ) ? $GLOBALS['meta'][ $id ][ $k ] : ''; }
+function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; return true; }
+function handle( $class, $fn, array $post ) { $_POST = $post; try { call_user_func( array( $class, $fn ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-admin' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-admin', 'class-ohcl-admin-members' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -66,7 +82,7 @@ OHCL_Core_Client::$transport = function ( $m, $u ) {
 };
 
 $o = page( 'page_overview' );
-check( 'Tổng quan: hiện 5 câu hỏi, câu 1 là "—" (chưa có nguồn)', 5 === substr_count( $o, 'class="ohcl-q"' ) && false !== strpos( $o, 'Đ1c' ) );
+check( 'Tổng quan: hiện 5 câu hỏi; câu 1 đếm từ hồ sơ thật (0 hồ sơ ⇒ số 0 + lời mời thêm, không phải số bịa)', 5 === substr_count( $o, 'class="ohcl-q"' ) && false !== strpos( $o, '<span>Tổng hội viên</span><b>0</b>' ) && false !== strpos( $o, 'Thêm hội viên đầu tiên' ) );
 check( 'Tổng quan: phễu từ khoá thật + việc "sắp hết hạn", "chưa dùng"', false !== strpos( $o, 'Đã nhận khoá' ) && false !== strpos( $o, 'sắp hết hạn trong 7 ngày' ) && false !== strpos( $o, 'chưa dùng trợ lý' ) );
 
 $GLOBALS['tr'] = array();
@@ -105,6 +121,63 @@ OHCL_Core_Client::$transport = function () { return new WP_Error( 'x', 'down' );
 OHCL_Overview::flush();
 $od = page( 'page_overview' );
 check( 'Lõi vắng: hiện lỗi bốn trường, việc cần làm báo kết nối, không có số bịa', false !== strpos( $od, 'ohcl_core_unreachable' ) && false !== strpos( $od, 'Kết nối lõi Bizcity chưa đạt' ) && false === strpos( $od, 'Đã nhận khoá' ) );
+
+/* ---- Member 360° (OHCL-D1C) ---- */
+// [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — thêm hồ sơ → tiếp nhận → cấp khoá từ hồ sơ → danh sách + Tổng quan câu 1.
+function mpage( array $get ) { $_GET = $get; ob_start(); OHCL_Admin_Members::page(); return ob_get_clean(); }
+$issued = array();
+OHCL_Core_Client::$transport = function ( $m, $u, $h, $b ) use ( &$issued ) {
+	if ( 'POST' === $m && false !== strpos( $u, '/hub/keys' ) ) {
+		$issued[] = json_decode( $b, true );
+		return array( 'status' => 201, 'body' => json_encode( array( 'success' => true, 'id' => 7, 'key' => 'biz-' . str_repeat( 'f', 32 ), 'key_prefix' => 'biz-…ffff', 'plan_code' => 'trial', 'plan_until' => gmdate( 'Y-m-d H:i:s', time() + 30 * 86400 ) ) ) );
+	}
+	$items = $issued ? array( array( 'id' => 7, 'key_prefix' => 'biz-…ffff', 'label' => 'x', 'site_url' => '', 'plan_code' => 'trial', 'plan_until' => gmdate( 'Y-m-d H:i:s', time() + 30 * 86400 ), 'status' => 'trial', 'coach_ref' => '', 'last_used_at' => gmdate( 'Y-m-d H:i:s', time() - 3600 ), 'created_at' => gmdate( 'Y-m-d H:i:s' ) ) ) : array();
+	return array( 'status' => 200, 'body' => json_encode( array( 'items' => $items, 'page' => 1 ) ) );
+};
+OHCL_Overview::flush();
+$GLOBALS['tr'] = array();
+
+$l0 = mpage( array() );
+check( 'Hội viên: trống ⇒ lời mời thêm hồ sơ, thuật ngữ ngành', false !== strpos( $l0, 'Chưa có hội viên nào' ) && false !== strpos( $l0, '+ Thêm hội viên' ) );
+$f0 = mpage( array( 'view' => 'new' ) );
+check( 'Thêm: form có trường lõi + trường ngành (multi, number)', false !== strpos( $f0, 'name="title"' ) && false !== strpos( $f0, 'name="f_nhom_hang[]"' ) && false !== strpos( $f0, 'name="f_nam_thanh_lap"' ) && false !== strpos( $f0, 'value="cua-hang"' ) );
+
+$r = handle( 'OHCL_Admin_Members', 'handle_save', array( 'id' => 0, 'title' => '' ) );
+check( 'Lưu: thiếu tên ⇒ lỗi bốn trường, quay lại form', false !== strpos( $r, 'view=new' ) && 'ohcl_member_title_required' === get_transient( 'ohcl_flash_1' )['error']['code'] );
+delete_transient( 'ohcl_flash_1' );
+$r = handle( 'OHCL_Admin_Members', 'handle_save', array( 'id' => 0, 'title' => '<b>Cửa hàng Bình An</b>', 'segment' => 'cua-hang', 'province' => 'Hà Nội', 'email' => 'a@b.vn', 'f_nhom_hang' => array( 'gia-dung', 'hack' ), 'f_nam_thanh_lap' => '2015' ) );
+$mid = (int) preg_replace( '/.*id=(\d+).*/', '$1', $r );
+$mem = OHCL_Members::get( $mid );
+check( 'Lưu: tạo hồ sơ, bỏ thẻ HTML, lọc lựa chọn lạ, trường ngành ở meta _bzi_*', $mid > 0 && 'Cửa hàng Bình An' === $mem['title'] && array( 'gia-dung' ) === $GLOBALS['meta'][ $mid ]['_bzi_nhom_hang'] && 2015 === $GLOBALS['meta'][ $mid ]['_bzi_nam_thanh_lap'] && 'active' === $mem['status'] );
+check( 'Hồ sơ mới: hành trình bậc 1 "Mới đăng ký"', 1 === OHCL_Members::journey( $mem, null, time() ) );
+
+handle( 'OHCL_Admin_Members', 'handle_accept', array( 'id' => $mid ) );
+check( 'Tiếp nhận ⇒ bậc 2', 2 === OHCL_Members::journey( OHCL_Members::get( $mid ), null, time() ) );
+delete_transient( 'ohcl_flash_1' );
+
+handle( 'OHCL_Admin_Members', 'handle_key', array( 'id' => $mid ) );
+$fl = get_transient( 'ohcl_flash_1' );
+check( 'Cấp khoá từ hồ sơ: gửi tên + gắn key_id / prefix, không lưu khoá thô', 1 === count( $issued ) && 'Cửa hàng Bình An' === $issued[0]['label'] && 7 === $GLOBALS['meta'][ $mid ]['_bzm_key_id'] && 'biz-…ffff' === $GLOBALS['meta'][ $mid ]['_bzm_key_prefix'] && false === strpos( json_encode( $GLOBALS['meta'] ), 'biz-' . str_repeat( 'f', 32 ) ) && ! empty( $fl['key'] ) );
+$one = mpage( array( 'id' => $mid ) );
+$one2 = mpage( array( 'id' => $mid ) );
+check( 'Member 360°: khoá thô hiện một lần, AI "Dùng thử", hành trình "Đang vận hành", tab ngành', false !== strpos( $one, 'biz-' . str_repeat( 'f', 32 ) ) && false === strpos( $one2, 'biz-' . str_repeat( 'f', 32 ) ) && false !== strpos( $one2, 'Dùng thử · còn' ) && false !== strpos( $one2, 'Đang vận hành (4/8)' ) && false !== strpos( $one2, '>Nhóm hàng</a>' ) );
+check( 'Member 360°: khoá đang chạy ⇒ không còn nút cấp khoá', false === strpos( $one2, 'Cấp khoá dùng thử</button>' ) );
+handle( 'OHCL_Admin_Members', 'handle_key', array( 'id' => $mid ) );
+check( 'Cấp lần hai khi khoá đang chạy ⇒ 409, không gọi lõi', 1 === count( $issued ) && 'ohcl_member_has_key' === get_transient( 'ohcl_flash_1' )['error']['code'] );
+delete_transient( 'ohcl_flash_1' );
+
+$tabp = mpage( array( 'id' => $mid, 'tab' => 'nhom-hang' ) );
+check( 'Tab ngành (ô mở rộng) hiện nội dung của plugin ngành', false !== strpos( $tabp, 'Nhóm hàng của cửa hàng hiển thị ở đây' ) );
+
+handle( 'OHCL_Admin_Members', 'handle_status', array( 'id' => $mid, 'status' => 'xoá-hết' ) );
+check( 'Trạng thái lạ ⇒ lỗi, giữ nguyên', 'active' === OHCL_Members::get( $mid )['status'] );
+delete_transient( 'ohcl_flash_1' );
+
+$l1 = mpage( array( 'stage' => 4 ) );
+$l2 = mpage( array( 'stage' => 1 ) );
+check( 'Danh sách: lọc chặng 4 có hồ sơ, chặng 1 rỗng', false !== strpos( $l1, 'Cửa hàng Bình An' ) && false === strpos( $l2, 'Cửa hàng Bình An' ) );
+$ov = page( 'page_overview' );
+check( 'Tổng quan câu 1: 1 hội viên, 1 hoạt động, theo phân khúc "Cửa hàng"', false !== strpos( $ov, '<span>Tổng hội viên</span><b>1</b>' ) && false !== strpos( $ov, '<span>Cửa hàng</span>' ) );
 
 echo "\n$pass pass, $fail fail\n";
 exit( $fail ? 1 : 0 );

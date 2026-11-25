@@ -46,7 +46,7 @@ php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → 
 |---|---|---|
 | **Đ1a** | hợp đồng ngành `bizcity_industry_hub@2` + bộ kiểm · registry 14 module bật / tắt · ô mở rộng + sự kiện · `OHCL_Core_Client` (một cửa gọi lõi) · CLI `wp ohcl` · ngành mẫu `examples/wp-sample-hub` | **xong mã + test (43/43)**, chưa chạy trên site thật |
 | **Đ1b** | màn quản trị (mockup O0, O1): **Tổng quan** câu 2 + 5 từ khoá thật ở lõi · **Khoá dùng thử** cấp (hiện một lần) / danh sách / thu hồi hai bước · **Cài đặt** module, kết nối lõi + kiểm tra, báo cáo dữ liệu ngành | **xong mã + test** (49/49 + chạy thử màn 10/10), chưa chạy trên site thật |
-| Đ1c | Member 360° (CPT `bz_hub_member`, trường ngành `_bzi_*`) · Tổng quan câu 1 | chưa |
+| **Đ1c** | Member 360° (CPT `bz_hub_member`, trường ngành `_bzi_*`, tiếp nhận, cấp khoá từ hồ sơ) · Tổng quan câu 1 | **xong mã + test** (admin-smoke 30/30) · kết nối lõi đã chạy thật trên veganhub.net ↔ bizcity.vn (4/4) |
 | Đ2 | Tài nguyên & quyền lợi (GitHub) · My Hub · Xác minh & chứng nhận + tra cứu QR | chưa |
 | Đ3 | Coach + affiliate + My Coach · Marketing (JSONL + rollup) · Doanh thu (core + Woo) · tài sản cộng đồng | chưa |
 
