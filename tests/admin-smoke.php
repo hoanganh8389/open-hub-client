@@ -182,6 +182,10 @@ check( 'Danh sách: lọc chặng 4 có hồ sơ, chặng 1 rỗng', false !== s
 $ov = page( 'page_overview' );
 check( 'Tổng quan câu 1: 1 hội viên, 1 hoạt động, theo phân khúc "Cửa hàng"', false !== strpos( $ov, '<span>Tổng hội viên</span><b>1</b>' ) && false !== strpos( $ov, '<span>Cửa hàng</span>' ) );
 
+// [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — Tổng quan: mới / rời theo tháng và việc cần làm từ hồ sơ.
+check( 'Tổng quan câu 1: có khối "Mới và rời theo tháng" (6 dòng tháng)', false !== strpos( $ov, 'Mới và rời theo tháng' ) && 6 === preg_match_all( '#<span>20[0-9]{2}-[0-9]{2}</span>#', $ov ) );
+check( 'Tổng quan câu 5: việc từ hồ sơ có liên kết lọc theo chặng (đang dùng, chờ xác minh ⇒ stage=4)', false !== strpos( $ov, 'chờ xác minh để lên bản đồ' ) && false !== strpos( $ov, 'stage=4' ) );
+
 /* ---- 06 · Chứng nhận (OHCL-D2A) ---- */
 // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — Member 360° → xác minh → cấp chứng nhận (đủ tiêu chí) → màn 06 → giấy in có QR → thu hồi hai bước.
 if ( ! function_exists( 'get_userdata' ) ) { function get_userdata( $id ) { return (object) array( 'display_name' => 'Leader ' . $id ); } }

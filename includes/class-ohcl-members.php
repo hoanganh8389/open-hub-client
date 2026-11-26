@@ -337,6 +337,8 @@ final class OHCL_Members {
 			'certs'       => get_post_meta( $id, '_bzm_certs', true ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			'industry'    => array(),
 			'demo'        => '1' === (string) get_post_meta( $id, '_bzm_demo', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
+			'left_at'     => (string) get_post_meta( $id, '_bzm_left_at', true ), // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — ngày rời (đếm "rời theo tháng")
+			'support_at'  => self::last_support_at( $id ),
 			'ref_coach'   => (int) get_post_meta( $id, '_bzm_ref_coach', true ), // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — Coach đã giới thiệu (người đầu tiên, giữ 12 tháng)
 			'ref_at'      => (string) get_post_meta( $id, '_bzm_ref_at', true ),
 			'shop_consent' => (string) get_post_meta( $id, '_bzm_shop_consent', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — ngày đồng ý hiện sản phẩm
@@ -349,6 +351,41 @@ final class OHCL_Members {
 			$m['industry'][ $f['key'] ] = get_post_meta( $id, $f['meta'], true );
 		}
 		return $m;
+	}
+
+	/** Time of the newest support request of a member ('Y-m-d H:i:s') or ''. */
+	private static function last_support_at( $id ) {
+		$l = get_post_meta( $id, '_bzm_support', true );
+		return is_array( $l ) && $l ? (string) end( $l )['at'] : '';
+	}
+
+	/**
+	 * New / left members per month for the last $months months (oldest first). Pure.
+	 * "New" = joined_at, "left" = left_at (set when the Hub Owner marks a member as left).
+	 *
+	 * @param array[] $members to_array() rows.
+	 * @return array[] { month:'Y-m', new:int, left:int }
+	 */
+	public static function growth( array $members, $now_ts, $months = 6 ) {
+		// [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — câu hỏi 1 của Tổng quan: mới / rời theo tháng, tính từ ngày thật.
+		$rows = array();
+		for ( $i = $months - 1; $i >= 0; $i-- ) {
+			$rows[ gmdate( 'Y-m', strtotime( '-' . $i . ' months', strtotime( gmdate( 'Y-m-01', $now_ts ) . ' UTC' ) ) ) ] = array( 'month' => '', 'new' => 0, 'left' => 0 );
+		}
+		foreach ( $rows as $k => $_ ) {
+			$rows[ $k ]['month'] = $k;
+		}
+		foreach ( $members as $m ) {
+			$j = ! empty( $m['joined_at'] ) ? substr( $m['joined_at'], 0, 7 ) : '';
+			$l = ! empty( $m['left_at'] ) ? substr( $m['left_at'], 0, 7 ) : '';
+			if ( isset( $rows[ $j ] ) ) {
+				$rows[ $j ]['new']++;
+			}
+			if ( isset( $rows[ $l ] ) && 'left' === $m['status'] ) {
+				$rows[ $l ]['left']++;
+			}
+		}
+		return array_values( $rows );
 	}
 
 	/** All members (cap 1 000 for Đ1c), newest first; sample businesses only when asked (never in a count). @return array[] */
@@ -434,7 +471,13 @@ final class OHCL_Members {
 		if ( ! isset( self::STATUS[ $status ] ) ) {
 			return OHCL_Error::make( 'ohcl_member_status_invalid', 'Trạng thái hội viên không hợp lệ.', 'Chọn Đang hoạt động, Tạm dừng hoặc Đã rời.', 400 );
 		}
+		$was = (string) get_post_meta( (int) $id, '_bzm_status', true );
 		update_post_meta( (int) $id, '_bzm_status', $status );
+		if ( 'left' === $status && 'left' !== $was ) { // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — ghi ngày rời một lần; quay lại hoạt động thì xoá
+			update_post_meta( (int) $id, '_bzm_left_at', gmdate( 'Y-m-d H:i:s' ) );
+		} elseif ( 'left' !== $status ) {
+			update_post_meta( (int) $id, '_bzm_left_at', '' );
+		}
 		self::flush_public();
 		return true;
 	}

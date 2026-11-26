@@ -71,6 +71,7 @@ function wp_update_post( array $a ) { $GLOBALS['posts'][ $a['ID'] ]->post_title 
 function get_post_meta( $id, $k, $s = true ) { return isset( $GLOBALS['meta'][ $id ][ $k ] ) ? $GLOBALS['meta'][ $id ][ $k ] : ''; }
 function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; return true; }
 function get_userdata( $id ) { return false; }
+function get_users( array $a ) { return array(); }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
@@ -157,6 +158,15 @@ check( 'lọc theo từ khoá và trạng thái', 1 === count( body( OHCL_Rest::
 check( 'per_page bị kẹp ≤ 50', 50 === body( OHCL_Rest::owner_members( req( array( 'page' => 1, 'per_page' => 9999 ) ) ) )['per_page'] );
 $ov = body( OHCL_Rest::owner_overview() );
 check( 'GET /owner/overview: cộng đồng đếm thật, lõi ok, doanh thu null (chưa có nguồn, không ước số)', 2 === $ov['community']['total'] && true === $ov['core']['ok'] && null === $ov['revenue'] && isset( $ov['todo'] ) );
+
+// [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15
+check( 'GET /owner/overview: có mới / rời 6 tháng (tháng này có 2 hồ sơ mới) và việc cần làm từ hồ sơ (chờ tiếp nhận)', 6 === count( $ov['community']['growth'] ) && 2 === end( $ov['community']['growth'] )['new'] && (bool) array_filter( $ov['todo'], function ( $t ) { return 'Hồ sơ mới chờ ban điều hành tiếp nhận' === $t['label'] && array( 'stage' => 1 ) === $t['args']; } ) );
+OHCL_Rest::owner_status( req( array( 'id' => $m2 ), array( 'status' => 'left' ) ) );
+$l1 = get_post_meta( $m2, '_bzm_left_at', true );
+OHCL_Rest::owner_status( req( array( 'id' => $m2 ), array( 'status' => 'left' ) ) );
+check( 'đánh dấu "Đã rời" ghi ngày rời MỘT lần (gọi lại không đổi ngày); hiện ở rời của tháng này', '' !== $l1 && $l1 === get_post_meta( $m2, '_bzm_left_at', true ) && 1 === end( body( OHCL_Rest::owner_overview() )['community']['growth'] )['left'] );
+OHCL_Rest::owner_status( req( array( 'id' => $m2 ), array( 'status' => 'active' ) ) );
+check( 'quay lại hoạt động ⇒ xoá ngày rời, không còn đếm là rời', '' === get_post_meta( $m2, '_bzm_left_at', true ) && 0 === end( body( OHCL_Rest::owner_overview() )['community']['growth'] )['left'] );
 
 /* ---------- hội viên: chỉ thấy của mình ---------- */
 update_post_meta( $mid, '_bzm_status', 'active' );

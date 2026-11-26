@@ -29,7 +29,7 @@ function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['o
 function update_option( $k, $v, $autoload = null ) { $GLOBALS['opt_writes']++; $GLOBALS['opts'][ $k ] = $v; return true; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 
@@ -160,6 +160,37 @@ check( 'phễu: không khoá ⇒ 0%, không chia 0', 0 === OHCL_Overview::funnel
 $todo = OHCL_Overview::todo( $s, array( 'ok' => true, 'errors' => array(), 'warnings' => array() ), false );
 check( 'việc cần làm: lõi chưa kết nối đứng đầu, kèm hết hạn + chưa dùng', 'open-hub-settings' === $todo[0]['page'] && 3 === count( $todo ) );
 check( 'việc cần làm: không có gì ⇒ rỗng (không bịa việc)', array() === OHCL_Overview::todo( OHCL_Overview::from_keys( array(), $now ), array( 'ok' => true, 'errors' => array(), 'warnings' => array() ), true ) );
+
+/* ---- 4b. Việc cần làm từ hồ sơ hội viên + mới / rời theo tháng (OHCL-Q15) ---- */
+// [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15
+$T   = strtotime( $now . ' UTC' );
+$mk  = function ( array $o ) {
+	return array_merge( array( 'id' => 1, 'code' => 'HV-000001', 'title' => 'X', 'status' => 'active', 'key_id' => 0, 'accepted_at' => '', 'joined_at' => '2026-11-10 00:00:00', 'left_at' => '', 'verify' => '', 'coach' => '', 'support_at' => '', 'certs' => '' ), $o );
+};
+$live = array( 11 => array( 'id' => 11, 'status' => 'active', 'plan_code' => 'p', 'plan_until' => '2030-01-01 00:00:00', 'last_used_at' => '2026-11-24 00:00:00', 'created_at' => '2026-09-01 00:00:00' ) );
+$mem  = array(
+	$mk( array( 'id' => 1 ) ),                                                                                                   // chờ tiếp nhận
+	$mk( array( 'id' => 2 ) ),                                                                                                   // chờ tiếp nhận
+	$mk( array( 'id' => 3, 'accepted_at' => '2026-11-11 00:00:00' ) ),                                                           // đã tiếp nhận, chưa khoá
+	$mk( array( 'id' => 4, 'accepted_at' => '2026-11-11 00:00:00', 'key_id' => 11 ) ),                                           // đang dùng, chưa xác minh
+	$mk( array( 'id' => 5, 'accepted_at' => '2026-11-11 00:00:00', 'key_id' => 11, 'verify' => array( 'until' => '2026-12-10 00:00:00' ), 'coach' => 'c1', 'support_at' => '2026-11-23 10:00:00' ) ), // xác minh sắp hết, có hỗ trợ mới
+	$mk( array( 'id' => 6, 'status' => 'left' ) ),                                                                                // đã rời: không tính
+	$mk( array( 'id' => 7, 'status' => 'paused' ) ),                                                                              // tạm dừng: không tính
+);
+$td  = OHCL_Overview::member_todo( $mem, $live, $T, true );
+$by  = array();
+foreach ( $td as $t ) { $by[ $t['label'] ] = $t; }
+check( 'việc từ hồ sơ: 2 hồ sơ chờ tiếp nhận (không tính đã rời / tạm dừng), liên kết lọc bậc 1', 2 === $by['Hồ sơ mới chờ ban điều hành tiếp nhận']['n'] && array( 'stage' => 1 ) === $by['Hồ sơ mới chờ ban điều hành tiếp nhận']['args'] && 'open-hub-members' === $by['Hồ sơ mới chờ ban điều hành tiếp nhận']['page'] );
+check( 'việc từ hồ sơ: 1 đã tiếp nhận chưa khoá (bậc 2); 1 đang dùng chờ xác minh (bậc 4)', 1 === $by['Đã tiếp nhận, chờ cấp khoá trợ lý AI']['n'] && 1 === $by['Đang dùng trợ lý, chờ xác minh để lên bản đồ']['n'] && array( 'stage' => 4 ) === $by['Đang dùng trợ lý, chờ xác minh để lên bản đồ']['args'] );
+check( 'việc từ hồ sơ: xác minh sắp hết trong 30 ngày = 1; hỗ trợ mới trong 7 ngày = 1 và đứng ĐẦU danh sách', 1 === $by['Xác minh sắp hết hạn trong 30 ngày']['n'] && 1 === $by['Yêu cầu hỗ trợ mới của hội viên trong 7 ngày']['n'] && 'Yêu cầu hỗ trợ mới của hội viên trong 7 ngày' === $td[0]['label'] );
+check( 'việc từ hồ sơ: "chưa có Coach" chỉ khi module Coach bật và có Coach; đếm hội viên đã tiếp nhận chưa gắn Coach (3, 4)', 2 === $by['Hội viên chưa có Coach phụ trách']['n'] && ! array_filter( OHCL_Overview::member_todo( $mem, $live, $T, false ), function ( $t ) { return 'Hội viên chưa có Coach phụ trách' === $t['label']; } ) );
+check( 'lõi không đọc được (không có khoá) ⇒ KHÔNG bịa việc "chờ xác minh"; việc chờ tiếp nhận vẫn đúng', ! array_filter( OHCL_Overview::member_todo( $mem, array(), $T, false ), function ( $t ) { return 0 === strpos( $t['label'], 'Đang dùng trợ lý' ); } ) && 2 === OHCL_Overview::member_todo( $mem, array(), $T, false )[1]['n'] );
+check( 'không hồ sơ nào cần làm ⇒ rỗng (không bịa việc)', array() === OHCL_Overview::member_todo( array(), array(), $T, true ) );
+$gr = OHCL_Members::growth( array( $mk( array( 'joined_at' => '2026-11-03 00:00:00' ) ), $mk( array( 'joined_at' => '2026-11-20 00:00:00' ) ), $mk( array( 'joined_at' => '2026-09-15 00:00:00', 'status' => 'left', 'left_at' => '2026-10-02 00:00:00' ) ), $mk( array( 'joined_at' => '2025-01-01 00:00:00' ) ), $mk( array( 'joined_at' => '2026-10-05 00:00:00', 'status' => 'active', 'left_at' => '2026-10-09 00:00:00' ) ) ), $T, 6 );
+$mo = array();
+foreach ( $gr as $g ) { $mo[ $g['month'] ] = $g; }
+check( 'mới / rời theo tháng: 6 tháng liên tục, tháng 11 có 2 mới, tháng 9 có 1 mới, tháng 10 có 1 mới + 1 rời', 6 === count( $gr ) && '2026-06' === $gr[0]['month'] && '2026-11' === $gr[5]['month'] && 2 === $mo['2026-11']['new'] && 1 === $mo['2026-09']['new'] && 1 === $mo['2026-10']['new'] && 1 === $mo['2026-10']['left'] );
+check( 'mới / rời: hồ sơ ngoài 6 tháng không đếm; người có left_at nhưng đã quay lại hoạt động không đếm là rời', 0 === array_sum( array_column( $gr, 'new' ) ) - 4 && 1 === array_sum( array_column( $gr, 'left' ) ) );
 
 /* ---- 5. Ranh giới mã (R-HUB-14, R-HUB-15) ---- */
 $src = '';

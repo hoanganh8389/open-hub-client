@@ -1,5 +1,12 @@
 # Lịch sử phát hành
 
+## 0.11.1 — 2026-11-26 (Tổng quan: câu 1 và câu 5 đủ việc từ hồ sơ hội viên)
+
+- **Câu 5 "Tôi cần làm gì tiếp theo?"** nay có việc từ hồ sơ, không chỉ từ khoá: yêu cầu hỗ trợ mới (7 ngày), hồ sơ chờ tiếp nhận, đã tiếp nhận chờ cấp khoá, đang dùng trợ lý chờ xác minh, xác minh sắp hết hạn (30 ngày), hội viên chưa có Coach (khi module Coach bật và đã có Coach). Mỗi việc là liên kết lọc danh sách hội viên theo chặng; chỉ hiện khi có số > 0; lõi không đọc được ⇒ không bịa việc "chờ xác minh".
+- **Câu 1 "Cộng đồng phát triển thế nào?"** thêm **mới / rời theo 6 tháng** (ngày tạo hồ sơ; ngày rời ghi một lần khi chuyển "Đã rời", xoá khi quay lại; hồ sơ cũ chưa có ngày rời không được đếm).
+- API `GET /owner/overview` trả thêm `community.growth` và các việc từ hồ sơ (có `args` để lọc `/owner/members`).
+- run 57/57, admin-smoke 48/48, rest-smoke 48/48.
+
 ## 0.11.0 — 2026-11-26 (REST API cho trục Hub Owner ↔ hội viên)
 
 - **REST `open-hub-client/v1`** (17 route): Hub Owner (`/owner/overview`, `/owner/members…`, tiếp nhận, trạng thái, cấp / thu hồi khoá, xác minh), hội viên (`/me`, `/me/profile`, `/me/support`), công khai (`/meta`, `/places`, `/places/{id}`). Cookie + nonce hoặc Application Password.

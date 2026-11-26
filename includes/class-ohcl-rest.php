@@ -141,7 +141,9 @@ final class OHCL_Rest {
 		$all = OHCL_Overview::all_keys();
 		$ok  = ! is_wp_error( $all );
 		$s   = OHCL_Overview::from_keys( $ok ? $all['items'] : array(), gmdate( 'Y-m-d H:i:s' ) );
-		$mc  = OHCL_Members::counts( OHCL_Members::all(), $ok ? array_column( $all['items'], null, 'id' ) : array(), time() );
+		$mem = OHCL_Members::all();
+		$kv  = $ok ? array_column( $all['items'], null, 'id' ) : array();
+		$mc  = OHCL_Members::counts( $mem, $kv, time() );
 		$seg = array();
 		$cfg = OHCL_Industry::current();
 		foreach ( $mc['by_segment'] as $k => $n ) {
@@ -149,10 +151,10 @@ final class OHCL_Rest {
 		}
 		return self::out(
 			array(
-				'community' => array( 'total' => $mc['total'], 'active' => $mc['active'], 'verified' => $mc['verified'], 'by_stage' => $mc['by_stage'], 'by_segment' => $seg ),
+				'community' => array( 'total' => $mc['total'], 'active' => $mc['active'], 'verified' => $mc['verified'], 'by_stage' => $mc['by_stage'], 'by_segment' => $seg, 'growth' => OHCL_Members::growth( $mem, time(), 6 ) ),
 				'adoption'  => $ok ? array( 'keys' => $s, 'funnel' => OHCL_Overview::funnel( $s ), 'capped' => $all['capped'] ) : null,
 				'core'      => array( 'ok' => $ok, 'error' => $ok ? '' : $all->get_error_code() ),
-				'todo'      => OHCL_Overview::todo( $s, OHCL_Industry::report(), $ok ),
+				'todo'      => array_merge( OHCL_Overview::todo( $s, OHCL_Industry::report(), $ok ), OHCL_Overview::member_todo( $mem, $kv, time(), class_exists( 'OHCL_Affiliate' ) && OHCL_Modules::enabled( '04' ) && (bool) OHCL_Affiliate::coaches() ) ), // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15
 				'revenue'   => null, // chưa có nguồn: lõi mở sổ doanh thu theo Hub ở Đ3 (R-HUB-6: không ước số)
 			)
 		);

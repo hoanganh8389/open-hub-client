@@ -118,6 +118,60 @@ final class OHCL_Overview {
 	}
 
 	/**
+	 * To-do items that come from MEMBER records (question 5): waiting for acceptance, accepted without a key,
+	 * using the assistant but not verified, verification ending, no Coach, new support requests. Only items with
+	 * a count > 0. Each item links to the member list filtered by journey stage when one fits. Pure.
+	 *
+	 * @param array[] $members  to_array() rows.
+	 * @param array   $keys     key_id => key view (empty when the core is unreachable: stage counts then stay honest).
+	 * @param bool    $coach_on module 04 on and at least one Coach exists.
+	 * @return array[] { label, n, page, args }
+	 */
+	public static function member_todo( array $members, array $keys, $now_ts, $coach_on = false ) {
+		// [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — "Tôi cần làm gì tiếp theo?" có việc từ hồ sơ hội viên, không chỉ từ khoá.
+		$c = array( 'wait' => 0, 'nokey' => 0, 'unverified' => 0, 'verify_end' => 0, 'nocoach' => 0, 'support' => 0 );
+		foreach ( $members as $m ) {
+			if ( 'active' !== $m['status'] ) {
+				continue;
+			}
+			$k   = $m['key_id'] && isset( $keys[ $m['key_id'] ] ) ? $keys[ $m['key_id'] ] : null;
+			$lvl = OHCL_Members::journey( $m, $k, $now_ts );
+			if ( 1 === $lvl ) {
+				$c['wait']++;
+			} elseif ( 2 === $lvl && ! $m['key_id'] ) {
+				$c['nokey']++;
+			} elseif ( 4 === $lvl ) {
+				$c['unverified']++;
+			}
+			if ( is_array( $m['verify'] ) && ! empty( $m['verify']['until'] ) ) {
+				$u = strtotime( $m['verify']['until'] . ' UTC' );
+				if ( $u >= $now_ts && $u - $now_ts <= 30 * DAY_IN_SECONDS ) {
+					$c['verify_end']++;
+				}
+			}
+			if ( $coach_on && '' === (string) $m['coach'] && $lvl >= 2 ) {
+				$c['nocoach']++;
+			}
+			if ( '' !== (string) $m['support_at'] && $now_ts - strtotime( $m['support_at'] . ' UTC' ) <= 7 * DAY_IN_SECONDS ) {
+				$c['support']++;
+			}
+		}
+		$out = array();
+		$add = function ( $n, $label, $args ) use ( &$out ) {
+			if ( $n > 0 ) {
+				$out[] = array( 'label' => $label, 'n' => $n, 'page' => 'open-hub-members', 'args' => $args );
+			}
+		};
+		$add( $c['support'], 'Yêu cầu hỗ trợ mới của hội viên trong 7 ngày', array() );
+		$add( $c['wait'], 'Hồ sơ mới chờ ban điều hành tiếp nhận', array( 'stage' => 1 ) );
+		$add( $c['nokey'], 'Đã tiếp nhận, chờ cấp khoá trợ lý AI', array( 'stage' => 2 ) );
+		$add( $c['unverified'], 'Đang dùng trợ lý, chờ xác minh để lên bản đồ', array( 'stage' => 4 ) );
+		$add( $c['verify_end'], 'Xác minh sắp hết hạn trong 30 ngày', array() );
+		$add( $c['nocoach'], 'Hội viên chưa có Coach phụ trách', array() );
+		return $out;
+	}
+
+	/**
 	 * All keys of this Hub (pages of 50), cached 5 minutes. Flushed after issue / revoke.
 	 *
 	 * @return array{items:array[], capped:bool}|WP_Error

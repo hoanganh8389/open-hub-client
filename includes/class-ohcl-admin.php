@@ -160,6 +160,15 @@ final class OHCL_Admin {
 		// [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — câu 1 đếm từ hồ sơ hội viên thật + khoá ở lõi.
 		$mc = OHCL_Members::counts( OHCL_Members::all(), $ok ? array_column( $keys['items'], null, 'id' ) : array(), time() );
 		echo '<div class="ohcl-g3">' . self::kpi( 'Tổng hội viên', number_format_i18n( $mc['total'] ), 'hồ sơ ở 02 · Hội viên' ) . self::kpi( 'Hội viên hoạt động', number_format_i18n( $mc['active'] ), $mc['total'] ? round( 100 * $mc['active'] / $mc['total'] ) . '% tổng' : '' ) . self::kpi( 'Đã xác minh', number_format_i18n( $mc['verified'] ), 'Verified còn hạn' ) . '</div>'; // phpcs:ignore
+		if ( $mc['total'] ) { // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — mới / rời theo tháng (6 tháng gần nhất)
+			$gr  = OHCL_Members::growth( OHCL_Members::all(), time(), 6 );
+			$max = max( 1, max( array_map( function ( $g ) { return max( $g['new'], $g['left'] ); }, $gr ) ) );
+			echo '<div class="ohcl-card ohcl-funnel"><h3>Mới và rời theo tháng</h3>';
+			foreach ( $gr as $g ) {
+				echo '<div><span>' . esc_html( $g['month'] ) . '</span><i><em style="width:' . (int) round( 100 * $g['new'] / $max ) . '%"></em></i><b>+' . (int) $g['new'] . ' / −' . (int) $g['left'] . '</b></div>';
+			}
+			echo '<p class="mute">Mới = ngày hồ sơ được tạo. Rời = ngày chuyển sang "Đã rời" (hồ sơ cũ chưa có ngày rời không được đếm).</p></div>';
+		}
 		if ( $mc['total'] ) {
 			echo '<div class="ohcl-card ohcl-funnel"><h3>Theo phân khúc</h3>';
 			$cfg_s = OHCL_Industry::current()['segments'];
@@ -186,12 +195,12 @@ final class OHCL_Admin {
 		echo '<div class="ohcl-q"><i>4</i><h2>Hub đang tạo ra bao nhiêu doanh thu?</h2></div><p class="mute">Có khi lõi Bizcity mở sổ doanh thu theo Hub (open-hub-core Đ3). Tới lúc đó hiện "—", không ước số.</p>';
 
 		echo '<div class="ohcl-q"><i>5</i><h2>Tôi cần làm gì tiếp theo?</h2></div><div class="ohcl-card ohcl-todo">';
-		$todo = OHCL_Overview::todo( $s, OHCL_Industry::report(), $ok );
+		$todo = array_merge( OHCL_Overview::todo( $s, OHCL_Industry::report(), $ok ), OHCL_Overview::member_todo( OHCL_Members::all(), $ok ? array_column( $keys['items'], null, 'id' ) : array(), time(), class_exists( 'OHCL_Affiliate' ) && OHCL_Modules::enabled( '04' ) && (bool) OHCL_Affiliate::coaches() ) ); // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15
 		if ( ! $todo ) {
 			echo '<p class="mute">Không có việc gấp. Cấp khoá cho cơ sở mới ở <a href="' . esc_url( self::url( 'open-hub-keys' ) ) . '">Khoá dùng thử</a>.</p>';
 		}
 		foreach ( $todo as $t ) {
-			echo '<a href="' . esc_url( self::url( $t['page'] ) ) . '"><span>' . esc_html( $t['label'] ) . '</span><b>' . esc_html( (string) $t['n'] ) . ' →</b></a>';
+			echo '<a href="' . esc_url( self::url( $t['page'], isset( $t['args'] ) ? $t['args'] : array() ) ) . '"><span>' . esc_html( $t['label'] ) . '</span><b>' . esc_html( (string) $t['n'] ) . ' →</b></a>';
 		}
 		echo '</div></div>';
 	}
