@@ -173,18 +173,7 @@ final class OHCL_MyHub {
 		if ( is_wp_error( $c ) ) {
 			self::back( 'ho-so', array( 'err' => $c->get_error_code() ) );
 		}
-		$id = (int) $cur['member']['id'];
-		foreach ( array( 'address', 'hours', 'site_url', 'shop_url', 'contact_zalo' ) as $k ) { // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP
-			update_post_meta( $id, '_bzm_' . $k, $c[ $k ] );
-		}
-		$had = (string) get_post_meta( $id, '_bzm_public_consent', true );
-		update_post_meta( $id, '_bzm_public_consent', $c['consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
-		$had = (string) get_post_meta( $id, '_bzm_shop_consent', true );
-		update_post_meta( $id, '_bzm_shop_consent', $c['shop_consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
-		if ( class_exists( 'OHCL_Shop' ) ) {
-			OHCL_Shop::flush( $c['shop_url'] );
-		}
-		OHCL_Members::flush_public();
+		OHCL_Service::save_profile( (int) $cur['member']['id'], $c ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API — cùng một cửa với REST /me/profile
 		self::back( 'ho-so', array( 'saved' => 1 ) );
 	}
 
@@ -193,19 +182,7 @@ final class OHCL_MyHub {
 		if ( ! $cur['member'] || ! isset( $_POST['_ohcl_myhub'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ohcl_myhub'] ) ), 'ohcl_myhub_support' ) ) {
 			self::back( 'ho-tro', array( 'err' => 'ohcl_join_expired' ) );
 		}
-		$text = isset( $_POST['text'] ) ? trim( preg_replace( '/\s+/u', ' ', sanitize_textarea_field( wp_unslash( $_POST['text'] ) ) ) ) : '';
-		if ( ( function_exists( 'mb_strlen' ) ? mb_strlen( $text, 'UTF-8' ) : strlen( $text ) ) < 10 ) {
-			self::back( 'ho-tro', array( 'err' => 'ohcl_report_too_short' ) );
-		}
-		$id   = (int) $cur['member']['id'];
-		$list = get_post_meta( $id, '_bzm_support', true );
-		$list = is_array( $list ) ? $list : array();
-		$today = gmdate( 'Y-m-d' );
-		if ( count( array_filter( $list, function ( $x ) use ( $today ) { return 0 === strpos( $x['at'], $today ); } ) ) >= self::SUPPORT_LIMIT ) {
-			self::back( 'ho-tro', array( 'err' => 'ohcl_report_rate_limited' ) );
-		}
-		$list[] = array( 'at' => gmdate( 'Y-m-d H:i:s' ), 'text' => function_exists( 'mb_substr' ) ? mb_substr( $text, 0, 1000, 'UTF-8' ) : substr( $text, 0, 1000 ) );
-		update_post_meta( $id, '_bzm_support', array_slice( $list, -20 ) );
-		self::back( 'ho-tro', array( 'sent' => 1 ) );
+		$r = OHCL_Service::add_support( (int) $cur['member']['id'], isset( $_POST['text'] ) ? sanitize_textarea_field( wp_unslash( $_POST['text'] ) ) : '' ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API
+		self::back( 'ho-tro', is_wp_error( $r ) ? array( 'err' => $r->get_error_code() ) : array( 'sent' => 1 ) );
 	}
 }

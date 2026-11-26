@@ -28,6 +28,34 @@ Tổng quan Hub · Quản lý hội viên (Member 360°) · Công nghệ & gói 
 <!-- [2026-11-25 06:23 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR -->
 Chủ Hub nối lõi **trên giao diện**: nhận mã ghép nối từ bizcity.vn › Sổ Hub → **Hub › 14 · Cài đặt › Kết nối lõi Bizcity** → dán mã → **Kết nối**. Site tự nhận bí mật từ lõi (máy chủ → máy chủ) và tự kiểm bốn bước: cấu hình · liên lạc · Hub có trong sổ · bí mật được nhận. Nhập tay hoặc hằng `OHCL_CORE_SECRET` chỉ còn ở mục Nâng cao.
 
+## REST API
+
+Cho ứng dụng, trợ lý và tự động hoá nói chuyện với Hub. Đăng nhập bằng cookie + `X-WP-Nonce` (trình duyệt) hoặc **Application Password** của WordPress (ứng dụng ngoài). Một cửa dịch vụ chung với wp-admin: bấm nút hay gọi API đều qua cùng luật và phát cùng sự kiện.
+
+| Nhóm | Route (`/wp-json/open-hub-client/v1`) | Quyền | Việc |
+|---|---|---|---|
+| Hub Owner | `GET /owner/overview` | quản trị | số liệu năm câu hỏi: cộng đồng, phễu dùng công nghệ, việc cần làm; `revenue: null` tới khi lõi có sổ doanh thu |
+| | `GET /owner/members` (`q`, `status`, `stage` 1–8, `page`, `per_page` ≤ 50) | quản trị | danh sách tóm tắt, có hành trình, trợ lý AI, bậc bản đồ, khoá (chỉ tiền tố) |
+| | `POST /owner/members` · `GET /owner/members/{id}` · `POST /owner/members/{id}` | quản trị | tạo · xem 360° (liên hệ, trường ngành, hỗ trợ) · sửa |
+| | `POST /owner/members/{id}/accept` · `/status` · `/verify` · `DELETE /verify` | quản trị | tiếp nhận · đổi trạng thái · xác minh · bỏ xác minh |
+| | `POST /owner/members/{id}/key` · `/key/revoke` | quản trị | cấp khoá qua lõi (**khoá thô chỉ trong câu trả lời này, một lần**) · thu hồi |
+| Hội viên | `GET /me` | đăng nhập | hồ sơ của chính mình, hành trình, lộ trình 90 ngày, khoá (tiền tố) |
+| | `POST /me/profile` | đăng nhập | sửa **từng phần** địa chỉ, giờ, website, website bán hàng, Zalo, đồng ý công khai / hiện sản phẩm |
+| | `POST /me/support` | đăng nhập | gửi yêu cầu hỗ trợ (≥ 10 ký tự, 5 / ngày) |
+| Công khai | `GET /meta` | không | tên Hub, loại hình, tỉnh, trường công khai, số địa điểm |
+| | `GET /places` (`q`, `seg`, `province`, `page`, `per_page`) · `GET /places/{id}` | không, 120 lần / phút / IP | cơ sở V4 (và cơ sở mẫu có cờ `demo`), đệm 60 giây |
+
+Luật: lỗi luôn có `code`, `message`, `data.hint`, `data.help_code`, `data.status`; lõi Bizcity không trả lời ⇒ **503** (không báo 200 giả); câu trả lời `/owner` và `/me` là `Cache-Control: no-store`; hội viên chỉ thấy dữ liệu của chính mình; khoá thô không bao giờ nằm trong cơ sở dữ liệu hay danh sách.
+
+```bash
+# chủ Hub: danh sách hội viên chờ tiếp nhận
+curl -u "admin:APP-PASSWORD" "https://<hub>/wp-json/open-hub-client/v1/owner/members?stage=1"
+# cấp khoá dùng thử cho hồ sơ 123 (khoá thô chỉ hiện trong câu trả lời này)
+curl -u "admin:APP-PASSWORD" -X POST "https://<hub>/wp-json/open-hub-client/v1/owner/members/123/key"
+# công khai: cơ sở theo loại hình
+curl "https://<hub>/wp-json/open-hub-client/v1/places?seg=nha-hang-chay&per_page=10"
+```
+
 ## Test
 
 ```bash
@@ -38,6 +66,7 @@ php tests/cert-smoke.php   # chứng nhận: cấp, gia hạn, thu hồi, tra c�
 php tests/pages-smoke.php  # mọi trang, menu, khung WordPress, My Hub, ứng tuyển Coach
 php tests/menu-smoke.php   # trang WordPress + "Menu Hub"
 php tests/fix-smoke.php    # lỗi đã gặp trên site thật
+php tests/rest-smoke.php      # REST: quyền, một cửa dịch vụ, khoá thô một lần, hội viên chỉ thấy của mình
 php tests/affiliate-smoke.php # Coach: cấp vai, mã giới thiệu, ghi nhận hoa hồng, kỳ chi trả
 php tests/demo-smoke.php   # dữ liệu mẫu (hiện có nhãn, tự ẩn, bài đăng / nháp / xoá) + sản phẩm Store API
 php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → mã ghép nối → kết nối → cấp khoá
@@ -61,6 +90,7 @@ php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → 
 | **Đ1c** | Member 360° (CPT `bz_hub_member`, trường ngành `_bzi_*`, tiếp nhận, cấp khoá từ hồ sơ) · Tổng quan câu 1 | **xong mã + test** (admin-smoke 30/30) · kết nối lõi đã chạy thật trên veganhub.net ↔ bizcity.vn (4/4) |
 | **CM-2/3** | dữ liệu mẫu theo ngành (cơ sở mẫu có nhãn, tự ẩn ở ngưỡng cơ sở thật; bài mẫu đăng / nháp / xoá hết) · sản phẩm từ Woo của cơ sở trên hồ sơ | **xong mã + test** (demo-smoke 40/40) · chưa chạy trên site thật |
 | **Đ3a** | Coach + affiliate (backend): vai `hub_coach`, mã + cookie giới thiệu 12 tháng, hoa hồng giới thiệu hội viên từ dữ liệu nguồn, kỳ chi trả tạm tính → duyệt → trả, dòng đảo | **xong mã + test** (affiliate-smoke 42/42) · chưa chạy trên site thật · nguồn Woo / AI, Coach Workspace: chưa · **My Coach đã có (0.10.1)** |
+| **API** | REST `open-hub-client/v1`: Hub Owner (tổng quan, hội viên, tiếp nhận, khoá, xác minh), hội viên (`/me`), công khai (`/places`); lớp dịch vụ chung với wp-admin | **xong mã + test** (rest-smoke 45/45) · chưa chạy trên site thật |
 | Đ2 | Tài nguyên & quyền lợi (GitHub) · My Hub · Xác minh & chứng nhận + tra cứu QR | chưa |
 | Đ3 | Coach + affiliate + My Coach · Marketing (JSONL + rollup) · Doanh thu (core + Woo) · tài sản cộng đồng | chưa |
 

@@ -359,7 +359,7 @@ final class OHCL_Admin_Members {
 			OHCL_Admin::flash_set( OHCL_Admin::error_flash( $clean ) );
 			self::back( $id ? array( 'id' => $id, 'view' => 'edit' ) : array( 'view' => 'new' ) );
 		}
-		$res = OHCL_Members::save( $clean, $id );
+		$res = OHCL_Members::save( $clean, $id ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API — form quản trị giữ cách gom trường riêng; các thao tác dưới đây đi qua OHCL_Service
 		if ( is_wp_error( $res ) ) {
 			OHCL_Admin::flash_set( OHCL_Admin::error_flash( $res ) );
 			self::back( array( 'view' => 'new' ) );
@@ -372,9 +372,8 @@ final class OHCL_Admin_Members {
 		OHCL_Admin::guard();
 		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 		check_admin_referer( 'ohcl_member_accept_' . $id );
-		if ( OHCL_Members::get( $id ) ) {
-			OHCL_Members::accept( $id );
-			OHCL_Slots::emit( 'member_stage_changed', array( 'member_id' => $id, 'to' => 2, 'label' => OHCL_Members::JOURNEY[2] ) );
+		$r = OHCL_Service::accept( $id ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API
+		if ( ! is_wp_error( $r ) ) {
 			OHCL_Admin::flash_set( array( 'ok' => 'Đã tiếp nhận hội viên.' ) );
 		}
 		self::back( array( 'id' => $id ) );
@@ -388,20 +387,11 @@ final class OHCL_Admin_Members {
 		if ( ! $m ) {
 			self::back( array() );
 		}
-		$keys = OHCL_Members::keys_by_id();
-		$cur  = $m['key_id'] && isset( $keys[ $m['key_id'] ] ) ? $keys[ $m['key_id'] ] : null;
-		if ( $cur && in_array( $cur['status'], array( 'trial', 'active', 'grace' ), true ) ) {
-			OHCL_Admin::flash_set( OHCL_Admin::error_flash( OHCL_Error::make( 'ohcl_member_has_key', 'Hồ sơ này đã có khoá đang chạy.', 'Thu hồi khoá cũ ở 03 · Khoá dùng thử nếu cần cấp lại.', 409 ) ) );
-			self::back( array( 'id' => $id ) );
-		}
-		$res = OHCL_Core_Client::issue_key( $m['title'], $m['site_url'], $m['coach'] );
+		$res = OHCL_Service::issue_key( $id ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API — cùng một cửa với REST
 		if ( is_wp_error( $res ) ) {
 			OHCL_Admin::flash_set( OHCL_Admin::error_flash( $res ) );
 			self::back( array( 'id' => $id ) );
 		}
-		OHCL_Members::link_key( $id, (int) $res['id'], (string) $res['key_prefix'] );
-		OHCL_Overview::flush();
-		OHCL_Slots::emit( 'key_issued', array( 'key_id' => (int) $res['id'], 'key_prefix' => (string) $res['key_prefix'], 'member_id' => $id, 'label' => $m['title'], 'coach_ref' => $m['coach'] ) );
 		OHCL_Admin::flash_set( array( 'key' => (string) $res['key'], 'label' => $m['title'], 'plan_code' => (string) $res['plan_code'], 'plan_until' => (string) $res['plan_until'] ) );
 		self::back( array( 'id' => $id ) );
 	}
@@ -412,11 +402,10 @@ final class OHCL_Admin_Members {
 		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 		check_admin_referer( 'ohcl_member_verify_' . $id );
 		$ev  = isset( $_POST['evidence'] ) && is_array( $_POST['evidence'] ) ? array_map( 'sanitize_key', wp_unslash( $_POST['evidence'] ) ) : array();
-		$res = OHCL_Members::get( $id ) ? OHCL_Members::verify( $id, $ev, isset( $_POST['note'] ) ? sanitize_text_field( wp_unslash( $_POST['note'] ) ) : '', isset( $_POST['months'] ) ? (int) $_POST['months'] : 12 ) : OHCL_Error::make( 'ohcl_member_not_found', 'Không tìm thấy hồ sơ.', 'Mở lại từ danh sách hội viên.', 404 );
+		$res = OHCL_Service::verify( $id, $ev, isset( $_POST['note'] ) ? sanitize_text_field( wp_unslash( $_POST['note'] ) ) : '', isset( $_POST['months'] ) ? (int) $_POST['months'] : 12 ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API
 		if ( is_wp_error( $res ) ) {
 			OHCL_Admin::flash_set( OHCL_Admin::error_flash( $res ) );
 		} else {
-			OHCL_Slots::emit( 'member_verified', array( 'member_id' => $id ) );
 			OHCL_Admin::flash_set( array( 'ok' => 'Đã xác minh hồ sơ.' ) );
 		}
 		self::back( array( 'id' => $id ) );
@@ -426,7 +415,7 @@ final class OHCL_Admin_Members {
 		OHCL_Admin::guard();
 		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 		check_admin_referer( 'ohcl_member_unverify_' . $id );
-		OHCL_Members::unverify( $id );
+		OHCL_Service::unverify( $id ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API
 		OHCL_Admin::flash_set( array( 'ok' => 'Đã bỏ xác minh; hồ sơ không còn trên bản đồ công khai.' ) );
 		self::back( array( 'id' => $id ) );
 	}
@@ -435,7 +424,7 @@ final class OHCL_Admin_Members {
 		OHCL_Admin::guard();
 		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
 		check_admin_referer( 'ohcl_member_status_' . $id );
-		$res = OHCL_Members::set_status( $id, isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : '' );
+		$res = OHCL_Service::set_status( $id, isset( $_POST['status'] ) ? sanitize_key( wp_unslash( $_POST['status'] ) ) : '' ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API
 		OHCL_Admin::flash_set( is_wp_error( $res ) ? OHCL_Admin::error_flash( $res ) : array( 'ok' => 'Đã lưu trạng thái hội viên.' ) );
 		self::back( array( 'id' => $id ) );
 	}

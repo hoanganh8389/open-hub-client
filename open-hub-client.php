@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Hub Client
  * Description:       Nền tảng chung cho mọi site Hub ngành của Bizcity Open: 14 module bật / tắt, hợp đồng ngành bizcity_industry_hub@2, ô mở rộng cho plugin ngành, một cửa gọi open-hub-core. Đặc tả: canon open-hub OPEN-HUB-CLIENT.md.
- * Version:           0.10.1
+ * Version:           0.11.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Johnny Chu – Chu Hoàng Anh
@@ -19,10 +19,10 @@ if ( defined( 'OHCL_VERSION' ) ) {
 	return;
 }
 
-define( 'OHCL_VERSION', '0.10.1' );
+define( 'OHCL_VERSION', '0.11.0' );
 define( 'OHCL_DIR', __DIR__ . '/' );
 
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
 	$ohcl_p = OHCL_DIR . 'includes/' . $ohcl_f . '.php';
 	if ( ! is_file( $ohcl_p ) || ! is_readable( $ohcl_p ) ) {
 		return; // a missing artifact disables the plugin quietly instead of a fatal.
@@ -33,6 +33,17 @@ unset( $ohcl_f, $ohcl_p );
 
 // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — hồ sơ hội viên là CPT trên site Hub (không bảng mới).
 add_action( 'init', array( 'OHCL_Members', 'register' ) );
+// [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API — REST open-hub-client/v1 (Hub Owner, hội viên, công khai); nạp khi có yêu cầu REST.
+add_action(
+	'rest_api_init',
+	static function () {
+		if ( is_file( OHCL_DIR . 'includes/class-ohcl-rest.php' ) && is_readable( OHCL_DIR . 'includes/class-ohcl-rest.php' ) ) {
+			require_once OHCL_DIR . 'includes/class-ohcl-rest.php';
+			OHCL_Rest::routes();
+		}
+	},
+	5
+);
 add_action( 'init', array( 'OHCL_Certs', 'register' ) );
 add_action( 'init', array( 'OHCL_Coach', 'register' ) );
 // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — vai hub_coach + CPT chi trả; cookie giới thiệu ?ref=; ghi nhận hoa hồng mỗi ngày.

@@ -1,5 +1,14 @@
 # Lịch sử phát hành
 
+## 0.11.0 — 2026-11-26 (REST API cho trục Hub Owner ↔ hội viên)
+
+- **REST `open-hub-client/v1`** (17 route): Hub Owner (`/owner/overview`, `/owner/members…`, tiếp nhận, trạng thái, cấp / thu hồi khoá, xác minh), hội viên (`/me`, `/me/profile`, `/me/support`), công khai (`/meta`, `/places`, `/places/{id}`). Cookie + nonce hoặc Application Password.
+- **Một cửa dịch vụ** `OHCL_Service`: màn quản trị và My Hub chuyển sang dùng chung với REST (tiếp nhận, trạng thái, cấp khoá, xác minh, hồ sơ, hỗ trợ) ⇒ cùng luật, cùng sự kiện chỉ đọc; trước đây logic nằm rải ở handler.
+- Khoá thô **chỉ** nằm trong câu trả lời `POST …/key`, một lần, `no-store`; không vào DB, danh sách, sự kiện. Cấp lần hai khi còn khoá chạy ⇒ 409, không gọi lõi.
+- Lõi không trả lời ⇒ **503** (trong plugin vẫn "fail open" cho giao diện; với ứng dụng gọi API là 503 để biết thử lại).
+- `/me/profile` cập nhật từng phần; hội viên không sửa được tên, loại hình, email, Coach. `/places` giới hạn 120 lần / phút / IP, đệm 60 giây, không lộ liên hệ riêng.
+- rest-smoke 45/45 (đột biến: mở quyền chủ Hub, ghi đè toàn phần, lộ trường nội bộ cho hội viên, cấp khoá trùng, báo 200 giả khi lõi lỗi — đều bị bắt).
+
 ## 0.10.1 — 2026-11-26 (My Coach)
 
 - Trang **/my-coach/** (module 04): Coach đăng nhập thấy link giới thiệu + mã, mức hoa hồng giới thiệu, bốn ô (hội viên giới thiệu · tạm tính · đã duyệt · đã trả), danh sách hội viên mình giới thiệu (tên cơ sở, mã, giai đoạn, "Đã ghi nhận / Chờ kích hoạt / Hết hạn 12 tháng") và lịch sử chi trả từng kỳ.
