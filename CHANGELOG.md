@@ -1,5 +1,15 @@
 # Lịch sử phát hành
 
+## 0.10.0 — 2026-11-26 (Đ3a: Coach + affiliate, backend)
+
+- **Vai `hub_coach`**: ở Hub › 04 · Coach, hồ sơ đã duyệt bấm "Cấp vai Coach" + email ⇒ tạo tài khoản (hoặc thêm vai vào tài khoản cùng email, giữ vai cũ), gửi email đặt mật khẩu, cấp **mã giới thiệu** 6 ký tự.
+- **Giới thiệu**: link `?ref=<mã>` đặt cookie 12 tháng; đăng ký hội viên ghi Coach + ngày, điền "Coach phụ trách"; **người đầu tiên thắng**, không ghi đè.
+- **Hoa hồng nguồn 1 (giới thiệu hội viên)** từ dữ liệu nguồn: hội viên được giới thiệu đã "Đã kích hoạt" (khoá đang chạy) trong 12 tháng ⇒ một dòng khoá `member:<id>`, không nhân đôi; số tiền chụp theo chính sách lúc ghi nhận (đổi chính sách chỉ áp dòng sau); số riêng của từng Coach thắng chính sách chung; chính sách 0 đ ⇒ không ghi nhận; lõi lỗi ⇒ không đoán.
+- **Kỳ chi trả** (CPT `bz_hub_payout`, mỗi Coach mỗi tháng, dòng trong meta): Tạm tính → Đã duyệt → Đã trả, một chiều; kỳ đã duyệt / đã trả không bị sửa, dòng mới vào tháng sau; huỷ ⇒ **dòng đảo** (số âm), không xoá.
+- Cron hằng ngày `ohcl_affiliate_daily`; nút "Ghi nhận ngay"; `wp ohcl affiliate sync|payouts|reverse`. Sự kiện chỉ đọc `coach_activated`.
+- Chưa làm: nguồn 2 (đơn Woo `_bz_hub_service`), nguồn 3 (doanh thu AI do lõi chốt tháng), My Coach (Coach tự xem), Coach Workspace.
+- affiliate-smoke 42/42 (đột biến: bỏ chặn trùng, bỏ hạn 12 tháng, sửa kỳ đã duyệt, bỏ điều kiện kích hoạt — đều bị test bắt).
+
 ## 0.9.2 — 2026-11-26 (góp ý trang chủ, tra cứu)
 
 - **Gần tôi**: danh sách thành thẻ từng cơ sở — thứ hạng, tên, loại hình · tỉnh, **số km nổi bật** (dưới 1 km hiện mét), Xem chi tiết, Chỉ đường (Google Maps), nút đóng; ghi rõ khoảng cách đường chim bay.

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Hub Client
  * Description:       Nền tảng chung cho mọi site Hub ngành của Bizcity Open: 14 module bật / tắt, hợp đồng ngành bizcity_industry_hub@2, ô mở rộng cho plugin ngành, một cửa gọi open-hub-core. Đặc tả: canon open-hub OPEN-HUB-CLIENT.md.
- * Version:           0.9.2
+ * Version:           0.10.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Johnny Chu – Chu Hoàng Anh
@@ -19,10 +19,10 @@ if ( defined( 'OHCL_VERSION' ) ) {
 	return;
 }
 
-define( 'OHCL_VERSION', '0.9.2' );
+define( 'OHCL_VERSION', '0.10.0' );
 define( 'OHCL_DIR', __DIR__ . '/' );
 
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
 	$ohcl_p = OHCL_DIR . 'includes/' . $ohcl_f . '.php';
 	if ( ! is_file( $ohcl_p ) || ! is_readable( $ohcl_p ) ) {
 		return; // a missing artifact disables the plugin quietly instead of a fatal.
@@ -34,7 +34,19 @@ unset( $ohcl_f, $ohcl_p );
 // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C — hồ sơ hội viên là CPT trên site Hub (không bảng mới).
 add_action( 'init', array( 'OHCL_Members', 'register' ) );
 add_action( 'init', array( 'OHCL_Certs', 'register' ) );
-add_action( 'init', array( 'OHCL_Coach', 'register' ) ); // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — hồ sơ ứng tuyển Coach (CPT bz_hub_coach_app).
+add_action( 'init', array( 'OHCL_Coach', 'register' ) );
+// [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — vai hub_coach + CPT chi trả; cookie giới thiệu ?ref=; ghi nhận hoa hồng mỗi ngày.
+add_action( 'init', array( 'OHCL_Affiliate', 'register' ) );
+add_action( 'init', array( 'OHCL_Affiliate', 'capture_ref' ), 5 );
+add_action( 'ohcl_affiliate_daily', array( 'OHCL_Affiliate', 'sync' ) );
+add_action(
+	'init',
+	static function () {
+		if ( ! wp_next_scheduled( 'ohcl_affiliate_daily' ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'ohcl_affiliate_daily' );
+		}
+	}
+); // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — hồ sơ ứng tuyển Coach (CPT bz_hub_coach_app).
 OHCL_MyHub::boot();
 OHCL_Pages::boot(); // [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3 — mẫu trang "Open Hub — …", bản đồ trang → link. // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — giấy chứng nhận là CPT bz_hub_cert.
 
@@ -47,7 +59,13 @@ register_activation_hook(
 		flush_rewrite_rules( false );
 	}
 );
-register_deactivation_hook( __FILE__, 'flush_rewrite_rules' );
+register_deactivation_hook(
+	__FILE__,
+	static function () {
+		flush_rewrite_rules();
+		wp_clear_scheduled_hook( 'ohcl_affiliate_daily' ); // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A
+	}
+);
 
 // Industry data problems are shown to the Hub owner in wp-admin only, never on public pages.
 add_action(

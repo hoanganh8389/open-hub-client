@@ -128,6 +128,39 @@ final class OHCL_Cli {
 	}
 
 	/**
+	 * Coach commissions (OPEN-HUB-CLIENT §7).
+	 *
+	 * <action>
+	 * : sync | payouts | reverse
+	 *
+	 * [<key>]
+	 * : for reverse: the line key, e.g. member:123.
+	 *
+	 * [--reason=<text>]
+	 * : reason written on the reversal line.
+	 */
+	public function affiliate( $args, $assoc ) {
+		// [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — wp ohcl affiliate sync|payouts|reverse.
+		$act = isset( $args[0] ) ? $args[0] : 'payouts';
+		if ( 'sync' === $act ) {
+			$s = OHCL_Affiliate::sync();
+			if ( $s['skipped_core'] ) {
+				WP_CLI::warning( 'Chưa đọc được khoá từ lõi: không ghi nhận được.' );
+			}
+			WP_CLI::success( 'Ghi nhận ' . $s['added'] . ' dòng mới.' );
+		} elseif ( 'reverse' === $act ) {
+			$r = OHCL_Affiliate::reverse( isset( $args[1] ) ? $args[1] : '', isset( $assoc['reason'] ) ? $assoc['reason'] : '' );
+			is_wp_error( $r ) ? WP_CLI::error( $r->get_error_message() ) : WP_CLI::success( 'Đã thêm dòng đảo.' );
+		} else {
+			$rows = array();
+			foreach ( OHCL_Affiliate::payouts() as $p ) {
+				$rows[] = array( 'id' => $p['id'], 'month' => $p['month'], 'coach' => $p['coach'], 'lines' => count( $p['lines'] ), 'total' => $p['total'], 'status' => $p['status'] );
+			}
+			WP_CLI\Utils\format_items( 'table', $rows, array( 'id', 'month', 'coach', 'lines', 'total', 'status' ) );
+		}
+	}
+
+	/**
 	 * Check the connection to open-hub-core.
 	 *
 	 * @subcommand core-ping

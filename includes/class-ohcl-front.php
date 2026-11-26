@@ -699,6 +699,9 @@ final class OHCL_Front {
 			exit;
 		}
 		update_post_meta( $id, '_bzm_source', 'web' );
+		if ( class_exists( 'OHCL_Affiliate' ) ) { // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — ghi nhớ Coach giới thiệu (cookie ?ref=, người đầu tiên thắng)
+			OHCL_Affiliate::attribute_member( $id );
+		}
 		OHCL_Slots::emit( 'member_stage_changed', array( 'member_id' => (int) $id, 'to' => 1, 'label' => OHCL_Members::JOURNEY[1], 'source' => 'web' ) );
 		wp_safe_redirect( add_query_arg( array( 'sent' => 1 ), $back ) . '#dang-ky' );
 		exit;

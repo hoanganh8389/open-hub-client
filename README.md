@@ -38,6 +38,7 @@ php tests/cert-smoke.php   # chứng nhận: cấp, gia hạn, thu hồi, tra c�
 php tests/pages-smoke.php  # mọi trang, menu, khung WordPress, My Hub, ứng tuyển Coach
 php tests/menu-smoke.php   # trang WordPress + "Menu Hub"
 php tests/fix-smoke.php    # lỗi đã gặp trên site thật
+php tests/affiliate-smoke.php # Coach: cấp vai, mã giới thiệu, ghi nhận hoa hồng, kỳ chi trả
 php tests/demo-smoke.php   # dữ liệu mẫu (hiện có nhãn, tự ẩn, bài đăng / nháp / xoá) + sản phẩm Store API
 php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → mã ghép nối → kết nối → cấp khoá
 ```
@@ -59,6 +60,7 @@ php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → 
 | **Đ2a** | xác minh & chứng nhận (module 06): cấp đủ tiêu chí, gia hạn, thu hồi, `/chung-nhan/` tra cứu mã / QR, phản ánh, bậc hành trình 6 | **xong mã + test** (cert-smoke 35/35) · chưa chạy trên site thật |
 | **Đ1c** | Member 360° (CPT `bz_hub_member`, trường ngành `_bzi_*`, tiếp nhận, cấp khoá từ hồ sơ) · Tổng quan câu 1 | **xong mã + test** (admin-smoke 30/30) · kết nối lõi đã chạy thật trên veganhub.net ↔ bizcity.vn (4/4) |
 | **CM-2/3** | dữ liệu mẫu theo ngành (cơ sở mẫu có nhãn, tự ẩn ở ngưỡng cơ sở thật; bài mẫu đăng / nháp / xoá hết) · sản phẩm từ Woo của cơ sở trên hồ sơ | **xong mã + test** (demo-smoke 40/40) · chưa chạy trên site thật |
+| **Đ3a** | Coach + affiliate (backend): vai `hub_coach`, mã + cookie giới thiệu 12 tháng, hoa hồng giới thiệu hội viên từ dữ liệu nguồn, kỳ chi trả tạm tính → duyệt → trả, dòng đảo | **xong mã + test** (affiliate-smoke 42/42) · chưa chạy trên site thật · My Coach, nguồn Woo / AI: chưa |
 | Đ2 | Tài nguyên & quyền lợi (GitHub) · My Hub · Xác minh & chứng nhận + tra cứu QR | chưa |
 | Đ3 | Coach + affiliate + My Coach · Marketing (JSONL + rollup) · Doanh thu (core + Woo) · tài sản cộng đồng | chưa |
 

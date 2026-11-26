@@ -337,6 +337,8 @@ final class OHCL_Members {
 			'certs'       => get_post_meta( $id, '_bzm_certs', true ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			'industry'    => array(),
 			'demo'        => '1' === (string) get_post_meta( $id, '_bzm_demo', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
+			'ref_coach'   => (int) get_post_meta( $id, '_bzm_ref_coach', true ), // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — Coach đã giới thiệu (người đầu tiên, giữ 12 tháng)
+			'ref_at'      => (string) get_post_meta( $id, '_bzm_ref_at', true ),
 			'shop_consent' => (string) get_post_meta( $id, '_bzm_shop_consent', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — ngày đồng ý hiện sản phẩm
 		);
 		$m['status'] = isset( self::STATUS[ $m['status'] ] ) ? $m['status'] : 'active';
