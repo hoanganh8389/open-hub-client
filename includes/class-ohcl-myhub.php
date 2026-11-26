@@ -20,6 +20,7 @@ final class OHCL_MyHub {
 
 	const TABS = array(
 		''           => array( 'Tổng quan', 'grid' ),
+		'quyen-loi'  => array( 'Quyền lợi của tôi', 'star' ), // [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2
 		'cong-nghe'  => array( 'Công nghệ của tôi', 'gift' ),
 		'ho-so'      => array( 'Hồ sơ doanh nghiệp', 'store' ),
 		'chung-nhan' => array( 'Chứng nhận của tôi', 'check' ),

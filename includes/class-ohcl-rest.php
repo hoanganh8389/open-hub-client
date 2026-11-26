@@ -84,6 +84,8 @@ final class OHCL_Rest {
 		$r( '/owner/members/(?P<id>\d+)/key/revoke', 'POST', 'owner_key_revoke', $o, $id );
 		$r( '/owner/members/(?P<id>\d+)/verify', 'POST', 'owner_verify', $o, $id );
 		$r( '/owner/members/(?P<id>\d+)/verify', 'DELETE', 'owner_unverify', $o, $id );
+		$r( '/owner/benefits', 'GET', 'owner_benefits', $o );
+		$r( '/me/benefits', 'GET', 'me_benefits', $m );
 		$r( '/me', 'GET', 'me', $m );
 		$r( '/me/profile', 'POST', 'me_profile', $m );
 		$r( '/me/support', 'POST', 'me_support', $m );
@@ -252,6 +254,18 @@ final class OHCL_Rest {
 		return is_wp_error( $r ) ? $r : self::out( array( 'ok' => true ) );
 	}
 
+	/** Funnel of the eight benefits; with ?benefit=<key>&state=<state> also the members behind it. */
+	public static function owner_benefits( $req ) {
+		// [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2
+		$b = sanitize_key( (string) $req->get_param( 'benefit' ) );
+		$s = sanitize_key( (string) $req->get_param( 'state' ) );
+		if ( '' !== $b && ! isset( OHCL_Benefits::DEFS[ $b ] ) ) {
+			return OHCL_Error::make( 'ohcl_benefit_unknown', 'Không có quyền lợi này.', 'Dùng một trong: ' . implode( ', ', array_keys( OHCL_Benefits::DEFS ) ) . '.', 400 );
+		}
+		$v = OHCL_Benefits::hub_view( $b, $s );
+		return self::out( array( 'benefits' => $v['funnel'], 'members' => $v['members'], 'core_ok' => $v['core_ok'] ) );
+	}
+
 	/* ---------- member ---------- */
 
 	private static function me_member() {
@@ -279,6 +293,17 @@ final class OHCL_Rest {
 		$v    = OHCL_Service::member_view( $m, $key, OHCL_Industry::current(), $now, true, false );
 		$v['roadmap'] = OHCL_MyHub::road( $m, $key, $now );
 		return self::out( $v );
+	}
+
+	public static function me_benefits() {
+		// [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2 — tám quyền lợi của chính hội viên, kèm lý do và việc tiếp theo
+		$m = self::me_member();
+		if ( is_wp_error( $m ) ) {
+			return $m;
+		}
+		$keys = self::keys();
+		$st   = OHCL_Benefits::for_member( $m, self::key_of( $m, $keys ), OHCL_Benefits::context( time() ) );
+		return self::out( array( 'benefits' => array_values( $st ), 'received' => OHCL_Benefits::received( $st ), 'core_ok' => (bool) $keys ) );
 	}
 
 	public static function me_profile( $req ) {

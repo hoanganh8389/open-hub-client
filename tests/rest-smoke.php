@@ -75,7 +75,7 @@ function get_users( array $a ) { return array(); }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-myhub', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-myhub', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -99,7 +99,7 @@ OHCL_Core_Client::$transport = function ( $m, $u, $h, $b ) use ( $now_s ) {
 };
 
 /* ---------- đăng ký route + quyền ---------- */
-check( 'đăng ký 17 route trong namespace open-hub-client/v1', 17 === count( $GLOBALS['routes'] ) && 'open-hub-client/v1' === $GLOBALS['routes'][0][0] );
+check( 'đăng ký 19 route trong namespace open-hub-client/v1', 19 === count( $GLOBALS['routes'] ) && 'open-hub-client/v1' === $GLOBALS['routes'][0][0] );
 login( 0 );
 $ps = route_perm( '/owner/overview', 'GET' );
 check( 'owner: chưa đăng nhập ⇒ 401 ohcl_rest_login_required (đủ bốn trường)', is_wp_error( $ps ) && 'ohcl_rest_login_required' === $ps->get_error_code() && 401 === $ps->get_error_data()['status'] && err4( $ps ) );
@@ -200,6 +200,28 @@ check( '/me/support: gửi được ⇒ 201; chủ Hub đọc thấy ở hồ s�
 login( 5, false );
 for ( $i = 0; $i < 6; $i++ ) { $last = OHCL_Rest::me_support( req( array(), array( 'text' => 'Yêu cầu hỗ trợ số ' . $i . ' của tôi' ) ) ); }
 check( 'quá 5 yêu cầu / ngày ⇒ 429 ohcl_report_rate_limited', is_wp_error( $last ) && 429 === $last->get_error_data()['status'] );
+
+// [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2
+login( 5, false );
+$mb = OHCL_Rest::me_benefits();
+$mbd = body( $mb );
+$byk = array();
+foreach ( $mbd['benefits'] as $b ) { $byk[ $b['key'] ] = $b; }
+check( 'GET /me/benefits: đủ 8 quyền lợi của chính mình, có trạng thái + lý do + việc tiếp theo; no-store', 8 === count( $mbd['benefits'] ) && isset( $byk['tech']['state'] ) && '' !== $byk['ai']['why'] && isset( $byk['ai']['next']['label'] ) && 'no-store' === $mb->headers['Cache-Control'] && 'soon' === $byk['growth']['state'] );
+check( 'GET /me/benefits: "đã nhận" khớp số quyền lợi từ đã trao trở lên', $mbd['received'] === count( array_filter( $mbd['benefits'], function ( $b ) { return in_array( $b['state'], array( 'granted', 'activated', 'used' ), true ); } ) ) );
+login( 6, false );
+check( 'GET /me/benefits: tài khoản không có hồ sơ ⇒ 404 ohcl_me_no_member', is_wp_error( OHCL_Rest::me_benefits() ) && 'ohcl_me_no_member' === OHCL_Rest::me_benefits()->get_error_code() );
+login( 1, true );
+$ob = body( OHCL_Rest::owner_benefits( req( array() ) ) );
+$obk = array();
+foreach ( $ob['benefits'] as $b ) { $obk[ $b['key'] ] = $b; }
+check( 'GET /owner/benefits: phễu 8 quyền lợi, mỗi dòng có đã nhận / mẫu số / %; sắp ra mắt đánh dấu', 8 === count( $ob['benefits'] ) && isset( $obk['ai']['reached'], $obk['ai']['of'], $obk['ai']['pct'] ) && true === $obk['growth']['soon'] );
+$ow = body( OHCL_Rest::owner_benefits( req( array( 'benefit' => 'ai', 'state' => 'eligible' ) ) ) );
+check( '/owner/benefits?benefit=ai&state=eligible: trả danh sách hội viên đứng sau con số (id, mã, tên)', is_array( $ow['members'] ) && ( ! $ow['members'] || isset( $ow['members'][0]['id'], $ow['members'][0]['title'], $ow['members'][0]['code'] ) ) );
+$bk = OHCL_Rest::owner_benefits( req( array( 'benefit' => 'bay' ) ) );
+check( 'quyền lợi lạ ⇒ 400 ohcl_benefit_unknown (bốn trường)', is_wp_error( $bk ) && 'ohcl_benefit_unknown' === $bk->get_error_code() && err4( $bk ) );
+login( 0 );
+check( 'cả hai route quyền lợi đóng với khách', is_wp_error( route_perm( '/owner/benefits', 'GET' ) ) && is_wp_error( route_perm( '/me/benefits', 'GET' ) ) );
 
 /* ---------- công khai ---------- */
 login( 0 );

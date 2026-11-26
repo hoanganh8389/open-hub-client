@@ -191,7 +191,22 @@ final class OHCL_Admin {
 			echo '<p class="mute">' . ( $keys['capped'] ? 'Mới đọc 1 000 khoá đầu. ' : '' ) . 'Tính từ khoá của Hub ở lõi: trạng thái, hạn gói, lần dùng gần nhất. Hub không thấy nội dung hội thoại.</p></div>';
 		}
 
-		echo '<div class="ohcl-q"><i>3</i><h2>Tôi và các Coach đang giúp được gì?</h2></div><p class="mute">Có ở bản Coach (Đ3).</p>';
+		echo '<div class="ohcl-q"><i>3</i><h2>Tôi và các Coach đang giúp được gì?</h2></div>';
+		// [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2 — phễu tám quyền lợi: hội viên đã nhận / đủ điều kiện, tính từ dữ liệu có sẵn.
+		$bv = OHCL_Benefits::hub_view();
+		echo '<div class="ohcl-card ohcl-funnel"><h3>Quyền lợi hội viên đã nhận</h3>';
+		foreach ( $bv['funnel'] as $b ) {
+			if ( $b['soon'] ) {
+				echo '<div><span>' . esc_html( $b['label'] ) . '</span><i></i><b class="mute">Sắp ra mắt</b></div>';
+				continue;
+			}
+			if ( $b['off'] ) {
+				echo '<div><span>' . esc_html( $b['label'] ) . '</span><i></i><b class="mute">Module tắt</b></div>';
+				continue;
+			}
+			echo '<div><span>' . esc_html( $b['label'] ) . ( 'accepted' === $b['availability'] ? '' : ' <small class="mute">· ' . esc_html( OHCL_Benefits::AVAILABILITY[ $b['availability'] ] ) . '</small>' ) . '</span><i><em style="width:' . (int) $b['pct'] . '%"></em></i><b>' . (int) $b['reached'] . ' / ' . (int) $b['of'] . '</b></div>';
+		}
+		echo '<p class="mute">Đã nhận = đã trao, đã bật hoặc đang dùng, trên số hội viên đã được tiếp nhận. Quyền lợi giới hạn chỉ đo được phần đã có tín hiệu (xem ghi chú ở My Hub của hội viên). Phần Coach, Marketing, Học viện sâu hơn sẽ có ở các đợt sau.</p></div>';
 		echo '<div class="ohcl-q"><i>4</i><h2>Hub đang tạo ra bao nhiêu doanh thu?</h2></div><p class="mute">Có khi lõi Bizcity mở sổ doanh thu theo Hub (open-hub-core Đ3). Tới lúc đó hiện "—", không ước số.</p>';
 
 		echo '<div class="ohcl-q"><i>5</i><h2>Tôi cần làm gì tiếp theo?</h2></div><div class="ohcl-card ohcl-todo">';

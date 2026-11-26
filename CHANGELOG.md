@@ -1,5 +1,45 @@
 # Lịch sử phát hành
 
+## 0.12.0 — 2026-11-26 (sổ quyền lợi: hội viên thấy mình nhận gì, chủ Hub thấy cả cộng đồng nhận gì)
+
+- **Tám quyền lợi** (`OHCL_Benefits`): Công nghệ · Đào tạo · Khách hàng · Trợ lý AI · Coach đồng hành · Kết nối giao thương · Uy tín & xác minh · Cơ hội tăng trưởng. Trạng thái từng hội viên **tính từ dữ liệu có sẵn** (không lưu thêm, không ước): Chưa mở → Có thể nhận → Đã trao → Đã bật → Đang dùng; quyền lợi chưa thể đo dừng ở mức chứng minh được và ghi rõ vì sao (ví dụ Công nghệ dừng ở "Đã trao" tới khi site hội viên báo mức dùng; Giao thương không bao giờ "đang dùng" khi chưa đo lượt kết nối). "Cơ hội tăng trưởng" = **Sắp ra mắt**, không tính là đã nhận. Mỗi quyền lợi mang mức sẵn sàng (Đã nghiệm thu / Giới hạn / Lộ trình), ngành tinh chỉnh bằng bộ lọc `ohcl_benefit_availability`.
+- **My Hub › Quyền lợi của tôi**: tám thẻ, trạng thái, lý do, ghi chú giới hạn, nút việc tiếp theo; Tổng quan có dòng "N quyền lợi bạn đã nhận". Quyền lợi mà Hub tắt module thì không hiện.
+- **Tổng quan chủ Hub (câu 3)**: phễu "Quyền lợi hội viên đã nhận" — đã nhận / số hội viên đã được tiếp nhận, theo từng quyền lợi.
+- **API**: `GET /me/benefits`, `GET /owner/benefits` (+ `?benefit=&state=` ra danh sách hội viên đứng sau con số). 19 route.
+- run 74/74, rest-smoke 55/55, pages-smoke 45/45, admin-smoke 49/49 (đột biến: "chưa tiếp nhận vẫn nhận", "lộ trình vẫn tính đã nhận", "Công nghệ báo đang dùng", "Giao thương luôn đã trao" — đều bị bắt).
+
+## 0.12.0 — 2026-11-26 (sổ quyền lợi: hội viên thấy mình nhận gì, chủ Hub thấy cả cộng đồng nhận gì)
+
+- **Tám quyền lợi** (`OHCL_Benefits`): Công nghệ · Đào tạo · Khách hàng · Trợ lý AI · Coach đồng hành · Kết nối giao thương · Uy tín & xác minh · Cơ hội tăng trưởng. Trạng thái từng hội viên **tính từ dữ liệu có sẵn** (không lưu thêm, không ước): Chưa mở → Có thể nhận → Đã trao → Đã bật → Đang dùng; quyền lợi chưa thể đo dừng ở mức chứng minh được và ghi rõ vì sao (ví dụ Công nghệ dừng ở "Đã trao" tới khi site hội viên báo mức dùng; Giao thương không bao giờ "đang dùng" khi chưa đo lượt kết nối). "Cơ hội tăng trưởng" = **Sắp ra mắt**, không tính là đã nhận. Mỗi quyền lợi mang mức sẵn sàng (Đã nghiệm thu / Giới hạn / Lộ trình), ngành tinh chỉnh bằng bộ lọc `ohcl_benefit_availability`.
+- **My Hub › Quyền lợi của tôi**: tám thẻ, trạng thái, lý do, ghi chú giới hạn, nút việc tiếp theo; Tổng quan có dòng "N quyền lợi bạn đã nhận". Quyền lợi mà Hub tắt module thì không hiện.
+- **Tổng quan chủ Hub (câu 3)**: phễu "Quyền lợi hội viên đã nhận" — đã nhận / số hội viên đã được tiếp nhận, theo từng quyền lợi.
+- **API**: `GET /me/benefits`, `GET /owner/benefits` (+ `?benefit=&state=` ra danh sách hội viên đứng sau con số). 19 route.
+- run 74/74, rest-smoke 55/55, pages-smoke 45/45, admin-smoke 49/49 (đột biến: "chưa tiếp nhận vẫn nhận", "lộ trình vẫn tính đã nhận", "Công nghệ báo đang dùng", "Giao thương luôn đã trao" — đều bị bắt).
+
+## 0.12.0 — 2026-11-26 (sổ quyền lợi: hội viên thấy mình nhận gì, chủ Hub thấy cả cộng đồng nhận gì)
+
+- **Tám quyền lợi** (`OHCL_Benefits`): Công nghệ · Đào tạo · Khách hàng · Trợ lý AI · Coach đồng hành · Kết nối giao thương · Uy tín & xác minh · Cơ hội tăng trưởng. Trạng thái từng hội viên **tính từ dữ liệu có sẵn** (không lưu thêm, không ước): Chưa mở → Có thể nhận → Đã trao → Đã bật → Đang dùng; quyền lợi chưa thể đo dừng ở mức chứng minh được và ghi rõ vì sao (ví dụ Công nghệ dừng ở "Đã trao" tới khi site hội viên báo mức dùng; Giao thương không bao giờ "đang dùng" khi chưa đo lượt kết nối). "Cơ hội tăng trưởng" = **Sắp ra mắt**, không tính là đã nhận. Mỗi quyền lợi mang mức sẵn sàng (Đã nghiệm thu / Giới hạn / Lộ trình), ngành tinh chỉnh bằng bộ lọc `ohcl_benefit_availability`.
+- **My Hub › Quyền lợi của tôi**: tám thẻ, trạng thái, lý do, ghi chú giới hạn, nút việc tiếp theo; Tổng quan có dòng "N quyền lợi bạn đã nhận". Quyền lợi mà Hub tắt module thì không hiện.
+- **Tổng quan chủ Hub (câu 3)**: phễu "Quyền lợi hội viên đã nhận" — đã nhận / số hội viên đã được tiếp nhận, theo từng quyền lợi.
+- **API**: `GET /me/benefits`, `GET /owner/benefits` (+ `?benefit=&state=` ra danh sách hội viên đứng sau con số). 19 route.
+- run 74/74, rest-smoke 55/55, pages-smoke 45/45, admin-smoke 49/49 (đột biến: "chưa tiếp nhận vẫn nhận", "lộ trình vẫn tính đã nhận", "Công nghệ báo đang dùng", "Giao thương luôn đã trao" — đều bị bắt).
+
+## 0.12.0 — 2026-11-26 (sổ quyền lợi: hội viên thấy mình nhận gì, chủ Hub thấy cả cộng đồng nhận gì)
+
+- **Tám quyền lợi** (`OHCL_Benefits`): Công nghệ · Đào tạo · Khách hàng · Trợ lý AI · Coach đồng hành · Kết nối giao thương · Uy tín & xác minh · Cơ hội tăng trưởng. Trạng thái từng hội viên **tính từ dữ liệu có sẵn** (không lưu thêm, không ước): Chưa mở → Có thể nhận → Đã trao → Đã bật → Đang dùng; quyền lợi chưa thể đo dừng ở mức chứng minh được và ghi rõ vì sao (ví dụ Công nghệ dừng ở "Đã trao" tới khi site hội viên báo mức dùng; Giao thương không bao giờ "đang dùng" khi chưa đo lượt kết nối). "Cơ hội tăng trưởng" = **Sắp ra mắt**, không tính là đã nhận. Mỗi quyền lợi mang mức sẵn sàng (Đã nghiệm thu / Giới hạn / Lộ trình), ngành tinh chỉnh bằng bộ lọc `ohcl_benefit_availability`.
+- **My Hub › Quyền lợi của tôi**: tám thẻ, trạng thái, lý do, ghi chú giới hạn, nút việc tiếp theo; Tổng quan có dòng "N quyền lợi bạn đã nhận". Quyền lợi mà Hub tắt module thì không hiện.
+- **Tổng quan chủ Hub (câu 3)**: phễu "Quyền lợi hội viên đã nhận" — đã nhận / số hội viên đã được tiếp nhận, theo từng quyền lợi.
+- **API**: `GET /me/benefits`, `GET /owner/benefits` (+ `?benefit=&state=` ra danh sách hội viên đứng sau con số). 19 route.
+- run 74/74, rest-smoke 55/55, pages-smoke 45/45, admin-smoke 49/49 (đột biến: "chưa tiếp nhận vẫn nhận", "lộ trình vẫn tính đã nhận", "Công nghệ báo đang dùng", "Giao thương luôn đã trao" — đều bị bắt).
+
+## 0.12.0 — 2026-11-26 (sổ quyền lợi: hội viên thấy mình nhận gì, chủ Hub thấy cả cộng đồng nhận gì)
+
+- **Tám quyền lợi** (`OHCL_Benefits`): Công nghệ · Đào tạo · Khách hàng · Trợ lý AI · Coach đồng hành · Kết nối giao thương · Uy tín & xác minh · Cơ hội tăng trưởng. Trạng thái từng hội viên **tính từ dữ liệu có sẵn** (không lưu thêm, không ước): Chưa mở → Có thể nhận → Đã trao → Đã bật → Đang dùng; quyền lợi chưa thể đo dừng ở mức chứng minh được và ghi rõ vì sao (ví dụ Công nghệ dừng ở "Đã trao" tới khi site hội viên báo mức dùng; Giao thương không bao giờ "đang dùng" khi chưa đo lượt kết nối). "Cơ hội tăng trưởng" = **Sắp ra mắt**, không tính là đã nhận. Mỗi quyền lợi mang mức sẵn sàng (Đã nghiệm thu / Giới hạn / Lộ trình), ngành tinh chỉnh bằng bộ lọc `ohcl_benefit_availability`.
+- **My Hub › Quyền lợi của tôi**: tám thẻ, trạng thái, lý do, ghi chú giới hạn, nút việc tiếp theo; Tổng quan có dòng "N quyền lợi bạn đã nhận". Quyền lợi mà Hub tắt module thì không hiện.
+- **Tổng quan chủ Hub (câu 3)**: phễu "Quyền lợi hội viên đã nhận" — đã nhận / số hội viên đã được tiếp nhận, theo từng quyền lợi.
+- **API**: `GET /me/benefits`, `GET /owner/benefits` (+ `?benefit=&state=` ra danh sách hội viên đứng sau con số). 19 route.
+- run 74/74, rest-smoke 55/55, pages-smoke 45/45, admin-smoke 49/49 (đột biến: "chưa tiếp nhận vẫn nhận", "lộ trình vẫn tính đã nhận", "Công nghệ báo đang dùng", "Giao thương luôn đã trao" — đều bị bắt).
+
 ## 0.11.1 — 2026-11-26 (Tổng quan: câu 1 và câu 5 đủ việc từ hồ sơ hội viên)
 
 - **Câu 5 "Tôi cần làm gì tiếp theo?"** nay có việc từ hồ sơ, không chỉ từ khoá: yêu cầu hỗ trợ mới (7 ngày), hồ sơ chờ tiếp nhận, đã tiếp nhận chờ cấp khoá, đang dùng trợ lý chờ xác minh, xác minh sắp hết hạn (30 ngày), hội viên chưa có Coach (khi module Coach bật và đã có Coach). Mỗi việc là liên kết lọc danh sách hội viên theo chặng; chỉ hiện khi có số > 0; lõi không đọc được ⇒ không bịa việc "chờ xác minh".

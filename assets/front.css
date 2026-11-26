@@ -286,3 +286,12 @@ body.ohcl-front .mfp-hide,body.ohcl-front .hidden,body.ohcl-front #main-menu.mob
 .ohcl-front .coach-kpis .kpi b{display:block;font-size:22px;margin-top:4px;font-variant-numeric:tabular-nums}
 @media (max-width:720px){.ohcl-front .coach-kpis{grid-template-columns:1fr 1fr}}
 .ohcl-front .tbl th{text-align:left}.ohcl-front .tbl th.n,.ohcl-front .tbl td.n{text-align:right}
+
+/* [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2 — Quyền lợi của tôi */
+.ohcl-front .bn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:14px}
+.ohcl-front .bn{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.ohcl-front .bn .ic{width:38px;height:38px;border-radius:10px;background:var(--g-s);color:var(--g-d);display:grid;place-items:center}.ohcl-front .bn .ic svg{width:22px;height:22px}
+.ohcl-front .bn p{margin:0;font-size:14px}
+.ohcl-front .bn .btn{margin-top:auto}
+.ohcl-front .bn-soon,.ohcl-front .bn-locked{opacity:.78}
+.ohcl-front .bn-sum{margin-top:14px}

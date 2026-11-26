@@ -61,6 +61,11 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 
 		<?php if ( '' === $ohcl_tab ) : ?>
 			<div class="gift0 pnl"><span class="kick">Bản quyền bộ công nghệ mã nguồn mở</span><b>0 đ</b><p><?php echo (int) count( $ohcl_apps ); ?> ứng dụng của ngành · không giới hạn người dùng</p></div>
+			<?php // [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2 — tóm tắt quyền lợi + liên kết sang tab đầy đủ.
+			$ohcl_bn  = OHCL_Benefits::for_member( $ohcl_m, $ohcl_key, OHCL_Benefits::context( $ohcl_now ) );
+			$ohcl_got = OHCL_Benefits::received( $ohcl_bn );
+			?>
+			<div class="pnl bn-sum"><div><b><?php echo (int) $ohcl_got; ?></b> quyền lợi bạn đã nhận · <a href="<?php echo esc_url( OHCL_Front::myhub_url( 'quyen-loi' ) ); ?>">Xem 8 quyền lợi của tôi</a></div></div>
 			<p class="kick">Hub mang lại cho bạn tháng này</p>
 			<div class="kpis">
 				<div class="pnl kpi"><span>Lượt xem hồ sơ</span><b>—</b></div>
@@ -88,6 +93,31 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 					<?php if ( $ohcl_m['coach'] ) : ?><p>Coach phụ trách: <b class="mono"><?php echo esc_html( $ohcl_m['coach'] ); ?></b></p><?php else : ?><p class="note">Chưa có Coach phụ trách. Ban điều hành sẽ phân công theo loại hình của bạn.</p><?php endif; ?>
 				</div>
 			</div>
+
+		<?php elseif ( 'quyen-loi' === $ohcl_tab ) : ?>
+			<?php
+			// [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2 — Quyền lợi của tôi: tám thẻ, trạng thái thật, lý do và việc tiếp theo; quyền lợi chưa mở hiện riêng.
+			$ohcl_bn   = OHCL_Benefits::for_member( $ohcl_m, $ohcl_key, OHCL_Benefits::context( $ohcl_now ) );
+			$ohcl_tone = array( 'locked' => 'idle', 'eligible' => 'soon', 'granted' => 'ok', 'activated' => 'ok', 'used' => 'ok', 'soon' => 'idle', 'off' => 'idle' );
+			$ohcl_show = array_filter( $ohcl_bn, function ( $b ) { return 'off' !== $b['state']; } );
+			?>
+			<div class="pnl"><h2>Quyền lợi của tôi</h2>
+				<p>Bạn đã nhận <b><?php echo (int) OHCL_Benefits::received( $ohcl_bn ); ?></b> trong <?php echo (int) count( array_filter( $ohcl_show, function ( $b ) { return 'soon' !== $b['state']; } ) ); ?> quyền lợi hiện có. Mỗi quyền lợi cho biết bạn đang ở đâu và việc tiếp theo.</p></div>
+			<div class="bn-grid">
+				<?php foreach ( $ohcl_show as $ohcl_b ) : $ohcl_u = OHCL_Benefits::next_url( $ohcl_b['next']['target'], $ohcl_m ); ?>
+					<div class="pnl bn bn-<?php echo esc_attr( $ohcl_b['state'] ); ?>">
+						<span class="ic"><?php echo OHCL_Front::icon( $ohcl_b['icon'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+						<b><?php echo esc_html( $ohcl_b['label'] ); ?></b>
+						<span class="tag <?php echo esc_attr( $ohcl_tone[ $ohcl_b['state'] ] ); ?>"><?php echo esc_html( $ohcl_b['state_label'] ); ?></span>
+						<?php if ( 'accepted' !== $ohcl_b['availability'] ) : ?><span class="tag idle"><?php echo esc_html( OHCL_Benefits::AVAILABILITY[ $ohcl_b['availability'] ] ); ?></span><?php endif; ?>
+						<p><?php echo esc_html( $ohcl_b['why'] ); ?></p>
+						<?php if ( $ohcl_b['note'] ) : ?><p class="note"><?php echo esc_html( $ohcl_b['note'] ); ?></p><?php endif; ?>
+						<?php if ( $ohcl_b['next']['label'] && $ohcl_u ) : ?><a class="btn o sm" href="<?php echo esc_url( $ohcl_u ); ?>"><?php echo esc_html( $ohcl_b['next']['label'] ); ?></a>
+						<?php elseif ( $ohcl_b['next']['label'] ) : ?><span class="note"><?php echo esc_html( $ohcl_b['next']['label'] ); ?></span><?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+			<p class="note">Quyền làm chủ của bạn áp dụng cho cả tám: dữ liệu của bạn thuộc về bạn, bạn có thể rút đồng ý công khai bất cứ lúc nào ở mục Hồ sơ doanh nghiệp.</p>
 
 		<?php elseif ( 'cong-nghe' === $ohcl_tab ) : ?>
 			<div class="pnl"><h2>Trợ lý AI trên Zalo</h2><p><span class="tag <?php echo esc_attr( in_array( $ohcl_ai['code'], array( 'trial', 'active' ), true ) ? 'ok' : 'idle' ); ?>"><?php echo esc_html( $ohcl_ai['label'] ); ?></span>

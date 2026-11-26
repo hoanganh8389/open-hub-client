@@ -29,7 +29,7 @@ function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['o
 function update_option( $k, $v, $autoload = null ) { $GLOBALS['opt_writes']++; $GLOBALS['opts'][ $k ] = $v; return true; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-benefits' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 
@@ -191,6 +191,39 @@ $mo = array();
 foreach ( $gr as $g ) { $mo[ $g['month'] ] = $g; }
 check( 'mới / rời theo tháng: 6 tháng liên tục, tháng 11 có 2 mới, tháng 9 có 1 mới, tháng 10 có 1 mới + 1 rời', 6 === count( $gr ) && '2026-06' === $gr[0]['month'] && '2026-11' === $gr[5]['month'] && 2 === $mo['2026-11']['new'] && 1 === $mo['2026-09']['new'] && 1 === $mo['2026-10']['new'] && 1 === $mo['2026-10']['left'] );
 check( 'mới / rời: hồ sơ ngoài 6 tháng không đếm; người có left_at nhưng đã quay lại hoạt động không đếm là rời', 0 === array_sum( array_column( $gr, 'new' ) ) - 4 && 1 === array_sum( array_column( $gr, 'left' ) ) );
+
+/* ---- 4c. Sổ quyền lợi: tám quyền lợi tính từ dữ liệu có sẵn (OHCL-H2) ---- */
+// [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2
+$bctx = array( 'modules' => array( '03' => true, '04' => true, '05' => true, '06' => true, '07' => true, '09' => true ), 'availability' => array(), 'tracks' => 2, 'now' => $T );
+$bm   = function ( array $o ) use ( $mk ) { return $mk( array_merge( array( 'accepted_at' => '2026-11-11 00:00:00', 'segment' => 'x', 'lat' => '', 'lng' => '', 'consent' => '', 'certs' => '' ), $o ) ); };
+$st   = function ( $key, array $m, $kv = null, array $ctx = null ) use ( $bctx ) { return OHCL_Benefits::state( $key, $m, $kv, null === $ctx ? $bctx : $ctx ); };
+check( 'quyền lợi: tám khoá, mỗi khoá có tên, biểu tượng, mức sẵn sàng', 8 === count( OHCL_Benefits::DEFS ) && array( 'tech', 'training', 'marketing', 'ai', 'coach', 'network', 'trust', 'growth' ) === array_keys( OHCL_Benefits::DEFS ) );
+check( 'chưa được tiếp nhận ⇒ mọi quyền lợi (trừ sắp ra mắt) "Chưa mở" kèm lý do', 'locked' === $st( 'tech', $mk( array() ) )['state'] && 'locked' === $st( 'ai', $mk( array() ) )['state'] && false !== strpos( $st( 'ai', $mk( array() ) )['why'], 'tiếp nhận' ) );
+check( 'tạm dừng / đã rời ⇒ "Chưa mở", lý do nói đúng', 'locked' === $st( 'tech', $bm( array( 'status' => 'left' ) ) )['state'] && false !== strpos( $st( 'tech', $bm( array( 'status' => 'left' ) ) )['why'], 'tạm dừng' ) );
+check( '"Cơ hội tăng trưởng" là lộ trình ⇒ "Sắp ra mắt", không bao giờ tính là đã nhận', 'soon' === $st( 'growth', $bm( array() ) )['state'] && 'soon' === $st( 'growth', $bm( array( 'key_id' => 11 ) ), $live[11] )['state'] );
+$ai0 = $st( 'ai', $bm( array() ) );
+check( 'AI: đã tiếp nhận, chưa khoá ⇒ "Có thể nhận" + việc nhắn ban điều hành', 'eligible' === $ai0['state'] && 'Nhắn ban điều hành cấp khoá' === $ai0['next']['label'] );
+$kv_unused = array( 'id' => 11, 'status' => 'trial', 'plan_code' => 'trial', 'plan_until' => '2030-01-01 00:00:00', 'last_used_at' => null, 'created_at' => '2026-11-20 00:00:00' );
+$kv_old    = array_merge( $kv_unused, array( 'last_used_at' => '2026-08-01 00:00:00' ) );
+check( 'AI: có khoá chưa dùng ⇒ "Đã trao"; từng dùng nhưng quá 30 ngày ⇒ "Đã bật"; dùng trong 30 ngày ⇒ "Đang dùng"', 'granted' === $st( 'ai', $bm( array( 'key_id' => 11 ) ), $kv_unused )['state'] && 'activated' === $st( 'ai', $bm( array( 'key_id' => 11 ) ), $kv_old )['state'] && 'used' === $st( 'ai', $bm( array( 'key_id' => 11 ) ), $live[11] )['state'] );
+$tech = $st( 'tech', $bm( array( 'key_id' => 11 ) ), $live[11] );
+check( 'Công nghệ: có khoá chạy ⇒ dừng ở "Đã trao" (chưa có tín hiệu ứng dụng nên KHÔNG nói "đang dùng"), có ghi chú vì sao', 'granted' === $tech['state'] && false !== strpos( $tech['note'], 'hiện chỉ biết' ) && 'used' !== $tech['state'] );
+check( 'Đào tạo: có lộ trình ⇒ "Có thể nhận" + liên kết trang Học viện + ghi chú ghi danh chưa mở; không lộ trình ⇒ vẫn "Có thể nhận" nhưng không có việc tiếp theo', 'eligible' === $st( 'training', $bm( array() ) )['state'] && 'page:academy' === $st( 'training', $bm( array() ) )['next']['target'] && '' === $st( 'training', $bm( array() ), null, array_merge( $bctx, array( 'tracks' => 0 ) ) )['next']['label'] && 'limited' === $st( 'training', $bm( array() ) )['availability'] );
+$ver = array( 'until' => '2026-12-30 00:00:00' );
+check( 'Khách hàng: chưa xác minh ⇒ "Có thể nhận"; đã xác minh nhưng thiếu đồng ý / toạ độ ⇒ "Đã trao"; lên bản đồ V4 ⇒ "Đang dùng"', 'eligible' === $st( 'marketing', $bm( array( 'key_id' => 11 ) ), $live[11] )['state'] && 'granted' === $st( 'marketing', $bm( array( 'key_id' => 11, 'verify' => $ver ) ), $live[11] )['state'] && 'used' === $st( 'marketing', $bm( array( 'key_id' => 11, 'verify' => $ver, 'lat' => '21', 'lng' => '105', 'consent' => '2026-11-12 00:00:00' ) ), $live[11] )['state'] );
+check( 'Coach: chưa có ⇒ "Có thể nhận"; có mã Coach ⇒ "Đã trao" (dừng, Workspace chưa mở, có ghi chú)', 'eligible' === $st( 'coach', $bm( array() ) )['state'] && 'granted' === $st( 'coach', $bm( array( 'coach' => 'c1' ) ) )['state'] && '' !== $st( 'coach', $bm( array( 'coach' => 'c1' ) ) )['note'] );
+check( 'Giao thương: chỉ "Đã trao" khi hồ sơ công khai (V4), không bao giờ "đang dùng" (chưa đo lượt kết nối)', 'eligible' === $st( 'network', $bm( array() ) )['state'] && 'granted' === $st( 'network', $bm( array( 'key_id' => 11, 'verify' => $ver, 'lat' => '21', 'lng' => '105', 'consent' => '2026-11-12 00:00:00' ) ), $live[11] )['state'] );
+$cert = array( 'thuan-chay' => array( 'label' => 'Thuần chay', 'until' => '2026-12-30 00:00:00', 'revoked' => false ) );
+check( 'Uy tín: chưa ⇒ "Có thể nhận"; Verified ⇒ "Đã trao"; Certified còn hạn ⇒ "Đang dùng"', 'eligible' === $st( 'trust', $bm( array() ) )['state'] && 'granted' === $st( 'trust', $bm( array( 'verify' => $ver ) ) )['state'] && 'used' === $st( 'trust', $bm( array( 'verify' => $ver, 'certs' => $cert ) ) )['state'] );
+check( 'module bị tắt ⇒ "Hub chưa bật", không đếm', 'off' === $st( 'trust', $bm( array() ), null, array_merge( $bctx, array( 'modules' => array_merge( $bctx['modules'], array( '06' => false ) ) ) ) )['state'] );
+check( 'bộ lọc ohcl_benefit_availability (ngành tinh chỉnh) đổi mức sẵn sàng; "lộ trình" ⇒ sắp ra mắt', 'soon' === $st( 'coach', $bm( array() ), null, array_merge( $bctx, array( 'availability' => array( 'coach' => 'roadmap' ) ) ) )['state'] );
+$per = function ( array $m, $kv ) use ( $bctx ) { return OHCL_Benefits::for_member( $m, $kv, $bctx ); };
+$rows = array( 1 => $per( $bm( array( 'id' => 1 ) ), null ), 2 => $per( $bm( array( 'id' => 2, 'key_id' => 11 ) ), $live[11] ), 3 => $per( $mk( array( 'id' => 3 ) ), null ) );
+$fn   = array();
+foreach ( OHCL_Benefits::funnel( $rows ) as $f ) { $fn[ $f['key'] ] = $f; }
+check( 'phễu: AI — 3 hội viên, 1 chưa tiếp nhận (không tính vào mẫu số), 1 có thể nhận, 1 đang dùng ⇒ đã nhận 1 / 2 = 50%', 1 === $fn['ai']['counts']['eligible'] && 1 === $fn['ai']['counts']['used'] && 1 === $fn['ai']['counts']['locked'] && 1 === $fn['ai']['reached'] && 2 === $fn['ai']['of'] && 50 === $fn['ai']['pct'] );
+check( 'phễu: "Cơ hội tăng trưởng" hiện "sắp ra mắt", không có số đã nhận', true === $fn['growth']['soon'] && 0 === $fn['growth']['reached'] );
+check( 'received(): đếm đúng quyền lợi đã trao trở lên (công nghệ, AI, khách hàng, Coach, uy tín = 5; giao thương mới "có thể nhận" và tăng trưởng "sắp ra mắt" không tính)', 5 === OHCL_Benefits::received( $per( $bm( array( 'id' => 2, 'key_id' => 11, 'verify' => $ver, 'coach' => 'c1' ) ), $live[11] ) ) );
 
 /* ---- 5. Ranh giới mã (R-HUB-14, R-HUB-15) ---- */
 $src = '';
