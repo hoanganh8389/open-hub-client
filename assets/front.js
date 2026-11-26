@@ -64,4 +64,11 @@
 			}, { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 });
 		});
 	});
+	/* [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — báo một lượt bấm "Nhắn Zalo" về Hub; không gửi gì về người bấm, không chặn việc mở Zalo. */
+	document.querySelectorAll('[data-ohcl-contact]').forEach(function (a) {
+		a.addEventListener('click', function () {
+			var u = a.getAttribute('data-ohcl-contact');
+			try { if (navigator.sendBeacon) { navigator.sendBeacon(u, new Blob([], { type: 'text/plain' })); } else { fetch(u, { method: 'POST', keepalive: true, credentials: 'omit' }); } } catch (e) { /* bỏ qua */ }
+		});
+	});
 })();

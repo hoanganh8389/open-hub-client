@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Hub Client
  * Description:       Nền tảng chung cho mọi site Hub ngành của Bizcity Open: 14 module bật / tắt, hợp đồng ngành bizcity_industry_hub@2, ô mở rộng cho plugin ngành, một cửa gọi open-hub-core. Đặc tả: canon open-hub OPEN-HUB-CLIENT.md.
- * Version:           0.12.0
+ * Version:           0.13.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Johnny Chu – Chu Hoàng Anh
@@ -19,10 +19,10 @@ if ( defined( 'OHCL_VERSION' ) ) {
 	return;
 }
 
-define( 'OHCL_VERSION', '0.12.0' );
+define( 'OHCL_VERSION', '0.13.0' );
 define( 'OHCL_DIR', __DIR__ . '/' );
 
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
 	$ohcl_p = OHCL_DIR . 'includes/' . $ohcl_f . '.php';
 	if ( ! is_file( $ohcl_p ) || ! is_readable( $ohcl_p ) ) {
 		return; // a missing artifact disables the plugin quietly instead of a fatal.
@@ -50,9 +50,13 @@ add_action( 'init', array( 'OHCL_Coach', 'register' ) );
 add_action( 'init', array( 'OHCL_Affiliate', 'register' ) );
 add_action( 'init', array( 'OHCL_Affiliate', 'capture_ref' ), 5 );
 add_action( 'ohcl_affiliate_daily', array( 'OHCL_Affiliate', 'sync' ) );
+add_action( 'ohcl_events_daily', array( 'OHCL_Events', 'rollup' ) ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — gộp sổ đo mỗi ngày
 add_action(
 	'init',
 	static function () {
+		if ( ! wp_next_scheduled( 'ohcl_events_daily' ) ) {
+			wp_schedule_event( time() + 2 * HOUR_IN_SECONDS, 'daily', 'ohcl_events_daily' );
+		}
 		if ( ! wp_next_scheduled( 'ohcl_affiliate_daily' ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'ohcl_affiliate_daily' );
 		}
@@ -74,7 +78,8 @@ register_deactivation_hook(
 	__FILE__,
 	static function () {
 		flush_rewrite_rules();
-		wp_clear_scheduled_hook( 'ohcl_affiliate_daily' ); // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A
+		wp_clear_scheduled_hook( 'ohcl_affiliate_daily' );
+		wp_clear_scheduled_hook( 'ohcl_events_daily' ); // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A
 	}
 );
 

@@ -75,7 +75,7 @@ function get_users( array $a ) { return array(); }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-myhub', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-myhub', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -99,7 +99,7 @@ OHCL_Core_Client::$transport = function ( $m, $u, $h, $b ) use ( $now_s ) {
 };
 
 /* ---------- đăng ký route + quyền ---------- */
-check( 'đăng ký 19 route trong namespace open-hub-client/v1', 19 === count( $GLOBALS['routes'] ) && 'open-hub-client/v1' === $GLOBALS['routes'][0][0] );
+check( 'đăng ký 23 route trong namespace open-hub-client/v1', 23 === count( $GLOBALS['routes'] ) && 'open-hub-client/v1' === $GLOBALS['routes'][0][0] );
 login( 0 );
 $ps = route_perm( '/owner/overview', 'GET' );
 check( 'owner: chưa đăng nhập ⇒ 401 ohcl_rest_login_required (đủ bốn trường)', is_wp_error( $ps ) && 'ohcl_rest_login_required' === $ps->get_error_code() && 401 === $ps->get_error_data()['status'] && err4( $ps ) );
@@ -222,6 +222,30 @@ $bk = OHCL_Rest::owner_benefits( req( array( 'benefit' => 'bay' ) ) );
 check( 'quyền lợi lạ ⇒ 400 ohcl_benefit_unknown (bốn trường)', is_wp_error( $bk ) && 'ohcl_benefit_unknown' === $bk->get_error_code() && err4( $bk ) );
 login( 0 );
 check( 'cả hai route quyền lợi đóng với khách', is_wp_error( route_perm( '/owner/benefits', 'GET' ) ) && is_wp_error( route_perm( '/me/benefits', 'GET' ) ) );
+
+// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+login( 5, false );
+$oc0 = body( OHCL_Rest::me_outcomes() );
+check( 'GET /me/outcomes: chưa khai ⇒ status "none"', 'none' === $oc0['status'] && array() === $oc0['items'] );
+$oc1 = OHCL_Rest::me_outcomes_save( req( array(), array( 'outcomes' => array( array( 'label' => 'Tỉ lệ giá vốn', 'before' => '38%', 'after' => '33%', 'period' => '90 ngày' ), array( 'label' => 'Thiếu số' ) ), 'outcomes_consent' => true ) ) );
+check( 'POST /me/outcomes: lưu 1 dòng hợp lệ (bỏ dòng thiếu số) ⇒ 201, trạng thái "pending" (chờ Hub duyệt), chưa công khai', 201 === $oc1->status && 1 === count( body( $oc1 )['items'] ) && 'pending' === body( $oc1 )['status'] );
+login( 6, false );
+check( '/me/outcomes: tài khoản không có hồ sơ ⇒ 404 (không lộ / không ghi vào hồ sơ người khác)', is_wp_error( OHCL_Rest::me_outcomes() ) && is_wp_error( OHCL_Rest::me_outcomes_save( req( array(), array( 'outcomes' => array() ) ) ) ) );
+login( 1, true );
+$rv = OHCL_Rest::owner_outcomes_review( req( array( 'id' => $mid ), array( 'approve' => true ) ) );
+check( 'POST /owner/members/{id}/outcomes/review: Hub duyệt ⇒ ok, hội viên thấy "public"', true === body( $rv )['ok'] && ( function () { login( 5, false ); return 'public' === body( OHCL_Rest::me_outcomes() )['status']; } )() );
+login( 1, true );
+OHCL_Rest::owner_outcomes_review( req( array( 'id' => $mid ), array( 'approve' => false ) ) );
+login( 5, false );
+check( 'Hub gỡ (approve=false) ⇒ về "pending"', 'pending' === body( OHCL_Rest::me_outcomes() )['status'] );
+login( 1, true );
+$rn = OHCL_Rest::owner_outcomes_review( req( array( 'id' => $m2 ), array( 'approve' => true ) ) );
+check( 'duyệt hồ sơ chưa khai / chưa đồng ý ⇒ 409 ohcl_outcomes_no_consent', is_wp_error( $rn ) && 409 === $rn->get_error_data()['status'] && 'ohcl_outcomes_no_consent' === $rn->get_error_code() );
+login( 5, false );
+$me2 = body( OHCL_Rest::me() );
+check( 'GET /me: có khối impact (chưa đo ⇒ measured=false, views / contacts null — không phải 0)', isset( $me2['impact'] ) && false === $me2['impact']['measured'] && null === $me2['impact']['views'] && null === $me2['impact']['contacts'] );
+login( 0 );
+check( 'đường outcomes đóng với khách; beacon /places/{id}/contact mở công khai', is_wp_error( route_perm( '/me/outcomes', 'GET' ) ) && is_wp_error( route_perm( '/me/outcomes', 'POST' ) ) && is_wp_error( route_perm( '/owner/members/(?P<id>\\d+)/outcomes/review', 'POST' ) ) && true === route_perm( '/places/(?P<id>\\d+)/contact', 'POST' ) );
 
 /* ---------- công khai ---------- */
 login( 0 );

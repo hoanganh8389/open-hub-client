@@ -72,7 +72,7 @@ function wp_safe_redirect( $u ) { throw new Redirected( $u ); }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-myhub', 'class-ohcl-front' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-myhub', 'class-ohcl-front' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -192,6 +192,10 @@ $bn = OHCL_Front::html( 'myhub', array( 'tab' => 'quyen-loi' ) );
 check( 'My Hub › Quyền lợi của tôi: có mục trong menu bên, 7 thẻ quyền lợi hiện có + thẻ "Sắp ra mắt" cho Cơ hội tăng trưởng; không có "Hub chưa bật" lọt ra', false !== strpos( $bn, 'Quyền lợi của tôi' ) && 8 === substr_count( $bn, 'class="pnl bn bn-' ) && false !== strpos( $bn, 'Sắp ra mắt' ) && false !== strpos( $bn, 'Cơ hội tăng trưởng' ) );
 check( 'My Hub › Quyền lợi: mỗi thẻ nói lý do, thẻ giới hạn mang nhãn "Giới hạn", có dòng quyền làm chủ', false !== strpos( $bn, 'class="tag idle">Giới hạn' ) && false !== strpos( $bn, 'Quyền làm chủ của bạn' ) );
 check( 'My Hub › Tổng quan: có tóm tắt "quyền lợi bạn đã nhận" và liên kết sang tab', false !== strpos( $my, 'quyền lợi bạn đã nhận' ) && false !== strpos( $my, 'quyen-loi' ) );
+// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+$kq = OHCL_Front::html( 'myhub', array( 'tab' => 'ket-qua' ) );
+check( 'My Hub › Kết quả của tôi: có trong menu, form 3 dòng trước / sau, ô đồng ý, nonce, nói rõ "bạn tự khai"', false !== strpos( $kq, 'Kết quả của tôi' ) && 3 === substr_count( $kq, 'name="outcomes[' ) / 4 && false !== strpos( $kq, 'name="outcomes_consent"' ) && false !== strpos( $kq, 'name="_ohcl_myhub"' ) && false !== strpos( $kq, 'tự khai' ) );
+check( 'My Hub › Tổng quan: chưa đo ⇒ lượt xem / liên hệ hiện "—" và có câu nói chưa đo', false !== strpos( $my, '<span>Lượt xem hồ sơ</span><b>—</b>' ) && false !== strpos( $my, 'Chưa đo' ) );
 check( 'My Hub › Quyền lợi: không lộ điện thoại nội bộ / khoá đầy đủ', false === strpos( $bn, '0912000111' ) && false === strpos( $bn, 'biz-' . str_repeat( 'f', 32 ) ) );
 function my_post( $action, array $p ) { $_POST = $p + array( '_ohcl_myhub' => 'nonce-ok' ); try { call_user_func( array( 'OHCL_MyHub', $action ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 $r = my_post( 'handle_profile', array( 'address' => '<b>12 Phố Huế</b>', 'hours' => '8-22', 'site_url' => 'javascript:x', 'contact_zalo' => '0912 333 444' ) );

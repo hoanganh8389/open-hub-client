@@ -158,6 +158,73 @@ final class OHCL_Service {
 		return true;
 	}
 
+	/* ===================== outcomes (kết quả tự khai) ===================== */
+
+	/**
+	 * Clean what a member reports about the results they got: up to 3 rows {label, before, after, period}, each
+	 * needs a label and both numbers; plus the consent to show them publicly. Pure.
+	 */
+	public static function clean_outcomes( array $in ) {
+		// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — kết quả tự khai: tối đa 3 dòng, đủ nhãn + trước + sau; ô đồng ý riêng.
+		$cut = function ( $v, $n ) {
+			$v = is_scalar( $v ) ? trim( preg_replace( '/\s+/u', ' ', strip_tags( (string) $v ) ) ) : '';
+			return function_exists( 'mb_substr' ) ? mb_substr( $v, 0, $n, 'UTF-8' ) : substr( $v, 0, $n );
+		};
+		$items = array();
+		foreach ( array_slice( isset( $in['outcomes'] ) && is_array( $in['outcomes'] ) ? $in['outcomes'] : array(), 0, 3 ) as $r ) {
+			$r = is_array( $r ) ? $r : array();
+			$row = array( 'label' => $cut( isset( $r['label'] ) ? $r['label'] : '', 60 ), 'before' => $cut( isset( $r['before'] ) ? $r['before'] : '', 30 ), 'after' => $cut( isset( $r['after'] ) ? $r['after'] : '', 30 ), 'period' => $cut( isset( $r['period'] ) ? $r['period'] : '', 30 ) );
+			if ( '' !== $row['label'] && '' !== $row['before'] && '' !== $row['after'] ) {
+				$items[] = $row;
+			}
+		}
+		return array( 'items' => $items, 'consent' => ! empty( $in['outcomes_consent'] ) || ! empty( $in['consent'] ) );
+	}
+
+	/** Member saves own reported results. Any edit takes the set off the public page until the Hub approves again. */
+	public static function save_outcomes( $member_id, array $clean ) {
+		$id  = (int) $member_id;
+		$old = get_post_meta( $id, '_bzm_outcomes', true );
+		$old = is_array( $old ) ? $old : array();
+		$had = isset( $old['consent_at'] ) ? (string) $old['consent_at'] : '';
+		update_post_meta( $id, '_bzm_outcomes', array( 'items' => $clean['items'], 'consent_at' => $clean['consent'] && $clean['items'] ? ( '' !== $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '', 'approved' => false, 'approved_at' => '', 'approved_by' => 0, 'saved_at' => gmdate( 'Y-m-d H:i:s' ) ) );
+		OHCL_Members::flush_public();
+		return true;
+	}
+
+	/** Hub Owner approves (or hides) the member's reported results for the public page. @return true|WP_Error */
+	public static function review_outcomes( $member_id, $approve ) {
+		$id = (int) $member_id;
+		if ( ! OHCL_Members::get( $id ) ) {
+			return self::not_found();
+		}
+		$o = get_post_meta( $id, '_bzm_outcomes', true );
+		if ( ! is_array( $o ) || empty( $o['items'] ) || empty( $o['consent_at'] ) ) {
+			return OHCL_Error::make( 'ohcl_outcomes_no_consent', 'Hội viên chưa khai kết quả hoặc chưa đồng ý công bố.', 'Chỉ duyệt khi hội viên đã khai và tích đồng ý công khai.', 409 );
+		}
+		$o['approved']    = (bool) $approve;
+		$o['approved_at'] = $approve ? gmdate( 'Y-m-d H:i:s' ) : '';
+		$o['approved_by'] = $approve ? get_current_user_id() : 0;
+		update_post_meta( $id, '_bzm_outcomes', $o );
+		OHCL_Members::flush_public();
+		return true;
+	}
+
+	/** Reported results as the owner / member sees them (status in words). */
+	public static function outcomes_view( array $m ) {
+		$o = is_array( $m['outcomes'] ) ? $m['outcomes'] : array();
+		$items = isset( $o['items'] ) ? $o['items'] : array();
+		$cons  = ! empty( $o['consent_at'] );
+		$app   = ! empty( $o['approved'] );
+		return array( 'items' => $items, 'consent' => $cons, 'approved' => $app, 'status' => ! $items ? 'none' : ( ! $cons ? 'private' : ( $app ? 'public' : 'pending' ) ) );
+	}
+
+	/** "Hub đã mang lại gì" this month: null counts when nothing has been measured yet. */
+	public static function impact( array $m, $now_ts ) {
+		$c = OHCL_Events::month_counts( (int) $m['id'], $now_ts );
+		return array( 'measured' => null !== $c, 'month' => gmdate( 'Y-m', $now_ts ), 'views' => null === $c ? null : $c['profile_view'], 'contacts' => null === $c ? null : $c['contact_click'] );
+	}
+
 	/* ===================== pure serializers (REST + tests) ===================== */
 
 	private static function key_view( $key ) {

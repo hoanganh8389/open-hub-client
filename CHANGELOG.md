@@ -1,5 +1,15 @@
 # Lịch sử phát hành
 
+## 0.13.0 — 2026-11-26 (H3: "Hub đã mang lại gì" có số thật + kết quả hội viên tự khai)
+
+- **Sổ đo** (`OHCL_Events`): lượt **xem hồ sơ** và lượt **bấm "Nhắn Zalo"** trên trang công khai. Mỗi lượt là một dòng JSONL `{t, e, m}` (giờ UTC, sự kiện, mã hội viên) trong `uploads/open-hub-client/events/` (có `.htaccess` chặn truy cập); **không IP, không user-agent, không liên hệ**. Cron hằng ngày gộp **tổng theo tháng** vào `_bzm_rollup` (giữ 14 tháng), xoá tệp quá 120 ngày; không dòng nào vào cơ sở dữ liệu.
+- Không đếm: chủ hồ sơ, quản trị viên, máy tự động / xem trước liên kết, hồ sơ mẫu, hồ sơ không hoạt động; một khách chỉ tính một lượt mỗi giờ (khử trùng bằng transient băm, không lưu dữ liệu đọc được).
+- **Chưa đo ≠ đo ra 0**: khi chưa từng có lượt nào, My Hub và Member 360° hiện "—"; có lượt rồi mới hiện số (kể cả 0).
+- **My Hub**: hai ô "Lượt xem hồ sơ", "Lượt liên hệ từ Hub" ở Tổng quan nay là số thật. **Tab mới "Kết quả của tôi"**: hội viên tự khai 1–3 chỉ số trước / sau (kèm kỳ) và ô đồng ý công bố. Trạng thái: chưa khai · chỉ mình thấy · chờ Hub duyệt · đang hiện công khai; **mỗi lần sửa về "chờ duyệt"**, bỏ tích đồng ý thì gỡ ngay.
+- **Chủ Hub**: Member 360° có "Hub đã mang lại (tháng này)" và "Kết quả hội viên tự khai" với nút **Duyệt hiện công khai / Gỡ**. Trang công khai chỉ hiện kết quả khi hội viên đồng ý **và** Hub duyệt, ghi rõ "do cơ sở tự khai; Hub không kiểm chứng số kinh doanh". Đây là đường duy nhất để công bố số liệu kết quả của hội viên.
+- **API**: `GET/POST /me/outcomes`, `POST /owner/members/{id}/outcomes/review`, `POST /places/{id}/contact` (beacon công khai, 202), `GET /me` có `impact`. 23 route.
+- events-smoke 36/36, rest-smoke 63/63, pages-smoke 47/47, admin-smoke 50/50 (đột biến: đếm quản trị viên, bỏ khử trùng, đếm hai lần sau rollup, kết quả chưa duyệt lên công khai, đếm máy tự động — đều bị bắt).
+
 ## 0.12.0 — 2026-11-26 (sổ quyền lợi: hội viên thấy mình nhận gì, chủ Hub thấy cả cộng đồng nhận gì)
 
 - **Tám quyền lợi** (`OHCL_Benefits`): Công nghệ · Đào tạo · Khách hàng · Trợ lý AI · Coach đồng hành · Kết nối giao thương · Uy tín & xác minh · Cơ hội tăng trưởng. Trạng thái từng hội viên **tính từ dữ liệu có sẵn** (không lưu thêm, không ước): Chưa mở → Có thể nhận → Đã trao → Đã bật → Đang dùng; quyền lợi chưa thể đo dừng ở mức chứng minh được và ghi rõ vì sao (ví dụ Công nghệ dừng ở "Đã trao" tới khi site hội viên báo mức dùng; Giao thương không bao giờ "đang dùng" khi chưa đo lượt kết nối). "Cơ hội tăng trưởng" = **Sắp ra mắt**, không tính là đã nhận. Mỗi quyền lợi mang mức sẵn sàng (Đã nghiệm thu / Giới hạn / Lộ trình), ngành tinh chỉnh bằng bộ lọc `ohcl_benefit_availability`.

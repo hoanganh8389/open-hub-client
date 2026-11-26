@@ -85,6 +85,10 @@ final class OHCL_Rest {
 		$r( '/owner/members/(?P<id>\d+)/verify', 'POST', 'owner_verify', $o, $id );
 		$r( '/owner/members/(?P<id>\d+)/verify', 'DELETE', 'owner_unverify', $o, $id );
 		$r( '/owner/benefits', 'GET', 'owner_benefits', $o );
+		$r( '/owner/members/(?P<id>\d+)/outcomes/review', 'POST', 'owner_outcomes_review', $o, $id ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+		$r( '/me/outcomes', 'GET', 'me_outcomes', $m );
+		$r( '/me/outcomes', 'POST', 'me_outcomes_save', $m );
+		$r( '/places/(?P<id>\d+)/contact', 'POST', 'place_contact', $p, $id );
 		$r( '/me/benefits', 'GET', 'me_benefits', $m );
 		$r( '/me', 'GET', 'me', $m );
 		$r( '/me/profile', 'POST', 'me_profile', $m );
@@ -266,6 +270,13 @@ final class OHCL_Rest {
 		return self::out( array( 'benefits' => $v['funnel'], 'members' => $v['members'], 'core_ok' => $v['core_ok'] ) );
 	}
 
+	/** Hub Owner approves or hides a member's reported results. */
+	public static function owner_outcomes_review( $req ) {
+		$in = self::in( $req );
+		$r  = OHCL_Service::review_outcomes( (int) $req['id'], ! empty( $in['approve'] ) && 'false' !== $in['approve'] && '0' !== (string) $in['approve'] );
+		return is_wp_error( $r ) ? $r : self::out( array( 'ok' => true ) );
+	}
+
 	/* ---------- member ---------- */
 
 	private static function me_member() {
@@ -292,6 +303,7 @@ final class OHCL_Rest {
 		$now  = time();
 		$v    = OHCL_Service::member_view( $m, $key, OHCL_Industry::current(), $now, true, false );
 		$v['roadmap'] = OHCL_MyHub::road( $m, $key, $now );
+		$v['impact']  = OHCL_Service::impact( $m, $now ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 		return self::out( $v );
 	}
 
@@ -304,6 +316,20 @@ final class OHCL_Rest {
 		$keys = self::keys();
 		$st   = OHCL_Benefits::for_member( $m, self::key_of( $m, $keys ), OHCL_Benefits::context( time() ) );
 		return self::out( array( 'benefits' => array_values( $st ), 'received' => OHCL_Benefits::received( $st ), 'core_ok' => (bool) $keys ) );
+	}
+
+	public static function me_outcomes() {
+		$m = self::me_member();
+		return is_wp_error( $m ) ? $m : self::out( OHCL_Service::outcomes_view( $m ) );
+	}
+
+	public static function me_outcomes_save( $req ) {
+		$m = self::me_member();
+		if ( is_wp_error( $m ) ) {
+			return $m;
+		}
+		OHCL_Service::save_outcomes( $m['id'], OHCL_Service::clean_outcomes( self::in( $req ) ) );
+		return self::out( OHCL_Service::outcomes_view( OHCL_Members::get( $m['id'] ) ), 201 );
 	}
 
 	public static function me_profile( $req ) {
@@ -379,6 +405,16 @@ final class OHCL_Rest {
 		list( $page, $pp ) = self::page_args( $req );
 		$res               = self::paged( array_map( array( 'OHCL_Service', 'place_view' ), $items ), $page, $pp, array( 'sample_shown' => ! empty( $pub['demo'] ) ) );
 		return self::out( $res, 200, true );
+	}
+
+	/** Public beacon: one "Nhắn Zalo" press. Counted once per visitor per hour; never fails the page. */
+	public static function place_contact( $req ) {
+		$it = OHCL_Front::find_place( (int) $req['id'] );
+		$m  = $it ? OHCL_Members::get( (int) $it['id'] ) : null;
+		if ( $m ) {
+			OHCL_Events::record( 'contact_click', $m, OHCL_Events::visitor() );
+		}
+		return self::out( array( 'ok' => true ), 202 );
 	}
 
 	public static function place( $req ) {

@@ -68,12 +68,13 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 			<div class="pnl bn-sum"><div><b><?php echo (int) $ohcl_got; ?></b> quyền lợi bạn đã nhận · <a href="<?php echo esc_url( OHCL_Front::myhub_url( 'quyen-loi' ) ); ?>">Xem 8 quyền lợi của tôi</a></div></div>
 			<p class="kick">Hub mang lại cho bạn tháng này</p>
 			<div class="kpis">
-				<div class="pnl kpi"><span>Lượt xem hồ sơ</span><b>—</b></div>
-				<div class="pnl kpi"><span>Lượt liên hệ từ Hub</span><b>—</b></div>
+				<?php $ohcl_im = OHCL_Service::impact( $ohcl_m, $ohcl_now ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — số đo thật; chưa đo thì "—", đã đo mà 0 thì hiện 0 ?>
+				<div class="pnl kpi"><span>Lượt xem hồ sơ</span><b><?php echo $ohcl_im['measured'] ? esc_html( number_format_i18n( $ohcl_im['views'] ) ) : '—'; ?></b></div>
+				<div class="pnl kpi"><span>Lượt liên hệ từ Hub</span><b><?php echo $ohcl_im['measured'] ? esc_html( number_format_i18n( $ohcl_im['contacts'] ) ) : '—'; ?></b></div>
 				<div class="pnl kpi"><span>Trợ lý AI</span><b class="sm"><?php echo esc_html( $ohcl_ai['label'] ); ?></b></div>
 				<div class="pnl kpi"><span>Bản đồ</span><b class="sm"><?php echo esc_html( OHCL_Members::LEVELS[ $ohcl_lv ] ); ?></b></div>
 			</div>
-			<p class="note">Lượt xem và lượt liên hệ được đo khi Hub bật module Marketing; chưa đo thì hiện "—".</p>
+			<p class="note"><?php echo $ohcl_im['measured'] ? 'Đếm lượt khách mở trang công khai và bấm "Nhắn Zalo" từ ' . esc_html( $ohcl_im['month'] ) . '-01; không đếm lượt của chính bạn, của quản trị viên hay của máy tự động. Hồ sơ chưa lên bản đồ thì chưa có lượt.' : 'Chưa đo: hiện "—" tới khi có lượt đầu tiên trên trang công khai của Hub.'; // phpcs:ignore WordPress.Security.EscapeOutput ?></p>
 			<div class="g2 cert-row">
 				<div class="pnl"><h2>Việc nên làm tiếp</h2>
 					<?php
@@ -118,6 +119,31 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 				<?php endforeach; ?>
 			</div>
 			<p class="note">Quyền làm chủ của bạn áp dụng cho cả tám: dữ liệu của bạn thuộc về bạn, bạn có thể rút đồng ý công khai bất cứ lúc nào ở mục Hồ sơ doanh nghiệp.</p>
+
+		<?php elseif ( 'ket-qua' === $ohcl_tab ) : ?>
+			<?php
+			// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — Kết quả của tôi: tự khai trước / sau, đồng ý công bố, Hub duyệt rồi mới lên trang công khai.
+			$ohcl_ov   = OHCL_Service::outcomes_view( $ohcl_m );
+			$ohcl_rows = array_pad( $ohcl_ov['items'], 3, array( 'label' => '', 'before' => '', 'after' => '', 'period' => '' ) );
+			$ohcl_stw  = array( 'none' => array( 'Chưa khai', 'idle' ), 'private' => array( 'Chỉ mình bạn thấy', 'idle' ), 'pending' => array( 'Chờ Hub duyệt', 'soon' ), 'public' => array( 'Đang hiện công khai', 'ok' ) );
+			?>
+			<?php if ( isset( $_GET['saved'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?><div class="pnl state ok sm"><b>Đã lưu kết quả</b></div><?php endif; ?>
+			<form class="pnl form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><h2>Kết quả của tôi</h2>
+				<p class="note">Khai 1–3 chỉ số của chính bạn, trước và sau khi dùng công nghệ của Hub (ví dụ "Tỉ lệ giá vốn": 38% → 33%). Đây là số do <b>bạn tự khai</b>; Hub không đọc số kinh doanh của bạn.</p>
+				<p><span class="tag <?php echo esc_attr( $ohcl_stw[ $ohcl_ov['status'] ][1] ); ?>"><?php echo esc_html( $ohcl_stw[ $ohcl_ov['status'] ][0] ); ?></span></p>
+				<input type="hidden" name="action" value="ohcl_myhub_outcomes"><?php wp_nonce_field( 'ohcl_myhub_outcomes', '_ohcl_myhub' ); ?>
+				<?php foreach ( $ohcl_rows as $ohcl_i => $ohcl_r ) : ?>
+					<div class="oc-row">
+						<input class="fld" name="outcomes[<?php echo (int) $ohcl_i; ?>][label]" maxlength="60" placeholder="Chỉ số (ví dụ Tỉ lệ giá vốn)" value="<?php echo esc_attr( $ohcl_r['label'] ); ?>" aria-label="Chỉ số">
+						<input class="fld" name="outcomes[<?php echo (int) $ohcl_i; ?>][before]" maxlength="30" placeholder="Trước" value="<?php echo esc_attr( $ohcl_r['before'] ); ?>" aria-label="Trước">
+						<input class="fld" name="outcomes[<?php echo (int) $ohcl_i; ?>][after]" maxlength="30" placeholder="Sau" value="<?php echo esc_attr( $ohcl_r['after'] ); ?>" aria-label="Sau">
+						<input class="fld" name="outcomes[<?php echo (int) $ohcl_i; ?>][period]" maxlength="30" placeholder="Kỳ (ví dụ 90 ngày)" value="<?php echo esc_attr( $ohcl_r['period'] ); ?>" aria-label="Kỳ">
+					</div>
+				<?php endforeach; ?>
+				<label class="chk"><input type="checkbox" name="outcomes_consent" value="1"<?php checked( $ohcl_ov['consent'] ); ?>> Tôi đồng ý cho Hub đưa các kết quả này lên trang công khai của tôi, ghi rõ "do cơ sở tự khai". Hub duyệt trước khi hiện; tôi bỏ tích bất cứ lúc nào để gỡ.</label>
+				<button class="btn g" style="width:100%;margin-top:10px">Lưu kết quả</button>
+				<p class="note">Mỗi lần sửa, kết quả về trạng thái chờ Hub duyệt lại.</p>
+			</form>
 
 		<?php elseif ( 'cong-nghe' === $ohcl_tab ) : ?>
 			<div class="pnl"><h2>Trợ lý AI trên Zalo</h2><p><span class="tag <?php echo esc_attr( in_array( $ohcl_ai['code'], array( 'trial', 'active' ), true ) ? 'ok' : 'idle' ); ?>"><?php echo esc_html( $ohcl_ai['label'] ); ?></span>

@@ -30,6 +30,13 @@ $ohcl_zalo = preg_replace( '/[^0-9]/', '', (string) $ohcl_p['zalo'] );
 				<a class="badge mem" href="<?php echo esc_url( OHCL_Certs::lookup_url( $ohcl_code ) ); ?>" title="<?php echo esc_attr( $ohcl_code ); ?>">Certified · <?php echo esc_html( $ohcl_lab ); ?></a>
 			<?php endforeach; ?>
 		<?php endif; ?>
+		<?php if ( ! empty( $ohcl_p['outcomes'] ) && empty( $ohcl_p['demo'] ) ) : // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — kết quả do cơ sở tự khai, đã được Hub duyệt ?>
+			<h2 class="sec-h">Kết quả khi dùng công nghệ của Hub</h2>
+			<table class="tbl"><thead><tr><th>Chỉ số</th><th>Trước</th><th>Sau</th><th>Kỳ</th></tr></thead><tbody>
+				<?php foreach ( $ohcl_p['outcomes'] as $ohcl_o ) : ?><tr><td><?php echo esc_html( $ohcl_o['label'] ); ?></td><td><?php echo esc_html( $ohcl_o['before'] ); ?></td><td><b><?php echo esc_html( $ohcl_o['after'] ); ?></b></td><td><?php echo esc_html( $ohcl_o['period'] ); ?></td></tr><?php endforeach; ?>
+			</tbody></table>
+			<p class="note">Số liệu do cơ sở tự khai và đồng ý công bố; Hub không kiểm chứng số kinh doanh của cơ sở.</p>
+		<?php endif; ?>
 		<?php if ( ! empty( $ohcl_p['demo'] ) ) : ?>
 			<p class="demo-note">Đây là <b>cơ sở mẫu</b> để xem thử cổng: tên, địa chỉ, món là ví dụ, không phải cơ sở có thật. <a href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đăng ký cơ sở thật của bạn</a></p>
 		<?php endif; ?>
@@ -75,7 +82,7 @@ $ohcl_zalo = preg_replace( '/[^0-9]/', '', (string) $ohcl_p['zalo'] );
 			<?php if ( ! empty( $ohcl_p['demo'] ) ) : ?>
 				<p class="note">Cơ sở mẫu không có số Zalo.</p>
 			<?php elseif ( $ohcl_zalo ) : ?>
-				<div style="margin-top:12px"><a class="btn g" style="width:100%" href="<?php echo esc_url( 'https://zalo.me/' . $ohcl_zalo ); ?>" rel="nofollow noopener" target="_blank">Nhắn Zalo</a></div>
+				<div style="margin-top:12px"><a class="btn g" style="width:100%" href="<?php echo esc_url( 'https://zalo.me/' . $ohcl_zalo ); ?>" rel="nofollow noopener" target="_blank"<?php echo OHCL_Front::contact_beacon_attr( $ohcl_p['id'] ); // phpcs:ignore WordPress.Security.EscapeOutput -- [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 ?>>Nhắn Zalo</a></div>
 			<?php else : ?>
 				<p class="note">Cơ sở chưa công khai số Zalo.</p>
 			<?php endif; ?>

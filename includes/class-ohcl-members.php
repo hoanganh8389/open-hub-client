@@ -302,6 +302,7 @@ final class OHCL_Members {
 			'lat'      => round( (float) $m['lat'], 4 ),
 			'lng'      => round( (float) $m['lng'], 4 ),
 			'fields'   => $ind,
+			'outcomes' => ( is_array( $m['outcomes'] ) && ! empty( $m['outcomes']['approved'] ) && ! empty( $m['outcomes']['consent_at'] ) && ! empty( $m['outcomes']['items'] ) ) ? $m['outcomes']['items'] : array(), // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — chỉ khi hội viên đồng ý VÀ Hub duyệt
 			'certs'    => self::valid_certs( $m, time() ),
 			'demo'     => ! empty( $m['demo'] ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — cơ sở mẫu: nhãn "Mẫu", không nút Zalo
 			'shop'     => ! empty( $m['shop_consent'] ) && ! empty( $m['shop_url'] ) ? $m['shop_url'] : '', // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — chỉ khi cơ sở đồng ý // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — huy hiệu chứng nhận trên trang công khai
@@ -337,6 +338,7 @@ final class OHCL_Members {
 			'certs'       => get_post_meta( $id, '_bzm_certs', true ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			'industry'    => array(),
 			'demo'        => '1' === (string) get_post_meta( $id, '_bzm_demo', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
+			'outcomes'    => get_post_meta( $id, '_bzm_outcomes', true ), // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — kết quả tự khai
 			'left_at'     => (string) get_post_meta( $id, '_bzm_left_at', true ), // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — ngày rời (đếm "rời theo tháng")
 			'support_at'  => self::last_support_at( $id ),
 			'ref_coach'   => (int) get_post_meta( $id, '_bzm_ref_coach', true ), // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — Coach đã giới thiệu (người đầu tiên, giữ 12 tháng)

@@ -277,6 +277,8 @@ final class OHCL_Front {
 			if ( ! $data['place'] ) {
 				status_header( 404 );
 				nocache_headers();
+			} elseif ( class_exists( 'OHCL_Events' ) && ( $pm = OHCL_Members::get( (int) $data['place']['id'] ) ) ) { // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — đếm lượt xem hồ sơ (không IP; bỏ chủ hồ sơ, quản trị, máy tự động)
+				OHCL_Events::record( 'profile_view', $pm, OHCL_Events::visitor() );
 			}
 		}
 		if ( 'myhub' === $p ) {
@@ -628,6 +630,12 @@ final class OHCL_Front {
 		}
 		set_transient( 'ohcl_portal_stats', $out, 10 * MINUTE_IN_SECONDS );
 		return $out;
+	}
+
+	/** data-ohcl-contact attribute holding the beacon URL (public, same origin), or '' when REST is unavailable. */
+	public static function contact_beacon_attr( $member_id ) {
+		// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — nút Nhắn Zalo báo một lượt bấm về Hub (sendBeacon), không chặn việc mở Zalo.
+		return function_exists( 'rest_url' ) ? ' data-ohcl-contact="' . esc_url( rest_url( 'open-hub-client/v1/places/' . (int) $member_id . '/contact' ) ) . '"' : '';
 	}
 
 	/** data-center / data-zoom attributes from persona.map (numbers only), or ''. */

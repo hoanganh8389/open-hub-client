@@ -21,6 +21,7 @@ final class OHCL_MyHub {
 	const TABS = array(
 		''           => array( 'Tổng quan', 'grid' ),
 		'quyen-loi'  => array( 'Quyền lợi của tôi', 'star' ), // [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2
+		'ket-qua'    => array( 'Kết quả của tôi', 'flow' ), // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 		'cong-nghe'  => array( 'Công nghệ của tôi', 'gift' ),
 		'ho-so'      => array( 'Hồ sơ doanh nghiệp', 'store' ),
 		'chung-nhan' => array( 'Chứng nhận của tôi', 'check' ),
@@ -40,6 +41,7 @@ final class OHCL_MyHub {
 	public static function boot() {
 		add_action( 'admin_post_ohcl_myhub_profile', array( __CLASS__, 'handle_profile' ) );
 		add_action( 'admin_post_ohcl_myhub_support', array( __CLASS__, 'handle_support' ) );
+		add_action( 'admin_post_ohcl_myhub_outcomes', array( __CLASS__, 'handle_outcomes' ) ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 	}
 
 	/* ===================== pure ===================== */
@@ -176,6 +178,16 @@ final class OHCL_MyHub {
 		}
 		OHCL_Service::save_profile( (int) $cur['member']['id'], $c ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API — cùng một cửa với REST /me/profile
 		self::back( 'ho-so', array( 'saved' => 1 ) );
+	}
+
+	public static function handle_outcomes() {
+		// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — hội viên tự khai kết quả (trước / sau) và đồng ý công bố; chờ Hub duyệt mới lên trang công khai.
+		$cur = self::current();
+		if ( ! $cur['member'] || ! isset( $_POST['_ohcl_myhub'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ohcl_myhub'] ) ), 'ohcl_myhub_outcomes' ) ) {
+			self::back( 'ket-qua', array( 'err' => 'ohcl_join_expired' ) );
+		}
+		OHCL_Service::save_outcomes( (int) $cur['member']['id'], OHCL_Service::clean_outcomes( wp_unslash( $_POST ) ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- clean_outcomes() bỏ thẻ, cắt độ dài.
+		self::back( 'ket-qua', array( 'saved' => 1 ) );
 	}
 
 	public static function handle_support() {

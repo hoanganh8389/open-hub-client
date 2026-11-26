@@ -21,7 +21,7 @@ final class OHCL_Admin_Members {
 	const PAGE = 'open-hub-members';
 
 	public static function boot() {
-		foreach ( array( 'save', 'accept', 'key', 'status', 'verify', 'unverify' ) as $a ) {
+		foreach ( array( 'save', 'accept', 'key', 'status', 'verify', 'unverify', 'outcomes' ) as $a ) { // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 			add_action( 'admin_post_ohcl_member_' . $a, array( __CLASS__, 'handle_' . $a ) );
 		}
 	}
@@ -255,6 +255,25 @@ final class OHCL_Admin_Members {
 			. '<dt>Website</dt><dd>' . ( $m['site_url'] ? esc_html( $m['site_url'] ) : '—' ) . '</dd>'
 			. '<dt>Tài khoản My Hub</dt><dd>' . esc_html( self::user_label( $m['user'] ) ) . '</dd></dl></div>'; // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
 
+		// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — Hub đã mang lại gì (tháng này) + kết quả hội viên tự khai: duyệt / gỡ.
+		$im = OHCL_Service::impact( $m, $now );
+		echo '<div class="ohcl-card"><h3>Hub đã mang lại (tháng này)</h3><dl class="ohcl-dl"><dt>Lượt xem hồ sơ</dt><dd>' . ( $im['measured'] ? (int) $im['views'] : '—' ) . '</dd><dt>Lượt liên hệ từ Hub</dt><dd>' . ( $im['measured'] ? (int) $im['contacts'] : '—' ) . '</dd></dl><p class="mute">Không đếm lượt của chính hội viên, quản trị viên hay máy tự động; không lưu IP.</p></div>';
+		$oc = OHCL_Service::outcomes_view( $m );
+		if ( $oc['items'] ) {
+			$stw = array( 'private' => 'Hội viên chưa đồng ý công bố', 'pending' => 'Chờ bạn duyệt', 'public' => 'Đang hiện công khai' );
+			echo '<div class="ohcl-card"><h3>Kết quả hội viên tự khai</h3><p><span class="ohcl-st ' . ( 'public' === $oc['status'] ? 'ok' : 'trial' ) . '">' . esc_html( $stw[ $oc['status'] ] ) . '</span></p><ul class="ohcl-reports">';
+			foreach ( $oc['items'] as $o ) {
+				echo '<li><b>' . esc_html( $o['label'] ) . '</b>: ' . esc_html( $o['before'] . ' → ' . $o['after'] . ( $o['period'] ? ' (' . $o['period'] . ')' : '' ) ) . '</li>';
+			}
+			echo '</ul>';
+			if ( $oc['consent'] ) {
+				echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+				wp_nonce_field( 'ohcl_member_outcomes_' . $m['id'] );
+				echo '<input type="hidden" name="action" value="ohcl_member_outcomes"><input type="hidden" name="id" value="' . (int) $m['id'] . '"><input type="hidden" name="approve" value="' . ( $oc['approved'] ? '0' : '1' ) . '"><button class="button ' . ( $oc['approved'] ? '' : 'button-primary' ) . '">' . ( $oc['approved'] ? 'Gỡ khỏi trang công khai' : 'Duyệt hiện công khai' ) . '</button></form>';
+			}
+			echo '<p class="mute">Số do hội viên tự khai; Hub không kiểm chứng số kinh doanh. Trang công khai ghi rõ "do cơ sở tự khai".</p></div>';
+		}
+
 		// [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — yêu cầu hỗ trợ hội viên gửi từ My Hub.
 		$sup = get_post_meta( $m['id'], '_bzm_support', true );
 		if ( is_array( $sup ) && $sup ) {
@@ -393,6 +412,16 @@ final class OHCL_Admin_Members {
 			self::back( array( 'id' => $id ) );
 		}
 		OHCL_Admin::flash_set( array( 'key' => (string) $res['key'], 'label' => $m['title'], 'plan_code' => (string) $res['plan_code'], 'plan_until' => (string) $res['plan_until'] ) );
+		self::back( array( 'id' => $id ) );
+	}
+
+	public static function handle_outcomes() {
+		// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+		OHCL_Admin::guard();
+		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+		check_admin_referer( 'ohcl_member_outcomes_' . $id );
+		$res = OHCL_Service::review_outcomes( $id, ! empty( $_POST['approve'] ) );
+		OHCL_Admin::flash_set( is_wp_error( $res ) ? OHCL_Admin::error_flash( $res ) : array( 'ok' => ! empty( $_POST['approve'] ) ? 'Đã duyệt: kết quả hiện trên trang công khai của hội viên.' : 'Đã gỡ kết quả khỏi trang công khai.' ) );
 		self::back( array( 'id' => $id ) );
 	}
 
