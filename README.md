@@ -20,9 +20,10 @@ Tổng quan Hub · Quản lý hội viên (Member 360°) · Công nghệ & gói 
 ## Làm Hub cho một ngành mới (dev ngành)
 
 1. Chép `examples/wp-sample-hub/` thành `wp-<ngành>-hub/`, đổi dữ liệu trong hàm trả mảng: `contract`, `id` (= mã Hub ở lõi), `brand.accent`, `terms`, `segments`, `member_fields`, `standards`…
-2. Muốn hiển thị thêm: móc vào ô `ohcl_member360_tabs`, `ohcl_dashboard_cards`, `ohcl_myhub_cards`, `ohcl_public_profile_blocks`, `ohcl_persona_pages`; nghe sự kiện chỉ đọc `ohcl_member_stage_changed`, `ohcl_member_verified`, `ohcl_key_issued`, `ohcl_cert_issued`, `ohcl_pack_granted`.
-3. Không: khoá, tiền, bảng mới, gọi `open-hub-core` / Cell / Zalo / LLM, sửa repo này cho riêng một ngành (R-HUB-14, R-HUB-15).
-4. Kiểm: `wp ohcl validate-industry` phải PASS; đủ bộ shots R-HUB-11 / R-HUB-12.
+2. Dữ liệu mẫu (tuỳ chọn): trả gói qua filter `open_hub_client_demo` (`threshold`, `categories`, `members`, `posts`) — xem `wp-vegan-hub/data/demo.php`.
+3. Muốn hiển thị thêm: móc vào ô `ohcl_member360_tabs`, `ohcl_dashboard_cards`, `ohcl_myhub_cards`, `ohcl_public_profile_blocks`, `ohcl_persona_pages`; nghe sự kiện chỉ đọc `ohcl_member_stage_changed`, `ohcl_member_verified`, `ohcl_key_issued`, `ohcl_cert_issued`, `ohcl_pack_granted`.
+4. Không: khoá, tiền, bảng mới, gọi `open-hub-core` / Cell / Zalo / LLM, sửa repo này cho riêng một ngành (R-HUB-14, R-HUB-15).
+5. Kiểm: `wp ohcl validate-industry` phải PASS; đủ bộ shots R-HUB-11 / R-HUB-12.
 
 <!-- [2026-11-25 06:23 PM Johnny Chu - Chu Hoàng Anh] OHCL-PAIR -->
 Chủ Hub nối lõi **trên giao diện**: nhận mã ghép nối từ bizcity.vn › Sổ Hub → **Hub › 14 · Cài đặt › Kết nối lõi Bizcity** → dán mã → **Kết nối**. Site tự nhận bí mật từ lõi (máy chủ → máy chủ) và tự kiểm bốn bước: cấu hình · liên lạc · Hub có trong sổ · bí mật được nhận. Nhập tay hoặc hằng `OHCL_CORE_SECRET` chỉ còn ở mục Nâng cao.
@@ -37,6 +38,7 @@ php tests/cert-smoke.php   # chứng nhận: cấp, gia hạn, thu hồi, tra c�
 php tests/pages-smoke.php  # mọi trang, menu, khung WordPress, My Hub, ứng tuyển Coach
 php tests/menu-smoke.php   # trang WordPress + "Menu Hub"
 php tests/fix-smoke.php    # lỗi đã gặp trên site thật
+php tests/demo-smoke.php   # dữ liệu mẫu (hiện có nhãn, tự ẩn, bài đăng / nháp / xoá) + sản phẩm Store API
 php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → mã ghép nối → kết nối → cấp khoá
 ```
 
@@ -56,6 +58,7 @@ php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → 
 | **F2** | đủ trang sitemap §12 + My Hub (6 mục) + ứng tuyển Coach; sổ trang một chỗ; mặc định vẽ cả site trong khung Hub (giữ theme cho Woo shop / trang chọn) | **xong mã + test** (pages-smoke 41/41) · chưa chạy trên site thật |
 | **Đ2a** | xác minh & chứng nhận (module 06): cấp đủ tiêu chí, gia hạn, thu hồi, `/chung-nhan/` tra cứu mã / QR, phản ánh, bậc hành trình 6 | **xong mã + test** (cert-smoke 35/35) · chưa chạy trên site thật |
 | **Đ1c** | Member 360° (CPT `bz_hub_member`, trường ngành `_bzi_*`, tiếp nhận, cấp khoá từ hồ sơ) · Tổng quan câu 1 | **xong mã + test** (admin-smoke 30/30) · kết nối lõi đã chạy thật trên veganhub.net ↔ bizcity.vn (4/4) |
+| **CM-2/3** | dữ liệu mẫu theo ngành (cơ sở mẫu có nhãn, tự ẩn ở ngưỡng cơ sở thật; bài mẫu đăng / nháp / xoá hết) · sản phẩm từ Woo của cơ sở trên hồ sơ | **xong mã + test** (demo-smoke 40/40) · chưa chạy trên site thật |
 | Đ2 | Tài nguyên & quyền lợi (GitHub) · My Hub · Xác minh & chứng nhận + tra cứu QR | chưa |
 | Đ3 | Coach + affiliate + My Coach · Marketing (JSONL + rollup) · Doanh thu (core + Woo) · tài sản cộng đồng | chưa |
 

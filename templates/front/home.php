@@ -12,7 +12,8 @@ defined( 'ABSPATH' ) || exit;
 
 $ohcl_pub     = OHCL_Members::public_list();
 $ohcl_members = OHCL_Members::counts( OHCL_Members::all(), array(), time() );
-$ohcl_geo     = count( array_filter( $ohcl_pub['items'], function ( $x ) { return $x['lat'] || $x['lng']; } ) );
+$ohcl_geo     = count( array_filter( $ohcl_pub['items'], function ( $x ) { return empty( $x['demo'] ) && ( $x['lat'] || $x['lng'] ); } ) ); // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — số liệu chỉ đếm cơ sở thật
+$ohcl_real    = isset( $ohcl_pub['real'] ) ? (int) $ohcl_pub['real'] : count( $ohcl_pub['items'] );
 $ohcl_posts   = get_posts( array( 'numberposts' => 3, 'post_status' => 'publish', 'post_type' => 'post' ) );
 $ohcl_segs    = $cfg['segments'];
 $ohcl_blog    = (int) get_option( 'page_for_posts' ) ? get_permalink( (int) get_option( 'page_for_posts' ) ) : '';
@@ -53,6 +54,9 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 			<div class="map-note"><b>Bản đồ đang chờ cơ sở đầu tiên</b>Cơ sở được ban điều hành xác minh và đồng ý công khai sẽ hiện ở đây.<a class="btn g sm" href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đăng ký cơ sở</a></div>
 		<?php endif; ?>
 	</div>
+	<?php if ( ! empty( $ohcl_pub['demo'] ) ) : // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — chú thích dữ liệu mẫu ngay dưới bản đồ. ?>
+		<p class="demo-note"><span class="badge demo">Mẫu</span> <?php echo (int) $ohcl_pub['demo']; ?> điểm có chữ "(mẫu)" là dữ liệu xem thử, không phải cơ sở có thật. Chúng tự ẩn khi Hub đủ cơ sở thật được xác minh. <a href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đưa cơ sở của bạn lên bản đồ</a></p>
+	<?php endif; ?>
 </div></section>
 
 <div class="in row">
@@ -101,7 +105,7 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 
 <section class="stats"><div class="in">
 	<div class="st"><i><?php echo OHCL_Front::icon( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( number_format_i18n( $ohcl_members['active'] ) ); ?></b><span><?php echo esc_html( ucfirst( OHCL_Industry::term( 'member' ) ) ); ?></span></div></div>
-	<div class="st"><i><?php echo OHCL_Front::icon( 'factory' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( $ohcl_pub['degraded'] ? '—' : number_format_i18n( count( $ohcl_pub['items'] ) ) ); ?></b><span>Đã xác minh, công khai</span></div></div>
+	<div class="st"><i><?php echo OHCL_Front::icon( 'factory' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( $ohcl_pub['degraded'] ? '—' : number_format_i18n( $ohcl_real ) ); ?></b><span>Đã xác minh, công khai</span></div></div>
 	<div class="st"><i><?php echo OHCL_Front::icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( $ohcl_pub['degraded'] ? '—' : number_format_i18n( $ohcl_geo ) ); ?></b><span>Địa điểm trên bản đồ</span></div></div>
 	<div class="st"><i><?php echo OHCL_Front::icon( 'cal' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b class="na">—</b><span>Sự kiện</span></div></div>
 	<p class="motto"><?php echo esc_html( $persona['motto'] ); ?></p>

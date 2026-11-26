@@ -75,6 +75,59 @@ final class OHCL_Cli {
 	}
 
 	/**
+	 * Demo data from the industry plugin (OPEN-HUB-CLIENT §12a). Only records with the demo mark are touched.
+	 *
+	 * <action>
+	 * : status | seed (businesses + posts) | remove (businesses + posts) | posts | mode
+	 *
+	 * [<arg>]
+	 * : for posts: publish | draft | delete. For mode: auto | off.
+	 *
+	 * [--members-only]
+	 * : seed / remove only the sample businesses.
+	 *
+	 * [--yes]
+	 * : confirm a delete.
+	 */
+	public function demo( $args, $assoc ) {
+		// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — wp ohcl demo status|seed|remove|posts|mode.
+		$act  = isset( $args[0] ) ? $args[0] : 'status';
+		$arg  = isset( $args[1] ) ? $args[1] : '';
+		$only = ! empty( $assoc['members-only'] );
+		$pub  = OHCL_Members::public_list();
+		if ( 'seed' === $act ) {
+			$m = OHCL_Demo::seed_members();
+			WP_CLI::line( 'Cơ sở mẫu: thêm ' . $m['added'] . ', đã có ' . $m['kept'] );
+			if ( ! $only ) {
+				$p = OHCL_Demo::seed_posts( 'draft' === $arg ? 'draft' : 'publish' );
+				WP_CLI::line( 'Bài mẫu: thêm ' . $p['added'] . ', đã có ' . $p['kept'] );
+			}
+		} elseif ( 'remove' === $act || ( 'posts' === $act && 'delete' === $arg ) ) {
+			if ( empty( $assoc['yes'] ) ) {
+				WP_CLI::error( 'Thêm --yes để xác nhận xoá dữ liệu mẫu.' );
+			}
+			if ( 'remove' === $act ) {
+				WP_CLI::line( 'Đã xoá ' . OHCL_Demo::delete_members() . ' cơ sở mẫu.' );
+			}
+			if ( ! $only ) {
+				WP_CLI::line( 'Đã xoá ' . OHCL_Demo::delete_posts() . ' bài mẫu.' );
+			}
+		} elseif ( 'posts' === $act && in_array( $arg, array( 'publish', 'draft' ), true ) ) {
+			WP_CLI::line( 'Đã đổi ' . OHCL_Demo::set_posts_status( $arg ) . ' bài mẫu sang ' . $arg . '.' );
+		} elseif ( 'mode' === $act && in_array( $arg, array( 'auto', 'off' ), true ) ) {
+			OHCL_Demo::set_mode( $arg );
+		} elseif ( 'status' !== $act ) {
+			WP_CLI::error( 'Dùng: wp ohcl demo status | seed [draft] | remove --yes | posts publish|draft|delete | mode auto|off' );
+		}
+		$st = OHCL_Demo::status( isset( $pub['real'] ) ? $pub['real'] : 0 );
+		WP_CLI::line( sprintf( 'Dữ liệu ngành: %d cơ sở mẫu, %d bài mẫu · Đã nhập: %d cơ sở · Bài: %d đăng, %d nháp', $st['pack_members'], $st['pack_posts'], $st['seeded'], $st['posts']['publish'], $st['posts']['draft'] ) );
+		foreach ( $st['skipped'] as $s ) {
+			WP_CLI::line( 'SKIP  sai dạng: ' . $s );
+		}
+		WP_CLI::success( $st['reason'] );
+	}
+
+	/**
 	 * Check the connection to open-hub-core.
 	 *
 	 * @subcommand core-ping

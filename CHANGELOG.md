@@ -1,5 +1,13 @@
 # Lịch sử phát hành
 
+## 0.9.0 — 2026-11-26 (dữ liệu mẫu + sản phẩm của cơ sở, chủ Hub chốt CM-Q1…Q4)
+
+- **Dữ liệu mẫu theo ngành** (`OHCL_Demo`, filter `open_hub_client_demo`): plugin ngành cấp cơ sở mẫu, chuyên mục, bài mẫu. Cơ sở mẫu hiện công khai trên bản đồ, danh bạ, giao thương với nhãn **"Mẫu"** (không bao giờ "Đã xác minh"), không nút Zalo, **không vào số liệu**; tự ẩn khi Hub có đủ cơ sở thật công khai (ngưỡng do ngành đặt, mặc định 15). Chủ Hub tắt được bất cứ lúc nào.
+- **Bài mẫu** đăng ngay; một nút **Đăng hết / Chuyển nháp hết / Xoá hết**. Dấu ẩn `_ohcl_demo` + `_ohcl_demo_ref` (cơ sở: `_bzm_demo`) ⇒ nhập lại không trùng, xoá không đụng dữ liệu thật. Link `{place:<ref>}` trong bài thành đường dẫn hồ sơ thật.
+- Màn **Hub › Dữ liệu mẫu**; lệnh `wp ohcl demo status|seed|remove --yes|posts publish|draft|delete --yes|mode auto|off`.
+- **Sản phẩm của cơ sở** (`OHCL_Shop`, đường B): trường "Website bán hàng (WooCommerce)" + ô đồng ý (quản trị và My Hub). Trang hồ sơ hiện tối đa 6 sản phẩm đọc từ Store API **công khai** của site cơ sở (https, `wp_safe_remote_get`, 4 giây, đệm 6 giờ / lỗi 30 phút); link chỉ về chính cửa hàng đó.
+- Bài test mới `demo-smoke.php` 40/40; các bộ cũ vẫn đạt.
+
 ## 0.8.3 — 2026-11-26 (góp ý trên veganhub.net)
 
 - **Màu chọn không lưu**: ô "Dùng màu của plugin ngành" được tích sẵn nên màu bị bỏ. Nay là ô "Trả về màu của plugin ngành", mặc định không tích.

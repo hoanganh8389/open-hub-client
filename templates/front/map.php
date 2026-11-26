@@ -51,7 +51,7 @@ $ohcl_any   = '' !== $ohcl_q['q'] || '' !== $ohcl_q['seg'] || '' !== $ohcl_q['pr
 								<?php foreach ( (array) $ohcl_f['value'] as $ohcl_v ) : ?><span class="badge"><?php echo esc_html( $ohcl_v ); ?></span><?php endforeach; ?>
 							<?php endif; ?>
 						<?php endforeach; ?>
-						<span class="badge mem">Đã xác minh</span>
+						<?php echo OHCL_Front::trust_badge( $ohcl_it ); // phpcs:ignore WordPress.Security.EscapeOutput -- [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO ?>
 					</span>
 				</a>
 			<?php endforeach; ?>

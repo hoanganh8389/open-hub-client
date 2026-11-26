@@ -44,6 +44,7 @@ final class OHCL_Members {
 		'email'        => array( 'Email', 100 ),
 		'contact_zalo' => array( 'Zalo của cơ sở', 40 ),
 		'site_url'     => array( 'Website', 200 ),
+		'shop_url'     => array( 'Website bán hàng (WooCommerce)', 200 ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — đường B: sản phẩm từ Woo của chính cơ sở
 		'coach'        => array( 'Coach phụ trách (mã)', 40 ),
 		'hours'        => array( 'Giờ mở cửa', 120 ),
 		'lat'          => array( 'Vĩ độ (bản đồ)', 12 ),
@@ -204,6 +205,10 @@ final class OHCL_Members {
 		if ( '' !== $core['site_url'] && ! preg_match( '#^https?://[^\s<>"]+$#i', $core['site_url'] ) ) {
 			return OHCL_Error::make( 'ohcl_member_url_invalid', 'Website phải bắt đầu bằng http:// hoặc https://.', 'Sửa địa chỉ website hoặc để trống.', 400 );
 		}
+		// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — cửa hàng phải là https (Store API công khai đọc qua https).
+		if ( '' !== $core['shop_url'] && class_exists( 'OHCL_Shop' ) && '' === OHCL_Shop::endpoint( $core['shop_url'] ) ) {
+			return OHCL_Error::make( 'ohcl_member_shop_invalid', 'Website bán hàng phải là địa chỉ https:// của site có WooCommerce.', 'Sửa địa chỉ (ví dụ https://tencoso.vn) hoặc để trống.', 400 );
+		}
 		$core['coach'] = strtolower( preg_replace( '/[^a-z0-9-]/i', '', $core['coach'] ) );
 		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — toạ độ phải là số hợp lệ, có đủ cặp; đồng ý công khai là ô riêng.
 		foreach ( array( 'lat' => 90, 'lng' => 180 ) as $k => $lim ) {
@@ -243,7 +248,7 @@ final class OHCL_Members {
 			}
 			$ind[ $f['key'] ] = $v;
 		}
-		return array( 'title' => $title, 'core' => $core, 'industry' => $ind, 'consent' => ! empty( $in['public_consent'] ) );
+		return array( 'title' => $title, 'core' => $core, 'industry' => $ind, 'consent' => ! empty( $in['public_consent'] ), 'shop_consent' => ! empty( $in['shop_consent'] ) );
 	}
 
 	/**
@@ -297,7 +302,9 @@ final class OHCL_Members {
 			'lat'      => round( (float) $m['lat'], 4 ),
 			'lng'      => round( (float) $m['lng'], 4 ),
 			'fields'   => $ind,
-			'certs'    => self::valid_certs( $m, time() ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — huy hiệu chứng nhận trên trang công khai
+			'certs'    => self::valid_certs( $m, time() ),
+			'demo'     => ! empty( $m['demo'] ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — cơ sở mẫu: nhãn "Mẫu", không nút Zalo
+			'shop'     => ! empty( $m['shop_consent'] ) && ! empty( $m['shop_url'] ) ? $m['shop_url'] : '', // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — chỉ khi cơ sở đồng ý // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — huy hiệu chứng nhận trên trang công khai
 		);
 	}
 
@@ -329,6 +336,8 @@ final class OHCL_Members {
 			'user'        => (int) get_post_meta( $id, '_bzm_user', true ), // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — tài khoản WordPress của hội viên (My Hub)
 			'certs'       => get_post_meta( $id, '_bzm_certs', true ), // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A
 			'industry'    => array(),
+			'demo'        => '1' === (string) get_post_meta( $id, '_bzm_demo', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
+			'shop_consent' => (string) get_post_meta( $id, '_bzm_shop_consent', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — ngày đồng ý hiện sản phẩm
 		);
 		$m['status'] = isset( self::STATUS[ $m['status'] ] ) ? $m['status'] : 'active';
 		foreach ( array_keys( self::CORE_FIELDS ) as $k ) {
@@ -340,13 +349,16 @@ final class OHCL_Members {
 		return $m;
 	}
 
-	/** All members (cap 1 000 for Đ1c), newest first. @return array[] */
-	public static function all( $limit = 1000 ) {
+	/** All members (cap 1 000 for Đ1c), newest first; sample businesses only when asked (never in a count). @return array[] */
+	public static function all( $limit = 1000, $with_demo = false ) {
 		$ind   = OHCL_Industry::current();
 		$posts = get_posts( array( 'post_type' => self::CPT, 'post_status' => array( 'publish', 'draft', 'pending', 'private' ), 'numberposts' => (int) $limit, 'orderby' => 'ID', 'order' => 'DESC', 'no_found_rows' => true ) );
 		$out   = array();
 		foreach ( $posts as $p ) {
-			$out[] = self::to_array( $p, $ind );
+			$m = self::to_array( $p, $ind );
+			if ( $with_demo || ! $m['demo'] ) { // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — số liệu, danh sách quản trị, My Hub không thấy cơ sở mẫu
+				$out[] = $m;
+			}
 		}
 		return $out;
 	}
@@ -385,6 +397,14 @@ final class OHCL_Members {
 			// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — đồng ý công khai lưu kèm ngày; bỏ đồng ý thì xoá (hồ sơ rời bản đồ ngay).
 			$had = (string) get_post_meta( $id, '_bzm_public_consent', true );
 			update_post_meta( $id, '_bzm_public_consent', $clean['consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
+		}
+		if ( array_key_exists( 'shop_consent', $clean ) ) {
+			// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — đồng ý hiện sản phẩm lưu kèm ngày; đổi địa chỉ thì xoá bộ đệm.
+			$had = (string) get_post_meta( $id, '_bzm_shop_consent', true );
+			update_post_meta( $id, '_bzm_shop_consent', $clean['shop_consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
+			if ( class_exists( 'OHCL_Shop' ) ) { // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — thiếu lớp cửa hàng (nạp lỗi) thì bỏ qua, không làm hỏng hồ sơ.
+				OHCL_Shop::flush( $clean['core']['shop_url'] );
+			}
 		}
 		self::flush_public();
 		if ( ! get_post_meta( $id, '_bzm_joined_at', true ) ) {
@@ -451,7 +471,8 @@ final class OHCL_Members {
 			return $c;
 		}
 		// [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — chưa hội viên nào có khoá thì không cần hỏi lõi (không ai đạt V2) ⇒ không báo lỗi danh bạ.
-		$members = self::all();
+		$every   = self::all( 1000, true );
+		$members = array_values( array_filter( $every, function ( $m ) { return ! $m['demo']; } ) );
 		$need    = (bool) array_filter( $members, function ( $m ) { return (int) $m['key_id'] > 0; } );
 		$keys    = $need ? OHCL_Overview::all_keys() : array( 'items' => array() );
 		$deg     = is_wp_error( $keys );
@@ -473,7 +494,18 @@ final class OHCL_Members {
 				$out[] = self::public_view( $m, $ind );
 			}
 		}
-		$res = array( 'items' => $out, 'degraded' => $deg );
+		// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — cơ sở mẫu ghép sau cơ sở thật khi Hub còn ít hơn ngưỡng cơ sở thật (CM-Q1); lõi lỗi thì không che lỗi bằng dữ liệu mẫu.
+		$real = count( $out );
+		$demo = 0;
+		if ( ! $deg && class_exists( 'OHCL_Demo' ) && OHCL_Demo::visible_now( $real ) ) {
+			foreach ( $every as $m ) {
+				if ( $m['demo'] && 'active' === $m['status'] && '' !== (string) $m['lat'] && '' !== (string) $m['lng'] ) {
+					$out[] = self::public_view( $m, $ind );
+					$demo++;
+				}
+			}
+		}
+		$res = array( 'items' => $out, 'degraded' => $deg, 'real' => $real, 'demo' => $demo );
 		if ( ! $deg ) {
 			set_transient( self::PUBLIC_CACHE, $res, 10 * MINUTE_IN_SECONDS );
 		}

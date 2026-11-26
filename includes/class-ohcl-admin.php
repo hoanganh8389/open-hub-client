@@ -47,6 +47,9 @@ final class OHCL_Admin {
 		if ( class_exists( 'OHCL_Admin_Pages' ) ) {
 			add_submenu_page( 'open-hub', 'Trang & menu', 'Trang & menu', self::CAP, OHCL_Admin_Pages::PAGE, array( 'OHCL_Admin_Pages', 'page' ) ); // [2026-11-25 11:53 PM Johnny Chu - Chu Hoàng Anh] OHCL-F3
 		}
+		if ( class_exists( 'OHCL_Admin_Demo' ) ) {
+			add_submenu_page( 'open-hub', 'Dữ liệu mẫu', 'Dữ liệu mẫu', self::CAP, OHCL_Admin_Demo::PAGE, array( 'OHCL_Admin_Demo', 'page' ) ); // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
+		}
 		add_submenu_page( 'open-hub', 'Cài đặt', '14 · Cài đặt', self::CAP, 'open-hub-settings', array( __CLASS__, 'page_settings' ) );
 	}
 

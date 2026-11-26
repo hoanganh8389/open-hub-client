@@ -230,3 +230,15 @@ body.ohcl-front .mfp-hide,body.ohcl-front .hidden,body.ohcl-front #main-menu.mob
 @media (max-width:720px){.ohcl-front .map.big{min-height:320px}.ohcl-front .row .wide .cats{grid-template-columns:repeat(2,1fr)}}
 /* [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — dòng ghi nguồn bản đồ giữ cỡ chữ nhỏ (luật svg/a chung của Hub làm nó phình to). */
 .ohcl-front .leaflet-control-attribution{font:11px/1.4 var(--f)!important;padding:2px 6px!important}.ohcl-front .leaflet-control-attribution a{color:#0078a8}.ohcl-front .leaflet-control-attribution svg{display:inline!important;width:12px!important;height:8px!important;vertical-align:baseline}
+
+/* [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO / OHCL-SHOP — nhãn "Mẫu", chú thích dữ liệu mẫu, thẻ sản phẩm từ cửa hàng của cơ sở */
+.ohcl-front .badge.demo{background:#fff6e0;color:#8a5a00;border:1px dashed #d9a21b}
+.ohcl-front .demo-note{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#fffaf0;border:1px dashed #e3c06b;color:#5c4a1a;font-size:.88rem;line-height:1.5}
+.ohcl-front .demo-note a{color:var(--g);font-weight:600}
+.ohcl-front .shop{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:6px 0 8px}
+.ohcl-front .shop .prod{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #e5e7eb;border-radius:12px;background:#fff;color:inherit;text-decoration:none}
+.ohcl-front .shop .prod:hover{border-color:var(--g)}
+.ohcl-front .shop .prod img,.ohcl-front .shop .prod .ph{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;background:#f3f4f1;display:flex;align-items:center;justify-content:center}
+.ohcl-front .shop .prod b{font-size:.9rem;line-height:1.35}
+.ohcl-front .shop .prod .pr{font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--g)}
+@media (max-width:720px){.ohcl-front .shop{grid-template-columns:repeat(2,minmax(0,1fr))}}

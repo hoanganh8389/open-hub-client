@@ -145,11 +145,13 @@ final class OHCL_Admin_Members {
 			if ( 'segment' === $k ) {
 				continue;
 			}
-			$type = 'email' === $k ? 'email' : ( 'site_url' === $k ? 'url' : 'text' );
+			$type = 'email' === $k ? 'email' : ( in_array( $k, array( 'site_url', 'shop_url' ), true ) ? 'url' : 'text' ); // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP
 			echo '<p><label>' . esc_html( $def[0] ) . '<br><input name="' . esc_attr( $k ) . '" type="' . esc_attr( $type ) . '" class="regular-text" maxlength="' . (int) $def[1] . '" value="' . esc_attr( $v( $k ) ) . '"></label></p>';
 		}
 		// [2026-11-25 09:06 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — đồng ý hiện trên bản đồ / danh bạ (bắt buộc cho V4).
 		echo '<p><label class="ohcl-chk"><input type="checkbox" name="public_consent" value="1"' . checked( $m && '' !== $m['consent'], true, false ) . '> Cơ sở đã đồng ý hiện trên bản đồ và danh bạ công khai</label></p>';
+		// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — đồng ý hiện sản phẩm từ website bán hàng (Store API công khai) trên trang hồ sơ.
+		echo '<p><label class="ohcl-chk"><input type="checkbox" name="shop_consent" value="1"' . checked( $m && '' !== $m['shop_consent'], true, false ) . '> Cơ sở đồng ý hiện sản phẩm từ website bán hàng trên trang hồ sơ</label></p>';
 		if ( $cfg['member_fields'] ) {
 			echo '<h3>Thông tin ngành (' . esc_html( $cfg['name'] ) . ')</h3>';
 		}

@@ -585,9 +585,15 @@ final class OHCL_Front {
 	public static function pins_json( array $items ) {
 		$out = array();
 		foreach ( $items as $it ) {
-			$out[] = array( 't' => $it['title'], 's' => $it['seg_label'], 'p' => $it['province'], 'lat' => $it['lat'], 'lng' => $it['lng'], 'u' => self::place_url( $it['id'], $it['title'] ) );
+			$out[] = array( 't' => $it['title'], 's' => $it['seg_label'], 'p' => $it['province'], 'lat' => $it['lat'], 'lng' => $it['lng'], 'u' => self::place_url( $it['id'], $it['title'] ), 'd' => empty( $it['demo'] ) ? 0 : 1 );
 		}
 		return wp_json_encode( $out );
+	}
+
+	/** "Đã xác minh" for a real public business, "Mẫu" for a sample one (never mixed up). */
+	public static function trust_badge( array $it ) {
+		// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — cơ sở mẫu luôn mang nhãn "Mẫu", không bao giờ "Đã xác minh".
+		return ! empty( $it['demo'] ) ? '<span class="badge demo" title="Dữ liệu mẫu để xem thử cổng, không phải cơ sở có thật">Mẫu</span>' : '<span class="badge mem">Đã xác minh</span>';
 	}
 
 	/* ---------- P4 đăng ký ---------- */

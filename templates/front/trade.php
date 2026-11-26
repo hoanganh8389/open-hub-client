@@ -17,7 +17,7 @@ foreach ( $ohcl_pub['items'] as $ohcl_it ) {
 ?>
 <div class="page-h"><div class="in"><p class="crumb"><a href="<?php echo esc_url( OHCL_Front::url() ); ?>">Trang chủ</a> › Kết nối giao thương</p>
 	<h1>Kết nối giao thương</h1>
-	<p class="lead">Tìm nguồn cung, nhà sản xuất, đối tác trong cộng đồng <?php echo esc_html( $cfg['name'] ); ?>. Mọi cơ sở dưới đây đã được xác minh.</p></div></div>
+	<p class="lead">Tìm nguồn cung, nhà sản xuất, đối tác trong cộng đồng <?php echo esc_html( $cfg['name'] ); ?>. Cơ sở thật dưới đây đã được xác minh<?php echo ! empty( $ohcl_pub['demo'] ) ? '; cơ sở có nhãn "Mẫu" là dữ liệu xem thử' : ''; ?>.</p></div></div>
 <div class="in">
 	<?php if ( $ohcl_pub['degraded'] ) : ?>
 		<div class="pnl state err" style="margin:20px 0 32px"><b>Không tải được danh sách</b>Thử lại sau ít phút.<br><small>Mã: ohcl_directory_unavailable<?php echo current_user_can( 'manage_options' ) && get_transient( 'ohcl_dir_error' ) ? ' · lõi: ' . esc_html( get_transient( 'ohcl_dir_error' ) ) . ' (chỉ quản trị viên thấy)' : ''; // [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 ?></small></div>
@@ -31,7 +31,7 @@ foreach ( $ohcl_pub['items'] as $ohcl_it ) {
 					<?php if ( OHCL_Front::page_on( 'map' ) && '—' !== $ohcl_s ) : ?><a href="<?php echo esc_url( OHCL_Front::url( 'map', array( 'seg' => $ohcl_s ) ) ); ?>">Xem trên bản đồ</a><?php endif; ?></h2>
 					<?php foreach ( $ohcl_group[ $ohcl_s ] as $ohcl_it ) : ?>
 						<a class="item" href="<?php echo esc_url( OHCL_Front::place_url( $ohcl_it['id'], $ohcl_it['title'] ) ); ?>"><span class="ph"><?php echo OHCL_Front::icon( 'store' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
-							<span><b><?php echo esc_html( $ohcl_it['title'] ); ?></b><span class="sub"><?php echo esc_html( $ohcl_it['province'] ); ?></span>
+							<span><b><?php echo esc_html( $ohcl_it['title'] ); ?></b><span class="sub"><?php echo esc_html( $ohcl_it['province'] ); ?></span><?php echo OHCL_Front::trust_badge( $ohcl_it ); // phpcs:ignore WordPress.Security.EscapeOutput -- [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO ?>
 								<?php foreach ( $ohcl_it['fields'] as $ohcl_f ) : ?><?php if ( 'multi' === $ohcl_f['type'] ) : ?><?php foreach ( (array) $ohcl_f['value'] as $ohcl_v ) : ?><span class="badge"><?php echo esc_html( $ohcl_v ); ?></span><?php endforeach; ?><?php endif; ?><?php endforeach; ?>
 							</span></a>
 					<?php endforeach; ?>

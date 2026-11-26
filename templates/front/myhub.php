@@ -109,6 +109,9 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 					<label class="lbl" for="mh-a">Địa chỉ</label><input class="fld" id="mh-a" name="address" maxlength="200" value="<?php echo esc_attr( $ohcl_m['address'] ); ?>">
 					<label class="lbl" for="mh-h">Giờ mở cửa</label><input class="fld" id="mh-h" name="hours" maxlength="120" value="<?php echo esc_attr( $ohcl_m['hours'] ); ?>">
 					<label class="lbl" for="mh-w">Website</label><input class="fld" id="mh-w" name="site_url" maxlength="200" value="<?php echo esc_attr( $ohcl_m['site_url'] ); ?>" placeholder="https://">
+					<?php // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — website bán hàng + đồng ý hiện sản phẩm. ?>
+					<label class="lbl" for="mh-s">Website bán hàng (WooCommerce)</label><input class="fld" id="mh-s" name="shop_url" maxlength="200" value="<?php echo esc_attr( $ohcl_m['shop_url'] ); ?>" placeholder="https://">
+					<label class="chk"><input type="checkbox" name="shop_consent" value="1"<?php checked( '' !== $ohcl_m['shop_consent'] ); ?>> Hiện 6 sản phẩm của cửa hàng trên trang hồ sơ (người mua bấm sang cửa hàng của tôi)</label>
 					<label class="lbl" for="mh-z">Zalo của cơ sở (nút Nhắn Zalo)</label><input class="fld" id="mh-z" name="contact_zalo" maxlength="20" value="<?php echo esc_attr( $ohcl_m['contact_zalo'] ); ?>">
 					<label class="chk"><input type="checkbox" name="public_consent" value="1"<?php checked( '' !== $ohcl_m['consent'] ); ?>> Đồng ý công khai hồ sơ trên bản đồ ngành</label>
 					<button class="btn g" style="width:100%;margin-top:10px">Lưu hồ sơ</button>

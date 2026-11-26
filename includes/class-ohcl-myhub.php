@@ -125,14 +125,19 @@ final class OHCL_MyHub {
 			$v = isset( $in[ $k ] ) && is_scalar( $in[ $k ] ) ? trim( preg_replace( '/\s+/u', ' ', strip_tags( (string) $in[ $k ] ) ) ) : '';
 			return function_exists( 'mb_substr' ) ? mb_substr( $v, 0, $n, 'UTF-8' ) : substr( $v, 0, $n );
 		};
-		$out = array( 'address' => $s( 'address', 200 ), 'hours' => $s( 'hours', 120 ), 'site_url' => $s( 'site_url', 200 ), 'contact_zalo' => preg_replace( '/[^0-9+]/', '', $s( 'contact_zalo', 20 ) ) );
+		$out = array( 'address' => $s( 'address', 200 ), 'hours' => $s( 'hours', 120 ), 'site_url' => $s( 'site_url', 200 ), 'shop_url' => $s( 'shop_url', 200 ), 'contact_zalo' => preg_replace( '/[^0-9+]/', '', $s( 'contact_zalo', 20 ) ) );
+		// [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP — cơ sở tự nhập website bán hàng (https) và tự đồng ý hiện sản phẩm.
+		if ( '' !== $out['shop_url'] && class_exists( 'OHCL_Shop' ) && '' === OHCL_Shop::endpoint( $out['shop_url'] ) ) {
+			return OHCL_Error::make( 'ohcl_member_shop_invalid', 'Website bán hàng phải là địa chỉ https:// của site có WooCommerce.', 'Sửa địa chỉ (ví dụ https://tencoso.vn) hoặc để trống.', 400 );
+		}
 		if ( '' !== $out['site_url'] && ! preg_match( '#^https?://[^\s<>"]+$#i', $out['site_url'] ) ) {
 			return OHCL_Error::make( 'ohcl_member_url_invalid', 'Website phải bắt đầu bằng http:// hoặc https://.', 'Sửa địa chỉ website hoặc để trống.', 400 );
 		}
 		if ( '' !== $out['contact_zalo'] && ! preg_match( '/^\+?[0-9]{9,12}$/', $out['contact_zalo'] ) ) {
 			return OHCL_Error::make( 'ohcl_join_phone_invalid', 'Số Zalo chưa đúng.', 'Nhập số điện thoại 10 chữ số, ví dụ 0912345678.', 400 );
 		}
-		$out['consent'] = ! empty( $in['public_consent'] );
+		$out['consent']      = ! empty( $in['public_consent'] );
+		$out['shop_consent'] = ! empty( $in['shop_consent'] );
 		return $out;
 	}
 
@@ -169,11 +174,16 @@ final class OHCL_MyHub {
 			self::back( 'ho-so', array( 'err' => $c->get_error_code() ) );
 		}
 		$id = (int) $cur['member']['id'];
-		foreach ( array( 'address', 'hours', 'site_url', 'contact_zalo' ) as $k ) {
+		foreach ( array( 'address', 'hours', 'site_url', 'shop_url', 'contact_zalo' ) as $k ) { // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-SHOP
 			update_post_meta( $id, '_bzm_' . $k, $c[ $k ] );
 		}
 		$had = (string) get_post_meta( $id, '_bzm_public_consent', true );
 		update_post_meta( $id, '_bzm_public_consent', $c['consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
+		$had = (string) get_post_meta( $id, '_bzm_shop_consent', true );
+		update_post_meta( $id, '_bzm_shop_consent', $c['shop_consent'] ? ( $had ? $had : gmdate( 'Y-m-d H:i:s' ) ) : '' );
+		if ( class_exists( 'OHCL_Shop' ) ) {
+			OHCL_Shop::flush( $c['shop_url'] );
+		}
 		OHCL_Members::flush_public();
 		self::back( 'ho-so', array( 'saved' => 1 ) );
 	}
