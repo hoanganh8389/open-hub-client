@@ -34,6 +34,7 @@ final class OHCL_Admin {
 		$cfg  = OHCL_Industry::current();
 		$name = $cfg['name'] ? $cfg['name'] : 'Hub';
 		add_menu_page( $name, $name, self::CAP, 'open-hub', array( __CLASS__, 'page_overview' ), 'dashicons-networking', 3 );
+		add_submenu_page( 'open-hub', 'Bắt đầu', 'Bắt đầu', self::CAP, 'open-hub-start', array( __CLASS__, 'page_start' ) ); // [2026-11-26 10:39 PM Johnny Chu - Chu Hoàng Anh] OHCL-H5
 		add_submenu_page( 'open-hub', 'Tổng quan', '01 · Tổng quan', self::CAP, 'open-hub', array( __CLASS__, 'page_overview' ) );
 		if ( class_exists( 'OHCL_Admin_Members' ) ) {
 			add_submenu_page( 'open-hub', 'Hội viên', '02 · Hội viên', self::CAP, 'open-hub-members', array( 'OHCL_Admin_Members', 'page' ) ); // [2026-11-25 06:49 PM Johnny Chu - Chu Hoàng Anh] OHCL-D1C
@@ -147,6 +148,32 @@ final class OHCL_Admin {
 		return '<div class="ohcl-card ohcl-kpi"><span>' . esc_html( $label ) . '</span><b>' . esc_html( $value ) . '</b>' . ( $note ? '<small>' . esc_html( $note ) . '</small>' : '' ) . '</div>';
 	}
 
+	/* ---------- Bắt đầu (H5) ---------- */
+
+	public static function page_start() {
+		// [2026-11-26 10:39 PM Johnny Chu - Chu Hoàng Anh] OHCL-H5 — bốn bước dựng Hub, trạng thái tính từ dữ liệu thật; mỗi bước một nút tới đúng màn.
+		self::guard();
+		$r = OHCL_Onboarding::evaluate();
+		self::head( 'Bắt đầu', 'Dựng Hub trong 4 bước', esc_html( $r['done'] . '/4 bước · ' . $r['percent'] . '%' ) );
+		if ( $r['activated'] ) {
+			echo '<div class="ohcl-card"><h3>Hub đã sẵn sàng' . ( $r['activated_at'] ? ' · từ ' . esc_html( substr( $r['activated_at'], 0, 10 ) ) : '' ) . '</h3><p class="mute">Đủ bốn bước: có hội viên thật, có khoá, có quyền lợi đã được dùng.</p></div>';
+		}
+		$chip = array( 'done' => 'Đã xong', 'doing' => 'Đang làm', 'todo' => 'Chưa làm' );
+		foreach ( $r['steps'] as $s ) {
+			echo '<div class="ohcl-card"><h3>Bước ' . (int) $s['n'] . ' · ' . esc_html( $s['title'] ) . ' — ' . esc_html( $chip[ $s['status'] ] ) . '</h3><p class="mute">' . esc_html( $s['what'] ) . '</p><ul>';
+			foreach ( $s['checks'] as $c ) {
+				$mark = true === $c['ok'] ? '✓' : ( null === $c['ok'] ? '?' : '✗' );
+				echo '<li>' . esc_html( $mark . ' ' . $c['label'] ) . ( ! empty( $c['note'] ) ? ' <span class="mute">— ' . esc_html( $c['note'] ) . '</span>' : '' ) . '</li>';
+			}
+			echo '</ul>';
+			if ( 'done' !== $s['status'] ) {
+				echo '<a class="button button-primary" href="' . esc_url( self::url( $s['action_page'] ) ) . '">' . esc_html( $s['action_label'] ) . '</a>';
+			}
+			echo '</div>';
+		}
+		echo '<p class="mute">Kiểm bằng dòng lệnh: <code>wp ohcl doctor</code>. Trạng thái tính lại mỗi lần mở trang, không lưu "đã tick".</p></div>';
+	}
+
 	/* ---------- Dữ liệu & nhật ký (H6) ---------- */
 
 	public static function page_data() {
@@ -197,6 +224,9 @@ final class OHCL_Admin {
 		self::guard();
 		$cfg = OHCL_Industry::current();
 		self::head( '01 · Tổng quan Hub', ( $cfg['name'] ? $cfg['name'] : 'Hub' ) . ' hôm nay', esc_html( 'Số liệu thật, không ước tính · khoá đọc từ lõi Bizcity (đệm 5 phút)' ) );
+		if ( '' === (string) get_option( OHCL_Onboarding::ACTIVATED_OPTION, '' ) ) { // [2026-11-26 10:39 PM Johnny Chu - Chu Hoàng Anh] OHCL-H5
+			echo '<div class="ohcl-card"><h3>Hub chưa đủ 4 bước dựng</h3><p class="mute">Kết nối, ngành, nội dung, mở cửa.</p><a class="button button-primary" href="' . esc_url( self::url( 'open-hub-start' ) ) . '">Mở "Bắt đầu"</a></div>';
+		}
 
 		$keys = OHCL_Overview::all_keys();
 		$ok   = ! is_wp_error( $keys );

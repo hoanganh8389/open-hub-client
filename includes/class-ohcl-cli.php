@@ -5,6 +5,7 @@
  *   wp ohcl validate-industry [--format=json]   check the industry data (contract @2); exit 1 on errors
  *   wp ohcl modules                             the 14 modules, on / off and why
  *   wp ohcl module <id> <on|off>                switch an optional module (Hub owner's choice)
+ *   wp ohcl doctor [--format=json]              the four "Bắt đầu" steps as PASS / FAIL / SKIP checks; exit 1 while step 1–3 fail
  *   wp ohcl core-ping                           check the connection to open-hub-core (never prints the secret)
  *
  * @package Open_Hub_Client
@@ -158,6 +159,35 @@ final class OHCL_Cli {
 			}
 			WP_CLI\Utils\format_items( 'table', $rows, array( 'id', 'month', 'coach', 'lines', 'total', 'status' ) );
 		}
+	}
+
+	/**
+	 * Is the Hub set up? The four steps of "Bắt đầu" as checks. Read-only (it may fire hub_activated once).
+	 *
+	 * [--format=<format>]
+	 * : table or json. Default table.
+	 */
+	public function doctor( $args, $assoc ) {
+		// [2026-11-26 10:39 PM Johnny Chu - Chu Hoàng Anh] OHCL-H5
+		$r = OHCL_Onboarding::evaluate();
+		if ( isset( $assoc['format'] ) && 'json' === $assoc['format'] ) {
+			WP_CLI::line( wp_json_encode( array( 'done' => $r['done'], 'percent' => $r['percent'], 'activated' => $r['activated'], 'steps' => $r['steps'] ) ) );
+		} else {
+			foreach ( $r['steps'] as $s ) {
+				WP_CLI::line( sprintf( 'Bước %d · %s — %s', $s['n'], $s['title'], $s['status'] ) );
+				foreach ( $s['checks'] as $c ) {
+					WP_CLI::line( '  ' . ( true === $c['ok'] ? 'PASS  ' : ( null === $c['ok'] ? 'SKIP  ' : 'FAIL  ' ) ) . $c['label'] . ( ! empty( $c['note'] ) ? ' — ' . $c['note'] : '' ) );
+				}
+			}
+		}
+		$blocked = false;
+		foreach ( array_slice( $r['steps'], 0, 3 ) as $s ) {
+			$blocked = $blocked || 'done' !== $s['status'];
+		}
+		if ( $blocked ) {
+			WP_CLI::error( 'Hub chưa dựng xong bước 1–3 (' . $r['done'] . '/4).' );
+		}
+		$r['activated'] ? WP_CLI::success( 'Hub đã sẵn sàng (4/4).' ) : WP_CLI::success( 'Bước 1–3 đạt; còn bước 4 "Mở cửa" (' . $r['done'] . '/4).' );
 	}
 
 	/**

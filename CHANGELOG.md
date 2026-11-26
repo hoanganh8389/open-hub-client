@@ -1,5 +1,12 @@
 # Lịch sử phát hành
 
+## 0.15.0 — 2026-11-26 (H5: màn "Bắt đầu" — dựng Hub trong 4 bước)
+
+- **Màn "Bắt đầu"** (menu đầu tiên của Hub) và `OHCL_Onboarding`: bốn bước **Kết nối → Ngành → Nội dung → Mở cửa**, mỗi bước là các phép kiểm tính từ dữ liệu thật (không lưu "đã tick"): lõi đã nhập địa chỉ, mã Hub, bí mật; dữ liệu ngành đạt hợp đồng @2; các trang của Hub đã tạo và đã đặt chính sách affiliate; đã tiếp nhận hội viên **thật** (không tính hồ sơ mẫu), đã cấp khoá, có một quyền lợi ở trạng thái "đã dùng". Bước chưa xong có nút dẫn tới đúng màn. Tổng quan hiện thẻ nhắc cho tới khi đủ 4 bước.
+- **`wp ohcl doctor`** (`--format=json`): cùng các phép kiểm dạng PASS / FAIL / SKIP; thoát mã lỗi khi bước 1–3 chưa đạt. Không kiểm được (lõi không phản hồi) hiện SKIP và **không bao giờ** tính là đạt.
+- **Sự kiện `hub_activated`**: bắn **một lần** khi đủ 4 bước (ngày lưu ở option `ohcl_hub_activated_at`), chỉ đọc, không mang bí mật.
+- onboarding-smoke 15/15, admin-smoke 52/52 (đột biến: 0/0 trang tính là xong, mất trạng thái "không kiểm được", bắn mỗi lần, "đang làm" tính là xong, hồ sơ mẫu tính là thật — đều bị bắt).
+
 ## 0.14.0 — 2026-11-26 (H6: làm chủ dữ liệu — xuất, rời Hub, xoá thông tin, nhật ký)
 
 - **Hội viên**: tab **"Dữ liệu của tôi"** ở My Hub — tải toàn bộ dữ liệu Hub giữ về mình (JSON: hồ sơ, đồng ý, hành trình, quyền lợi, chứng nhận, kết quả tự khai, yêu cầu hỗ trợ của chính mình, số đo tháng này, **trạng thái** khoá — không có khoá đầy đủ, không ghi chú nội bộ, không dữ liệu người khác); **rời Hub** hai bước (đọc điều sẽ xảy ra, tích xác nhận, bấm): hồ sơ rời bản đồ ngay, đồng ý công khai / cửa hàng / kết quả bị rút; khoá không tự thu hồi và không chuyển Hub.

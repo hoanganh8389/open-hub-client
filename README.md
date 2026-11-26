@@ -88,6 +88,7 @@ php tests/fix-smoke.php    # lỗi đã gặp trên site thật
 php tests/run.php           # (gồm sổ quyền lợi, việc cần làm, mới / rời theo tháng)
 php tests/run.php           # (gồm sổ quyền lợi, việc cần làm, mới / rời theo tháng)
 php tests/run.php           # (gồm sổ quyền lợi, việc cần làm, mới / rời theo tháng)
+php tests/onboarding-smoke.php # "Bắt đầu" 4 bước từ dữ liệu thật, hub_activated một lần
 php tests/export-smoke.php    # xuất dữ liệu, nhật ký, rời Hub, xoá thông tin
 php tests/events-smoke.php    # sổ đo (JSONL + rollup, riêng tư), kết quả tự khai, beacon liên hệ
 php tests/rest-smoke.php      # REST: quyền, một cửa dịch vụ, khoá thô một lần, hội viên chỉ thấy của mình
@@ -119,6 +120,7 @@ php tests/e2e-core.php     # liên thông với ../open-hub-core: tạo Hub → 
 | **H2** | sổ quyền lợi: tám quyền lợi × trạng thái từng hội viên (tính từ dữ liệu có sẵn), My Hub › Quyền lợi của tôi, phễu cho chủ Hub, `/me/benefits` + `/owner/benefits` | **xong mã + test** (run 74/74) · chưa chạy trên site thật |
 | **H3** | sổ đo lượt xem hồ sơ / lượt liên hệ (JSONL + rollup tháng, không IP), "Hub đã mang lại gì" thật ở My Hub, kết quả hội viên tự khai + Hub duyệt, beacon liên hệ | **xong mã + test** (events-smoke 36/36) · chưa chạy trên site thật |
 | **H6** | làm chủ dữ liệu: hội viên tải dữ liệu của mình, rời Hub; chủ Hub xuất CSV / JSON, xoá thông tin hội viên đã rời; nhật ký thao tác nhạy cảm (JSONL) | **xong mã + test** (export-smoke 24/24) · chưa chạy trên site thật |
+| **H5** | màn "Bắt đầu" 4 bước (kết nối, ngành, nội dung, mở cửa) tính từ dữ liệu thật, `wp ohcl doctor`, sự kiện `hub_activated` | **xong mã + test** (onboarding-smoke 15/15) · chưa chạy trên site thật · bộ dữ liệu mẫu theo ngành đã có từ 0.11 |
 | **API** | REST `open-hub-client/v1`: Hub Owner (tổng quan, hội viên, tiếp nhận, khoá, xác minh), hội viên (`/me`), công khai (`/places`); lớp dịch vụ chung với wp-admin | **xong mã + test** (rest-smoke 45/45) · chưa chạy trên site thật |
 | Đ2 | Tài nguyên & quyền lợi (GitHub) · My Hub · Xác minh & chứng nhận + tra cứu QR | chưa |
 | Đ3 | Coach + affiliate + My Coach · Marketing (JSONL + rollup) · Doanh thu (core + Woo) · tài sản cộng đồng | chưa |

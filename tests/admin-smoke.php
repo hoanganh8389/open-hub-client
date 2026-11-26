@@ -26,6 +26,7 @@ function add_filter( $h, $cb ) { $GLOBALS['hooks'][ $h ][] = $cb; return true; }
 function add_action( $h, $cb ) { return add_filter( $h, $cb ); }
 function apply_filters( $h, $v ) { $a = func_get_args(); foreach ( isset( $GLOBALS['hooks'][ $h ] ) ? $GLOBALS['hooks'][ $h ] : array() as $cb ) { $a[1] = $v; $v = call_user_func_array( $cb, array_slice( $a, 1 ) ); } return $v; }
 function do_action( $h ) {}
+function get_users( $a ) { return array(); }
 function get_option( $k, $d = false ) { return array_key_exists( $k, $GLOBALS['opts'] ) ? $GLOBALS['opts'][ $k ] : $d; }
 function update_option( $k, $v, $a = null ) { $GLOBALS['opts'][ $k ] = $v; return true; }
 function get_transient( $k ) { return isset( $GLOBALS['tr'][ $k ] ) ? $GLOBALS['tr'][ $k ] : false; }
@@ -66,7 +67,7 @@ function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; r
 function handle( $class, $fn, array $post ) { $_POST = $post; try { call_user_func( array( $class, $fn ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs', 'class-ohcl-admin-coach' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-pages', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-onboarding', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs', 'class-ohcl-admin-coach' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -194,6 +195,9 @@ check( 'Member 360°: có thẻ "Hub đã mang lại (tháng này)" — chưa đ
 // [2026-11-26 04:36 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 $dp = page( 'page_data' );
 check( 'Dữ liệu & nhật ký: nút xuất CSV + JSON có nonce, ghi chú dữ liệu cá nhân, bảng nhật ký (hoặc "chưa có")', false !== strpos( $dp, 'value="csv"' ) && false !== strpos( $dp, 'value="json"' ) && false !== strpos( $dp, 'ohcl_export_members' ) && false !== strpos( $dp, 'thông tin cá nhân' ) );
+// [2026-11-26 10:39 PM Johnny Chu - Chu Hoàng Anh] OHCL-H5
+$sp = page( 'page_start' );
+check( 'Bắt đầu: 4 bước có tiêu đề, bước chưa xong có nút dẫn tới màn, nhắc wp ohcl doctor', 4 === substr_count( $sp, 'Bước ' ) - substr_count( $sp, 'Bước 1–3' ) && false !== strpos( $sp, 'wp ohcl doctor' ) && false !== strpos( $sp, 'class="button button-primary" href="https://hub.test/wp-admin/admin.php?page=' ) && 1 === substr_count( $sp, 'Chưa làm' ) );
 /* ---- 06 · Chứng nhận (OHCL-D2A) ---- */
 // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — Member 360° → xác minh → cấp chứng nhận (đủ tiêu chí) → màn 06 → giấy in có QR → thu hồi hai bước.
 if ( ! function_exists( 'get_userdata' ) ) { function get_userdata( $id ) { return (object) array( 'display_name' => 'Leader ' . $id ); } }

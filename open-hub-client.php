@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Open Hub Client
  * Description:       Nền tảng chung cho mọi site Hub ngành của Bizcity Open: 14 module bật / tắt, hợp đồng ngành bizcity_industry_hub@2, ô mở rộng cho plugin ngành, một cửa gọi open-hub-core. Đặc tả: canon open-hub OPEN-HUB-CLIENT.md.
- * Version:           0.14.0
+ * Version:           0.15.0
  * Requires at least: 6.0
  * Requires PHP:      7.4
  * Author:            Johnny Chu – Chu Hoàng Anh
@@ -19,10 +19,10 @@ if ( defined( 'OHCL_VERSION' ) ) {
 	return;
 }
 
-define( 'OHCL_VERSION', '0.14.0' );
+define( 'OHCL_VERSION', '0.15.0' );
 define( 'OHCL_DIR', __DIR__ . '/' );
 
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-onboarding', 'class-ohcl-myhub', 'class-ohcl-pages', 'class-ohcl-front' ) as $ohcl_f ) {
 	$ohcl_p = OHCL_DIR . 'includes/' . $ohcl_f . '.php';
 	if ( ! is_file( $ohcl_p ) || ! is_readable( $ohcl_p ) ) {
 		return; // a missing artifact disables the plugin quietly instead of a fatal.
