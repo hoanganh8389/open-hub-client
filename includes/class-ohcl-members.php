@@ -514,6 +514,7 @@ final class OHCL_Members {
 
 	public static function flush_public() {
 		delete_transient( self::PUBLIC_CACHE );
+		delete_transient( 'ohcl_portal_stats' ); // [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5
 	}
 
 	/** key_id => key view, from the cached key list (empty when the core is unreachable). */

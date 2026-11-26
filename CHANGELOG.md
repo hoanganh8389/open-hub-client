@@ -1,5 +1,12 @@
 # Lịch sử phát hành
 
+## 0.9.2 — 2026-11-26 (góp ý trang chủ, tra cứu)
+
+- **Gần tôi**: danh sách thành thẻ từng cơ sở — thứ hạng, tên, loại hình · tỉnh, **số km nổi bật** (dưới 1 km hiện mét), Xem chi tiết, Chỉ đường (Google Maps), nút đóng; ghi rõ khoảng cách đường chim bay.
+- **Trang Chứng nhận**: ô tra cứu lên đầu, căn giữa; dưới là các thẻ thông tin, "Kết quả có thể gặp" thành 4 ô, bộ tiêu chuẩn, phản ánh.
+- **Thống kê trang chủ thật**: hội viên, cơ sở xác minh công khai, địa điểm, bài viết, bài review (nếu ngành khai `persona.review_category`), chứng nhận còn hiệu lực, Coach. Bỏ ô "Sự kiện —" chưa có nguồn. Đệm 10 phút.
+- demo-smoke 53/53.
+
 ## 0.9.1 — 2026-11-26 (góp ý trang chủ)
 
 - Bỏ khối chú thích dữ liệu mẫu dưới bản đồ trang chủ; nhãn "Mẫu" vẫn ở từng cơ sở mẫu.

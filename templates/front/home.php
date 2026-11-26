@@ -102,9 +102,9 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 </div>
 
 <section class="stats"><div class="in">
-	<div class="st"><i><?php echo OHCL_Front::icon( 'users' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( number_format_i18n( $ohcl_members['active'] ) ); ?></b><span><?php echo esc_html( ucfirst( OHCL_Industry::term( 'member' ) ) ); ?></span></div></div>
-	<div class="st"><i><?php echo OHCL_Front::icon( 'factory' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( $ohcl_pub['degraded'] ? '—' : number_format_i18n( $ohcl_real ) ); ?></b><span>Đã xác minh, công khai</span></div></div>
-	<div class="st"><i><?php echo OHCL_Front::icon( 'pin' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( $ohcl_pub['degraded'] ? '—' : number_format_i18n( $ohcl_geo ) ); ?></b><span>Địa điểm trên bản đồ</span></div></div>
-	<div class="st"><i><?php echo OHCL_Front::icon( 'cal' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b class="na">—</b><span>Sự kiện</span></div></div>
+	<?php // [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5 — thống kê thật (bỏ ô "Sự kiện —" chưa có nguồn). ?>
+	<?php foreach ( OHCL_Front::portal_stats( $ohcl_pub, $persona ) as $ohcl_st ) : ?>
+		<div class="st"><i><?php echo OHCL_Front::icon( $ohcl_st[0] ); // phpcs:ignore WordPress.Security.EscapeOutput ?></i><div><b><?php echo esc_html( is_numeric( $ohcl_st[1] ) ? number_format_i18n( $ohcl_st[1] ) : $ohcl_st[1] ); ?></b><span><?php echo esc_html( $ohcl_st[2] ); ?></span></div></div>
+	<?php endforeach; ?>
 	<p class="motto"><?php echo esc_html( $persona['motto'] ); ?></p>
 </div></section>

@@ -118,7 +118,8 @@ check( 'bản công khai: toạ độ làm tròn 4 số, không có điện tho�
 /* P1 */
 $h = OHCL_Front::html( 'home', array() );
 check( 'P1: chữ persona, nút trở thành hội viên, chân trang Powered by Bizcity Open', false !== strpos( $h, 'Ngành của chúng ta' ) && false !== strpos( $h, 'Trở thành hội viên' ) && false !== strpos( $h, 'POWERED BY BIZCITY OPEN' ) );
-check( 'P1: số hội viên đang hoạt động thật (3), sự kiện "—"', false !== strpos( $h, '<b>3</b><span>Hội viên</span>' ) && false !== strpos( $h, '<b class="na">—</b><span>Sự kiện</span>' ) );
+// [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5 — thống kê thật; không còn ô "Sự kiện —" chưa có nguồn.
+check( 'P1: số hội viên đang hoạt động thật (3); không còn ô "Sự kiện —"; có ô "Bài viết"', false !== strpos( $h, '<b>3</b><span>Hội viên</span>' ) && false === strpos( $h, 'Sự kiện</span>' ) && false !== strpos( $h, '<span>Bài viết</span>' ) );
 check( 'P1: ghim bản đồ chỉ có hồ sơ V4; tên đã escape', false !== strpos( $h, 'data-pins' ) && false === strpos( $h, 'Cửa hàng Kín' ) && false === strpos( $h, 'Cửa hàng Mới' ) && false === strpos( $h, '<script>x</script>' ) );
 check( 'P1: chưa có bài viết ⇒ "Chưa có tin", không bịa tin', false !== strpos( $h, 'Chưa có tin' ) );
 

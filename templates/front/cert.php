@@ -28,6 +28,42 @@ $ohcl_tone = array( 'valid' => 'ok', 'expired' => 'soon', 'revoked' => 'bad', 'n
 	<p class="lead">Bốn loại ghi nhận khác nhau. Không loại nào được hiểu thay cho loại khác.</p></div></div>
 
 <div class="in certpage<?php echo $ohcl_lk ? ' has-lookup' : ''; ?>">
+	<?php // [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5 — ô tra cứu lên đầu, căn giữa; các thẻ thông tin ở dưới. ?>
+	<div class="pnl lookup-box" id="tra-cuu"><h2>Tra cứu chứng nhận</h2>
+		<p class="note" style="margin:0 0 10px">Nhập mã in trên giấy chứng nhận, hoặc quét mã QR trên giấy.</p>
+		<form method="get" action="<?php echo esc_url( OHCL_Front::url( 'cert' ) ); ?>#tra-cuu" class="lookup">
+			<input class="fld" name="ma" value="<?php echo esc_attr( $ohcl_asked ); ?>" placeholder="<?php echo esc_attr( OHCL_Certs::code( OHCL_Certs::prefix( $cfg ), (int) gmdate( 'Y' ), 1 ) ); ?>" aria-label="Mã chứng nhận" autocomplete="off" spellcheck="false">
+			<button class="btn g">Tra cứu</button>
+		</form>
+		<?php if ( $ohcl_lk ) : ?>
+			<div class="result" aria-live="polite">
+				<?php if ( 'none' === $ohcl_lk['state'] ) : ?>
+					<span class="tag idle"><?php echo esc_html( $ohcl_lk['state_label'] ); ?></span>
+					<p>Mã <b class="mono"><?php echo esc_html( $ohcl_asked ); ?></b> không do <?php echo esc_html( $ohcl_hub ); ?> cấp, hoặc gõ sai. Kiểm lại từng ký tự trên giấy.</p>
+				<?php else : ?>
+					<div class="cert-card">
+						<?php if ( 'valid' === $ohcl_lk['state'] ) : ?>
+							<div class="qr" data-ohcl-qr="<?php echo esc_attr( OHCL_Certs::lookup_url( $ohcl_lk['code'] ) ); ?>" role="img" aria-label="Mã QR tra cứu chứng nhận này"></div>
+						<?php endif; ?>
+						<div>
+							<span class="tag <?php echo esc_attr( $ohcl_tone[ $ohcl_lk['state'] ] ); ?>"><?php echo esc_html( $ohcl_lk['state_label'] ); ?></span>
+							<h3><?php echo esc_html( $ohcl_lk['business'] ? $ohcl_lk['business'] : '—' ); ?></h3>
+							<p><?php echo esc_html( $ohcl_hub ); ?> Certified · <b><?php echo esc_html( $ohcl_lk['standard'] ); ?></b><?php echo $ohcl_lk['province'] ? ' · ' . esc_html( $ohcl_lk['province'] ) : ''; ?></p>
+							<p class="mono"><?php echo esc_html( $ohcl_lk['code'] ); ?></p>
+							<p>Hiệu lực <?php echo esc_html( $ohcl_lk['from'] . ' – ' . $ohcl_lk['until'] ); ?> · đạt <?php echo (int) $ohcl_lk['criteria_count']; ?>/<?php echo (int) $ohcl_lk['criteria_count']; ?> tiêu chí</p>
+							<?php if ( 'revoked' === $ohcl_lk['state'] ) : ?>
+								<p class="bad-txt">Thu hồi ngày <?php echo esc_html( $ohcl_lk['revoked_at'] ); ?>. Lý do: <?php echo esc_html( $ohcl_lk['reason'] ); ?></p>
+							<?php elseif ( 'expired' === $ohcl_lk['state'] ) : ?>
+								<p class="note">Cơ sở đã từng đạt, chưa gia hạn.</p>
+							<?php endif; ?>
+							<p class="note">Đơn vị cấp: <?php echo esc_html( $ohcl_hub ); ?></p>
+						</div>
+					</div>
+				<?php endif; ?>
+			</div>
+		<?php endif; ?>
+	</div>
+
 	<div class="kinds">
 		<?php foreach ( $ohcl_kinds as $ohcl_k ) : ?>
 			<div class="pnl kind"><span class="ic"><?php echo OHCL_Front::icon( $ohcl_k[0] ); // phpcs:ignore WordPress.Security.EscapeOutput -- SVG cố định. ?></span>
@@ -35,51 +71,14 @@ $ohcl_tone = array( 'valid' => 'ok', 'expired' => 'soon', 'revoked' => 'bad', 'n
 		<?php endforeach; ?>
 	</div>
 
-	<div class="g2 cert-row">
-		<div class="pnl" id="tra-cuu"><h2>Tra cứu chứng nhận</h2>
-			<p class="note" style="margin:0 0 10px">Nhập mã in trên giấy chứng nhận, hoặc quét mã QR trên giấy.</p>
-			<form method="get" action="<?php echo esc_url( OHCL_Front::url( 'cert' ) ); ?>#tra-cuu" class="lookup">
-				<input class="fld" name="ma" value="<?php echo esc_attr( $ohcl_asked ); ?>" placeholder="<?php echo esc_attr( OHCL_Certs::code( OHCL_Certs::prefix( $cfg ), (int) gmdate( 'Y' ), 1 ) ); ?>" aria-label="Mã chứng nhận" autocomplete="off" spellcheck="false">
-				<button class="btn g">Tra cứu</button>
-			</form>
-			<?php if ( $ohcl_lk ) : ?>
-				<div class="result" aria-live="polite">
-					<?php if ( 'none' === $ohcl_lk['state'] ) : ?>
-						<span class="tag idle"><?php echo esc_html( $ohcl_lk['state_label'] ); ?></span>
-						<p>Mã <b class="mono"><?php echo esc_html( $ohcl_asked ); ?></b> không do <?php echo esc_html( $ohcl_hub ); ?> cấp, hoặc gõ sai. Kiểm lại từng ký tự trên giấy.</p>
-					<?php else : ?>
-						<div class="cert-card">
-							<?php if ( 'valid' === $ohcl_lk['state'] ) : ?>
-								<div class="qr" data-ohcl-qr="<?php echo esc_attr( OHCL_Certs::lookup_url( $ohcl_lk['code'] ) ); ?>" role="img" aria-label="Mã QR tra cứu chứng nhận này"></div>
-							<?php endif; ?>
-							<div>
-								<span class="tag <?php echo esc_attr( $ohcl_tone[ $ohcl_lk['state'] ] ); ?>"><?php echo esc_html( $ohcl_lk['state_label'] ); ?></span>
-								<h3><?php echo esc_html( $ohcl_lk['business'] ? $ohcl_lk['business'] : '—' ); ?></h3>
-								<p><?php echo esc_html( $ohcl_hub ); ?> Certified · <b><?php echo esc_html( $ohcl_lk['standard'] ); ?></b><?php echo $ohcl_lk['province'] ? ' · ' . esc_html( $ohcl_lk['province'] ) : ''; ?></p>
-								<p class="mono"><?php echo esc_html( $ohcl_lk['code'] ); ?></p>
-								<p>Hiệu lực <?php echo esc_html( $ohcl_lk['from'] . ' – ' . $ohcl_lk['until'] ); ?> · đạt <?php echo (int) $ohcl_lk['criteria_count']; ?>/<?php echo (int) $ohcl_lk['criteria_count']; ?> tiêu chí</p>
-								<?php if ( 'revoked' === $ohcl_lk['state'] ) : ?>
-									<p class="bad-txt">Thu hồi ngày <?php echo esc_html( $ohcl_lk['revoked_at'] ); ?>. Lý do: <?php echo esc_html( $ohcl_lk['reason'] ); ?></p>
-								<?php elseif ( 'expired' === $ohcl_lk['state'] ) : ?>
-									<p class="note">Cơ sở đã từng đạt, chưa gia hạn.</p>
-								<?php endif; ?>
-								<p class="note">Đơn vị cấp: <?php echo esc_html( $ohcl_hub ); ?></p>
-							</div>
-						</div>
-					<?php endif; ?>
-				</div>
-			<?php endif; ?>
-		</div>
-
-		<div class="pnl"><h2>Kết quả có thể gặp</h2>
-			<ul class="states">
-				<li><span class="tag ok">Còn hiệu lực</span> đạt bộ tiêu chuẩn, trong thời hạn</li>
-				<li><span class="tag soon">Hết hạn</span> đã từng đạt, chưa gia hạn</li>
-				<li><span class="tag bad">Đã thu hồi</span> kèm ngày và lý do công khai</li>
-				<li><span class="tag idle">Không tìm thấy</span> mã không do <?php echo esc_html( $ohcl_hub ); ?> cấp</li>
-			</ul>
-			<p class="note">Có thắc mắc về một cơ sở? <a href="#phan-anh">Gửi phản ánh →</a></p>
-		</div>
+	<div class="pnl" style="margin-top:16px"><h2>Kết quả có thể gặp</h2>
+		<ul class="states">
+			<li><span class="tag ok">Còn hiệu lực</span> đạt bộ tiêu chuẩn, trong thời hạn</li>
+			<li><span class="tag soon">Hết hạn</span> đã từng đạt, chưa gia hạn</li>
+			<li><span class="tag bad">Đã thu hồi</span> kèm ngày và lý do công khai</li>
+			<li><span class="tag idle">Không tìm thấy</span> mã không do <?php echo esc_html( $ohcl_hub ); ?> cấp</li>
+		</ul>
+		<p class="note">Có thắc mắc về một cơ sở? <a href="#phan-anh">Gửi phản ánh →</a></p>
 	</div>
 
 	<?php if ( $cfg['standards'] ) : ?>

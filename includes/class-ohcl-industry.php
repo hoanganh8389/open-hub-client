@@ -104,6 +104,7 @@ final class OHCL_Industry {
 			),
 			'categories' => array(),
 			'join_note'  => 'Ban điều hành duyệt rồi cấp site và khoá trợ lý AI cho cơ sở. Không cần thẻ thanh toán.',
+			'review_category' => '', // [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5 — slug chuyên mục bài review để đếm "Bài review" ở thống kê (rỗng = không hiện)
 			'hero_bg'    => '', // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — ảnh nền dưới phần hero, theo ngành (rỗng = nền trắng)
 			'map'        => array(), // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — tâm + zoom mặc định của bản đồ (rỗng = vừa khung mọi điểm)
 		);
@@ -142,6 +143,9 @@ final class OHCL_Industry {
 				}
 				$out[ $k ] = $v;
 			}
+		}
+		if ( isset( $raw['review_category'] ) ) { // [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5
+			$out['review_category'] = strtolower( preg_replace( '/[^a-z0-9-]/i', '', (string) ( is_scalar( $raw['review_category'] ) ? $raw['review_category'] : '' ) ) );
 		}
 		if ( isset( $raw['hero_bg'] ) ) { // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4
 			$out['hero_bg'] = self::clean_image_url( $raw['hero_bg'] );

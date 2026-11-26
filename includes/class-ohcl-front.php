@@ -590,6 +590,45 @@ final class OHCL_Front {
 		return wp_json_encode( $out );
 	}
 
+	/**
+	 * Real numbers of the portal home (R-HUB-6: nothing invented; a source that cannot be read ⇒ no tile).
+	 * Cached 10 minutes; flushed with the public directory.
+	 *
+	 * @return array[] { icon, value, label }
+	 */
+	public static function portal_stats( array $pub, array $persona ) {
+		// [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5 — thống kê trang chủ đọc từ dữ liệu thật: hội viên, cơ sở công khai, địa điểm, bài viết, bài review, chứng nhận, Coach.
+		$c = get_transient( 'ohcl_portal_stats' );
+		if ( is_array( $c ) ) {
+			return $c;
+		}
+		$deg    = ! empty( $pub['degraded'] );
+		$real   = isset( $pub['real'] ) ? (int) $pub['real'] : count( $pub['items'] );
+		$geo    = count( array_filter( $pub['items'], function ( $x ) { return empty( $x['demo'] ) && ( $x['lat'] || $x['lng'] ); } ) );
+		$counts = OHCL_Members::counts( OHCL_Members::all(), array(), time() );
+		$posts  = function_exists( 'wp_count_posts' ) ? (int) wp_count_posts( 'post' )->publish : count( get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'numberposts' => 500, 'fields' => 'ids' ) ) );
+		$out    = array(
+			array( 'users', $counts['active'], ucfirst( OHCL_Industry::term( 'member' ) ) ),
+			array( 'factory', $deg ? '—' : $real, 'Đã xác minh, công khai' ),
+			array( 'pin', $deg ? '—' : $geo, 'Địa điểm trên bản đồ' ),
+			array( 'doc', $posts, 'Bài viết' ),
+		);
+		$slug = isset( $persona['review_category'] ) ? $persona['review_category'] : '';
+		$cat  = '' !== $slug && function_exists( 'get_category_by_slug' ) ? get_category_by_slug( $slug ) : null;
+		if ( $cat && isset( $cat->count ) ) {
+			$out[] = array( 'star', (int) $cat->count, 'Bài review ' . ( isset( $cat->name ) ? mb_strtolower( (string) $cat->name, 'UTF-8' ) : '' ) );
+		}
+		if ( self::cert_on() ) {
+			$now   = time();
+			$out[] = array( 'shield', count( array_filter( OHCL_Certs::all(), function ( $x ) use ( $now ) { return 'valid' === OHCL_Certs::state( $x, $now ); } ) ), 'Chứng nhận còn hiệu lực' );
+		}
+		if ( class_exists( 'OHCL_Coach' ) && self::page_on( 'coaches' ) ) {
+			$out[] = array( 'cal', OHCL_Coach::approved_count(), 'Coach đồng hành' );
+		}
+		set_transient( 'ohcl_portal_stats', $out, 10 * MINUTE_IN_SECONDS );
+		return $out;
+	}
+
 	/** data-center / data-zoom attributes from persona.map (numbers only), or ''. */
 	public static function map_view_attrs( array $persona ) {
 		// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — bản đồ mở ở tâm ngành / chủ Hub đặt (ví dụ Hà Nội) thay vì vừa khung cả nước.

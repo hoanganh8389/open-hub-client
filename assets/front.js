@@ -51,10 +51,13 @@
 				var near = m.pins.map(function (p) { return { p: p, d: km(me, [p.lat, p.lng]) }; }).sort(function (x, y) { return x.d - y.d; }).slice(0, 5);
 				if (!near.length) { m.map.setView(me, 14); say('<p class="note">Chưa có cơ sở nào trên bản đồ.</p>'); return; }
 				m.map.fitBounds([me].concat(near.slice(0, 3).map(function (x) { return [x.p.lat, x.p.lng]; })), { padding: [40, 40], maxZoom: 15 });
-				say('<b>Gần bạn nhất</b><ol>' + near.map(function (x) {
-					var d = x.d < 1 ? Math.round(x.d * 1000) + ' m' : (Math.round(x.d * 10) / 10).toString().replace('.', ',') + ' km';
-					return '<li><a href="' + esc(x.p.u) + '">' + esc(x.p.t) + '</a><span>' + esc([x.p.s, d].filter(Boolean).join(' · ')) + '</span></li>';
-				}).join('') + '</ol>');
+				// [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5 — thẻ từng cơ sở: thứ hạng, tên, loại hình · tỉnh, số km nổi bật, xem chi tiết + chỉ đường.
+				var fmt = function (d) { return d < 1 ? Math.round(d * 1000) + ' m' : (Math.round(d * 10) / 10).toString().replace('.', ',') + ' km'; };
+				say('<div class="near-h"><b>Cơ sở chay gần bạn nhất</b><span>Khoảng cách theo đường chim bay · vị trí của bạn không được lưu</span><button type="button" class="near-x" data-ohcl-near-close aria-label="Đóng">×</button></div><div class="near-grid">' + near.map(function (x, i) {
+					return '<div class="near-card"><span class="near-n">' + (i + 1) + '</span><div class="near-b"><a class="near-t" href="' + esc(x.p.u) + '">' + esc(x.p.t) + '</a><span class="near-s">' + esc([x.p.s, x.p.p].filter(Boolean).join(' · ')) + '</span><span class="near-l"><a href="' + esc(x.p.u) + '">Xem chi tiết</a><a href="https://www.google.com/maps/dir/?api=1&destination=' + x.p.lat + ',' + x.p.lng + '" rel="noopener" target="_blank">Chỉ đường</a></span></div><span class="near-d">' + fmt(x.d) + '</span></div>';
+				}).join('') + '</div>');
+				var cl = box && box.querySelector('[data-ohcl-near-close]');
+				if (cl) { cl.addEventListener('click', function () { box.hidden = true; box.innerHTML = ''; }); }
 			}, function (err) {
 				btn.disabled = false; btn.textContent = 'Gần tôi';
 				say('<p class="note">' + (err && err.code === 1 ? 'Bạn chưa cho phép lấy vị trí. Bật quyền vị trí cho trang này rồi bấm lại.' : 'Chưa lấy được vị trí. Thử lại sau ít giây.') + '</p>');

@@ -228,6 +228,33 @@ update_option( OHCL_Industry::HERO_OPTION, '' );
 $bh = OHCL_Front::html( 'benefits', array() );
 check( 'trang quyền lợi: "8 quyền lợi đặc biệt"', false !== strpos( $bh, '<h1>8 quyền lợi đặc biệt</h1>' ) && false === strpos( $bh, 'trụ cột quyền lợi' ) );
 
+/* ---------- thống kê thật + danh sách gần nhất + trang tra cứu (OHCL-FIX5) ---------- */
+// [2026-11-26 10:50 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX5
+function wp_count_posts( $t ) { return (object) array( 'publish' => isset( $GLOBALS['wp_posts'] ) ? count( $GLOBALS['wp_posts'] ) : 0 ); }
+function get_category_by_slug( $s ) { return 'diem-den' === $s ? (object) array( 'count' => 4, 'name' => 'Điểm đến chay' ) : null; }
+$GLOBALS['wp_posts'] = array( (object) array( 'ID' => 1, 'post_title' => 'A' ), (object) array( 'ID' => 2, 'post_title' => 'B' ), (object) array( 'ID' => 3, 'post_title' => 'C' ) );
+OHCL_Members::flush_public();
+$pub  = OHCL_Members::public_list();
+$st   = OHCL_Front::portal_stats( $pub, $cfg['persona'] );
+$vals = array();
+foreach ( $st as $row ) { $vals[ $row[2] ] = $row[1]; }
+check( 'thống kê: có Bài viết = số bài thật (3); không có ô "Sự kiện"; không có "Bài review" khi ngành chưa khai chuyên mục', 3 === $vals['Bài viết'] && ! isset( $vals['Sự kiện'] ) && ! array_filter( array_keys( $vals ), function ( $k ) { return 0 === strpos( $k, 'Bài review' ); } ) );
+OHCL_Members::flush_public();
+$st   = OHCL_Front::portal_stats( $pub, array_merge( $cfg['persona'], array( 'review_category' => 'diem-den' ) ) );
+$vals = array();
+foreach ( $st as $row ) { $vals[ $row[2] ] = $row[1]; }
+check( 'thống kê: ngành khai review_category ⇒ có "Bài review điểm đến chay" = 4 (đếm từ chuyên mục thật)', 4 === $vals['Bài review điểm đến chay'] );
+$w2 = array();
+$pp = OHCL_Industry::validate_persona( array( 'review_category' => 'Diem Den!' ), array(), $w2 );
+check( 'review_category được làm sạch thành slug', 'diemden' === $pp['review_category'] );
+OHCL_Members::flush_public();
+$h = OHCL_Front::html( 'home', array() );
+check( 'trang chủ: ô "Đã xác minh, công khai" bằng số cơ sở thật V4 (2) + có ô Bài viết', 1 === preg_match( '#<b>2</b><span>Đã xác minh, công khai#', $h ) && false !== strpos( $h, '<b>3</b><span>Bài viết</span>' ) );
+$js = (string) file_get_contents( OHCL_DIR . 'assets/front.js' );
+check( 'JS gần nhất: thẻ có số km nổi bật, xem chi tiết, chỉ đường, nút đóng', false !== strpos( $js, 'near-d' ) && false !== strpos( $js, 'Chỉ đường' ) && false !== strpos( $js, 'data-ohcl-near-close' ) && false !== strpos( $js, 'near-card' ) );
+$ch = OHCL_Front::html( 'cert', array() );
+check( 'trang tra cứu: ô tra cứu đứng đầu (trước các thẻ thông tin và "Kết quả có thể gặp"), căn giữa', false !== strpos( $ch, 'lookup-box' ) && strpos( $ch, 'lookup-box' ) < strpos( $ch, 'class="kinds"' ) && strpos( $ch, 'class="kinds"' ) < strpos( $ch, 'Kết quả có thể gặp' ) && false === strpos( $ch, 'cert-row' ) );
+
 /* ---------- sản phẩm từ cửa hàng của cơ sở (đường B) ---------- */
 check( 'endpoint: chỉ https tên miền thật; http, IP, có query ⇒ rỗng', 'https://shop.vn/wp-json/wc/store/v1/products?per_page=6&orderby=popularity' === OHCL_Shop::endpoint( 'https://shop.vn/' ) && '' === OHCL_Shop::endpoint( 'http://shop.vn' ) && '' === OHCL_Shop::endpoint( 'https://127.0.0.1' ) && '' === OHCL_Shop::endpoint( 'https://shop.vn/?a=1' ) );
 check( 'giá: 45000 VND (minor 0) ⇒ "45.000 ₫"; 1250 USD minor 2 ⇒ "$12,50"', '45.000 ₫' === OHCL_Shop::price( array( 'price' => '45000', 'currency_minor_unit' => 0, 'currency_symbol' => '₫', 'currency_prefix' => '', 'currency_suffix' => '' ) ) && '$12,50' === OHCL_Shop::price( array( 'price' => '1250', 'currency_minor_unit' => 2, 'currency_prefix' => '$' ) ) );
