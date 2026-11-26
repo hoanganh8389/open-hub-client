@@ -159,6 +159,7 @@ final class OHCL_Admin_Coach {
 		$res = array( 'ok' => 'Không có gì để làm.' );
 		if ( 'policy' === $do ) {
 			OHCL_Affiliate::save_policy( wp_unslash( $_POST ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- clean_policy() ép số.
+			OHCL_Audit::log( 'policy_changed', 0, 'chính sách affiliate' ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 			$res = array( 'ok' => 'Đã lưu chính sách affiliate. Áp cho hoa hồng ghi nhận từ bây giờ.' );
 		} elseif ( 'override' === $do ) {
 			OHCL_Affiliate::save_override( isset( $_POST['coach'] ) ? (int) $_POST['coach'] : 0, isset( $_POST['amount'] ) ? sanitize_text_field( wp_unslash( $_POST['amount'] ) ) : '' );
@@ -169,6 +170,9 @@ final class OHCL_Admin_Coach {
 		} elseif ( 'move' === $do ) {
 			$r   = OHCL_Affiliate::move( isset( $_POST['payout'] ) ? (int) $_POST['payout'] : 0, isset( $_POST['to'] ) ? sanitize_key( wp_unslash( $_POST['to'] ) ) : '' );
 			$res = is_wp_error( $r ) ? OHCL_Admin::error_flash( $r ) : array( 'ok' => 'Đã cập nhật kỳ chi trả.' );
+			if ( ! is_wp_error( $r ) ) {
+				OHCL_Audit::log( 'payout_moved', 0, isset( $_POST['to'] ) ? sanitize_key( wp_unslash( $_POST['to'] ) ) : '' ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+			}
 		}
 		OHCL_Admin::flash_set( $res );
 		wp_safe_redirect( OHCL_Admin::url( self::PAGE ) );

@@ -96,7 +96,7 @@ function has_post_thumbnail( $p ) { return false; }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-certs', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-coach' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-certs', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-coach' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';

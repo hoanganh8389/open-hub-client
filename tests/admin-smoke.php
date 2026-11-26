@@ -66,7 +66,7 @@ function update_post_meta( $id, $k, $v ) { $GLOBALS['meta'][ $id ][ $k ] = $v; r
 function handle( $class, $fn, array $post ) { $_POST = $post; try { call_user_func( array( $class, $fn ) ); } catch ( Redirected $r ) { return $r->getMessage(); } return ''; }
 
 $dir = dirname( __DIR__ );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs', 'class-ohcl-admin-coach' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-front', 'class-ohcl-admin', 'class-ohcl-admin-members', 'class-ohcl-admin-certs', 'class-ohcl-admin-coach' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -191,6 +191,9 @@ check( 'Tổng quan câu 3: có khối "Quyền lợi hội viên đã nhận" �
 
 // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — Member 360°: Hub đã mang lại gì + kết quả tự khai.
 check( 'Member 360°: có thẻ "Hub đã mang lại (tháng này)" — chưa đo ⇒ "—"', false !== strpos( mpage( array( 'id' => $mid ) ), 'Hub đã mang lại (tháng này)' ) && false !== strpos( mpage( array( 'id' => $mid ) ), '<dt>Lượt xem hồ sơ</dt><dd>—</dd>' ) );
+// [2026-11-26 04:36 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+$dp = page( 'page_data' );
+check( 'Dữ liệu & nhật ký: nút xuất CSV + JSON có nonce, ghi chú dữ liệu cá nhân, bảng nhật ký (hoặc "chưa có")', false !== strpos( $dp, 'value="csv"' ) && false !== strpos( $dp, 'value="json"' ) && false !== strpos( $dp, 'ohcl_export_members' ) && false !== strpos( $dp, 'thông tin cá nhân' ) );
 /* ---- 06 · Chứng nhận (OHCL-D2A) ---- */
 // [2026-11-25 11:02 PM Johnny Chu - Chu Hoàng Anh] OHCL-D2A — Member 360° → xác minh → cấp chứng nhận (đủ tiêu chí) → màn 06 → giấy in có QR → thu hồi hai bước.
 if ( ! function_exists( 'get_userdata' ) ) { function get_userdata( $id ) { return (object) array( 'display_name' => 'Leader ' . $id ); } }

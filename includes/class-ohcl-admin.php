@@ -26,6 +26,7 @@ final class OHCL_Admin {
 		add_action( 'admin_post_ohcl_revoke', array( __CLASS__, 'handle_revoke' ) );
 		add_action( 'admin_post_ohcl_settings', array( __CLASS__, 'handle_settings' ) );
 		add_action( 'admin_post_ohcl_ping', array( __CLASS__, 'handle_ping' ) );
+		add_action( 'admin_post_ohcl_export_members', array( __CLASS__, 'handle_export' ) ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		add_action( 'admin_post_ohcl_pair', array( __CLASS__, 'handle_pair' ) );
 	}
 
@@ -50,6 +51,7 @@ final class OHCL_Admin {
 		if ( class_exists( 'OHCL_Admin_Demo' ) ) {
 			add_submenu_page( 'open-hub', 'Dữ liệu mẫu', 'Dữ liệu mẫu', self::CAP, OHCL_Admin_Demo::PAGE, array( 'OHCL_Admin_Demo', 'page' ) ); // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
 		}
+		add_submenu_page( 'open-hub', 'Dữ liệu & nhật ký', 'Dữ liệu & nhật ký', self::CAP, 'open-hub-data', array( __CLASS__, 'page_data' ) ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		add_submenu_page( 'open-hub', 'Cài đặt', '14 · Cài đặt', self::CAP, 'open-hub-settings', array( __CLASS__, 'page_settings' ) );
 	}
 
@@ -143,6 +145,50 @@ final class OHCL_Admin {
 
 	public static function kpi( $label, $value, $note = '' ) {
 		return '<div class="ohcl-card ohcl-kpi"><span>' . esc_html( $label ) . '</span><b>' . esc_html( $value ) . '</b>' . ( $note ? '<small>' . esc_html( $note ) . '</small>' : '' ) . '</div>';
+	}
+
+	/* ---------- Dữ liệu & nhật ký (H6) ---------- */
+
+	public static function page_data() {
+		// [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — xuất danh sách hội viên (CSV / JSON) và nhật ký thao tác nhạy cảm.
+		self::guard();
+		self::head( 'Dữ liệu & nhật ký', 'Dữ liệu của hội viên thuộc về hội viên', esc_html( 'Mỗi lần xuất và mỗi thao tác nhạy cảm đều được ghi lại' ) );
+		echo '<div class="ohcl-card"><h3>Xuất danh sách hội viên</h3><p class="mute">Gồm hồ sơ, liên hệ, hành trình, trạng thái khoá (tiền tố, không có khoá đầy đủ). Không gồm nội dung yêu cầu hỗ trợ và ghi chú nội bộ. Hồ sơ mẫu không có trong file.</p>';
+		foreach ( array( 'csv' => 'Tải CSV (mở bằng Excel)', 'json' => 'Tải JSON' ) as $fmt => $lb ) {
+			echo '<form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '" style="display:inline-block;margin-right:8px">';
+			wp_nonce_field( 'ohcl_export_members' );
+			echo '<input type="hidden" name="action" value="ohcl_export_members"><input type="hidden" name="format" value="' . esc_attr( $fmt ) . '"><button class="button ' . ( 'csv' === $fmt ? 'button-primary' : '' ) . '">' . esc_html( $lb ) . '</button></form>';
+		}
+		echo '<p class="mute">Dữ liệu này chứa thông tin cá nhân: chỉ dùng để phục vụ hội viên, không bán, không chuyển cho bên thứ ba khi chưa có đồng ý.</p></div>';
+		echo '<div class="ohcl-card"><h3>Nhật ký thao tác (100 gần nhất)</h3>';
+		$rows = OHCL_Audit::recent( 100 );
+		if ( ! $rows ) {
+			echo '<p class="mute">Chưa có thao tác nào được ghi.</p></div></div>';
+			return;
+		}
+		echo '<table class="widefat striped"><thead><tr><th>Lúc (UTC)</th><th>Việc</th><th>Người làm</th><th>Hồ sơ</th><th>Ghi chú</th></tr></thead><tbody>';
+		foreach ( $rows as $r ) {
+			$u = $r['by'] && function_exists( 'get_userdata' ) ? get_userdata( $r['by'] ) : null;
+			echo '<tr><td>' . esc_html( $r['t'] ) . '</td><td>' . esc_html( $r['label'] ) . '</td><td>' . esc_html( $r['by'] ? ( $u ? $u->display_name . ' (#' . $r['by'] . ')' : '#' . $r['by'] ) : 'hội viên / hệ thống' ) . '</td><td>' . ( $r['m'] ? '<a href="' . esc_url( self::url( 'open-hub-members', array( 'id' => $r['m'] ) ) ) . '">#' . (int) $r['m'] . '</a>' : '—' ) . '</td><td>' . esc_html( $r['n'] ) . '</td></tr>';
+		}
+		echo '</tbody></table><p class="mute">Nhật ký không chứa khoá, bí mật hay thông tin liên hệ.</p></div></div>';
+	}
+
+	public static function handle_export() {
+		self::guard();
+		check_admin_referer( 'ohcl_export_members' );
+		$csv = isset( $_POST['format'] ) && 'json' !== $_POST['format'];
+		nocache_headers();
+		if ( $csv ) {
+			header( 'Content-Type: text/csv; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="hoi-vien-' . gmdate( 'Ymd' ) . '.csv"' );
+			echo OHCL_Export::for_hub_csv(); // phpcs:ignore WordPress.Security.EscapeOutput -- CSV tải về, từng ô đã được escape theo CSV.
+		} else {
+			header( 'Content-Type: application/json; charset=utf-8' );
+			header( 'Content-Disposition: attachment; filename="hoi-vien-' . gmdate( 'Ymd' ) . '.json"' );
+			echo wp_json_encode( OHCL_Export::for_hub(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ); // phpcs:ignore WordPress.Security.EscapeOutput
+		}
+		exit;
 	}
 
 	/* ---------- 01 Tổng quan ---------- */

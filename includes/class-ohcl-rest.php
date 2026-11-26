@@ -84,6 +84,11 @@ final class OHCL_Rest {
 		$r( '/owner/members/(?P<id>\d+)/key/revoke', 'POST', 'owner_key_revoke', $o, $id );
 		$r( '/owner/members/(?P<id>\d+)/verify', 'POST', 'owner_verify', $o, $id );
 		$r( '/owner/members/(?P<id>\d+)/verify', 'DELETE', 'owner_unverify', $o, $id );
+		$r( '/owner/export', 'GET', 'owner_export', $o ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+		$r( '/owner/audit', 'GET', 'owner_audit', $o );
+		$r( '/owner/members/(?P<id>\d+)/anonymize', 'POST', 'owner_anonymize', $o, $id );
+		$r( '/me/export', 'GET', 'me_export', $m );
+		$r( '/me/leave', 'POST', 'me_leave', $m );
 		$r( '/owner/benefits', 'GET', 'owner_benefits', $o );
 		$r( '/owner/members/(?P<id>\d+)/outcomes/review', 'POST', 'owner_outcomes_review', $o, $id ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 		$r( '/me/outcomes', 'GET', 'me_outcomes', $m );
@@ -277,6 +282,26 @@ final class OHCL_Rest {
 		return is_wp_error( $r ) ? $r : self::out( array( 'ok' => true ) );
 	}
 
+	/** Hub's member list as one package (no keys, no support text); logged. */
+	public static function owner_export() {
+		return self::out( OHCL_Export::for_hub() );
+	}
+
+	/** Newest sensitive actions first (who, what, when, which member). */
+	public static function owner_audit( $req ) {
+		return self::out( array( 'items' => OHCL_Audit::recent( max( 1, min( 500, (int) $req->get_param( 'limit' ) ? (int) $req->get_param( 'limit' ) : 100 ) ) ) ) );
+	}
+
+	/** Erase the personal data of a member who has left. Needs {"confirm": true}. */
+	public static function owner_anonymize( $req ) {
+		$in = self::in( $req );
+		if ( empty( $in['confirm'] ) || 'false' === $in['confirm'] ) {
+			return OHCL_Error::make( 'ohcl_confirm_required', 'Cần xác nhận trước khi xoá thông tin.', 'Gửi {"confirm": true}. Việc này không hoàn tác được.', 400 );
+		}
+		$r = OHCL_Service::anonymize( (int) $req['id'] );
+		return is_wp_error( $r ) ? $r : self::out( array( 'ok' => true ) );
+	}
+
 	/* ---------- member ---------- */
 
 	private static function me_member() {
@@ -330,6 +355,26 @@ final class OHCL_Rest {
 		}
 		OHCL_Service::save_outcomes( $m['id'], OHCL_Service::clean_outcomes( self::in( $req ) ) );
 		return self::out( OHCL_Service::outcomes_view( OHCL_Members::get( $m['id'] ) ), 201 );
+	}
+
+	/** The member's own data package (JSON); logged. */
+	public static function me_export() {
+		$m = self::me_member();
+		return is_wp_error( $m ) ? $m : self::out( OHCL_Export::for_member( $m ) );
+	}
+
+	/** The member leaves the Hub. Needs {"confirm": true}. */
+	public static function me_leave( $req ) {
+		$m = self::me_member();
+		if ( is_wp_error( $m ) ) {
+			return $m;
+		}
+		$in = self::in( $req );
+		if ( empty( $in['confirm'] ) || 'false' === $in['confirm'] ) {
+			return OHCL_Error::make( 'ohcl_confirm_required', 'Cần xác nhận trước khi rời Hub.', 'Gửi {"confirm": true}. Hồ sơ của bạn sẽ rời bản đồ ngay.', 400 );
+		}
+		$r = OHCL_Service::leave( $m['id'] );
+		return is_wp_error( $r ) ? $r : self::out( array( 'ok' => true, 'status' => 'left' ) );
 	}
 
 	public static function me_profile( $req ) {

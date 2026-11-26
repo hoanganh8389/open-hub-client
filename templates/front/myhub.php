@@ -120,6 +120,33 @@ $ohcl_lv   = OHCL_Members::level( $ohcl_m, $ohcl_key, $ohcl_now );
 			</div>
 			<p class="note">Quyền làm chủ của bạn áp dụng cho cả tám: dữ liệu của bạn thuộc về bạn, bạn có thể rút đồng ý công khai bất cứ lúc nào ở mục Hồ sơ doanh nghiệp.</p>
 
+		<?php elseif ( 'du-lieu' === $ohcl_tab ) : ?>
+			<?php // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — Dữ liệu của tôi: quyền làm chủ — tải về, rút đồng ý, rời Hub (hai bước). ?>
+			<?php if ( isset( $_GET['left'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended ?><div class="pnl state ok sm"><b>Bạn đã rời Hub</b>Hồ sơ của bạn đã rời bản đồ công khai. Cảm ơn bạn đã đồng hành.</div><?php endif; ?>
+			<div class="pnl"><h2>Dữ liệu của tôi</h2>
+				<p>Dữ liệu của bạn thuộc về bạn. Bạn có thể tải toàn bộ những gì Hub đang giữ về bạn, rút đồng ý công khai, hoặc rời Hub bất cứ lúc nào.</p>
+				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
+					<input type="hidden" name="action" value="ohcl_myhub_export"><?php wp_nonce_field( 'ohcl_myhub_export', '_ohcl_myhub' ); ?>
+					<button class="btn g">Tải dữ liệu của tôi (JSON)</button>
+				</form>
+				<p class="note">Gồm hồ sơ, đồng ý, hành trình, quyền lợi, chứng nhận, kết quả bạn khai, yêu cầu hỗ trợ của bạn, số đo tháng này, trạng thái khoá (không có khoá đầy đủ). Không gồm ghi chú nội bộ và dữ liệu hội viên khác. Mỗi lần tải đều được ghi nhật ký.</p>
+			</div>
+			<div class="pnl" style="margin-top:14px"><h2>Rút đồng ý công khai</h2>
+				<p>Bỏ tích "Đồng ý công khai" ở mục Hồ sơ doanh nghiệp: hồ sơ rời bản đồ và danh bạ ngay. Bỏ tích ở mục Kết quả của tôi: kết quả bạn khai bị gỡ khỏi trang công khai.</p>
+				<a class="btn o sm" href="<?php echo esc_url( OHCL_Front::myhub_url( 'ho-so' ) ); ?>">Mở Hồ sơ doanh nghiệp</a></div>
+			<?php if ( 'left' !== $ohcl_m['status'] ) : ?>
+			<form class="pnl form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-top:14px"><h2>Rời Hub</h2>
+				<input type="hidden" name="action" value="ohcl_myhub_leave"><?php wp_nonce_field( 'ohcl_myhub_leave', '_ohcl_myhub' ); ?>
+				<ul class="todo">
+					<li>Hồ sơ của bạn rời bản đồ, danh bạ và trang giao thương ngay.</li>
+					<li>Trợ lý AI chạy tiếp tới hết thời gian đã trả; khoá không chuyển sang Hub khác (muốn sang Hub khác thì Hub đó cấp khoá mới).</li>
+					<li>Hub giữ hồ sơ của bạn cho tới khi bạn nhờ ban điều hành xoá thông tin cá nhân.</li>
+				</ul>
+				<label class="chk"><input type="checkbox" name="confirm" value="1"> Tôi hiểu và muốn rời Hub.</label>
+				<button class="btn o" style="margin-top:10px">Rời Hub</button>
+			</form>
+			<?php else : ?><div class="pnl state sm" style="margin-top:14px"><b>Hồ sơ này đã rời Hub</b>Muốn xoá thông tin cá nhân, nhắn ban điều hành ở mục Hỗ trợ.</div><?php endif; ?>
+
 		<?php elseif ( 'ket-qua' === $ohcl_tab ) : ?>
 			<?php
 			// [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — Kết quả của tôi: tự khai trước / sau, đồng ý công bố, Hub duyệt rồi mới lên trang công khai.

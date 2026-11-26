@@ -22,6 +22,7 @@ final class OHCL_MyHub {
 		''           => array( 'Tổng quan', 'grid' ),
 		'quyen-loi'  => array( 'Quyền lợi của tôi', 'star' ), // [2026-11-26 02:20 PM Johnny Chu - Chu Hoàng Anh] OHCL-H2
 		'ket-qua'    => array( 'Kết quả của tôi', 'flow' ), // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+		'du-lieu'    => array( 'Dữ liệu của tôi', 'shield' ), // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		'cong-nghe'  => array( 'Công nghệ của tôi', 'gift' ),
 		'ho-so'      => array( 'Hồ sơ doanh nghiệp', 'store' ),
 		'chung-nhan' => array( 'Chứng nhận của tôi', 'check' ),
@@ -41,7 +42,9 @@ final class OHCL_MyHub {
 	public static function boot() {
 		add_action( 'admin_post_ohcl_myhub_profile', array( __CLASS__, 'handle_profile' ) );
 		add_action( 'admin_post_ohcl_myhub_support', array( __CLASS__, 'handle_support' ) );
-		add_action( 'admin_post_ohcl_myhub_outcomes', array( __CLASS__, 'handle_outcomes' ) ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+		add_action( 'admin_post_ohcl_myhub_outcomes', array( __CLASS__, 'handle_outcomes' ) );
+		add_action( 'admin_post_ohcl_myhub_export', array( __CLASS__, 'handle_export' ) ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+		add_action( 'admin_post_ohcl_myhub_leave', array( __CLASS__, 'handle_leave' ) ); // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 	}
 
 	/* ===================== pure ===================== */
@@ -178,6 +181,33 @@ final class OHCL_MyHub {
 		}
 		OHCL_Service::save_profile( (int) $cur['member']['id'], $c ); // [2026-11-26 12:05 PM Johnny Chu - Chu Hoàng Anh] OHCL-API — cùng một cửa với REST /me/profile
 		self::back( 'ho-so', array( 'saved' => 1 ) );
+	}
+
+	public static function handle_export() {
+		// [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — tải dữ liệu của chính mình (JSON), có nhật ký.
+		$cur = self::current();
+		if ( ! $cur['member'] || ! isset( $_POST['_ohcl_myhub'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ohcl_myhub'] ) ), 'ohcl_myhub_export' ) ) {
+			self::back( 'du-lieu', array( 'err' => 'ohcl_join_expired' ) );
+		}
+		$pkg = OHCL_Export::for_member( $cur['member'] );
+		nocache_headers();
+		header( 'Content-Type: application/json; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="du-lieu-cua-toi-' . preg_replace( '/[^A-Za-z0-9-]/', '', $cur['member']['code'] ) . '.json"' );
+		echo wp_json_encode( $pkg, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE ); // phpcs:ignore WordPress.Security.EscapeOutput -- JSON tải về, không phải HTML.
+		exit;
+	}
+
+	public static function handle_leave() {
+		// [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — rời Hub hai bước: phải tích xác nhận rồi bấm nút.
+		$cur = self::current();
+		if ( ! $cur['member'] || ! isset( $_POST['_ohcl_myhub'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['_ohcl_myhub'] ) ), 'ohcl_myhub_leave' ) ) {
+			self::back( 'du-lieu', array( 'err' => 'ohcl_join_expired' ) );
+		}
+		if ( empty( $_POST['confirm'] ) ) {
+			self::back( 'du-lieu', array( 'err' => 'ohcl_confirm_required' ) );
+		}
+		$r = OHCL_Service::leave( (int) $cur['member']['id'] );
+		self::back( 'du-lieu', is_wp_error( $r ) ? array( 'err' => $r->get_error_code() ) : array( 'left' => 1 ) );
 	}
 
 	public static function handle_outcomes() {

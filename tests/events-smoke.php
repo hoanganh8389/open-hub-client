@@ -98,7 +98,7 @@ function wp_remote_retrieve_body( $r ) { return $r['body']; }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';

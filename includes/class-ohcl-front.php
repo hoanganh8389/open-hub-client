@@ -836,6 +836,8 @@ final class OHCL_Front {
 			'ohcl_coach_contact_required' => array( 'Cần email hoặc số Zalo.', 'Nhập một cách liên hệ rồi gửi lại.' ),
 			'ohcl_coach_skill_required'   => array( 'Cần chọn ít nhất một chuyên môn.', 'Đánh dấu chuyên môn của bạn rồi gửi lại.' ),
 			'ohcl_coach_save_failed'      => array( 'Chưa lưu được hồ sơ.', 'Thử lại sau ít phút.' ),
+			'ohcl_confirm_required'       => array( 'Cần tích ô xác nhận trước khi rời Hub.', 'Đọc kỹ điều sẽ xảy ra, tích ô xác nhận rồi bấm lại.' ), // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+			'ohcl_member_already_left'    => array( 'Hồ sơ này đã rời Hub.', 'Nếu muốn xoá thông tin, nhờ ban điều hành xử lý.' ),
 			'ohcl_member_url_invalid'     => array( 'Website phải bắt đầu bằng http:// hoặc https://.', 'Sửa địa chỉ website hoặc để trống.' ),
 		);
 		$code = (string) $code;

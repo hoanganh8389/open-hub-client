@@ -1,5 +1,13 @@
 # Lịch sử phát hành
 
+## 0.14.0 — 2026-11-26 (H6: làm chủ dữ liệu — xuất, rời Hub, xoá thông tin, nhật ký)
+
+- **Hội viên**: tab **"Dữ liệu của tôi"** ở My Hub — tải toàn bộ dữ liệu Hub giữ về mình (JSON: hồ sơ, đồng ý, hành trình, quyền lợi, chứng nhận, kết quả tự khai, yêu cầu hỗ trợ của chính mình, số đo tháng này, **trạng thái** khoá — không có khoá đầy đủ, không ghi chú nội bộ, không dữ liệu người khác); **rời Hub** hai bước (đọc điều sẽ xảy ra, tích xác nhận, bấm): hồ sơ rời bản đồ ngay, đồng ý công khai / cửa hàng / kết quả bị rút; khoá không tự thu hồi và không chuyển Hub.
+- **Chủ Hub**: màn **"Dữ liệu & nhật ký"** — xuất danh sách hội viên CSV (có BOM, chống chèn công thức Excel) hoặc JSON; nhật ký 100 thao tác gần nhất. Member 360° có **"Xoá thông tin cá nhân"** cho hồ sơ đã rời (tích "chắc chắn"): xoá liên hệ, địa chỉ, website, toạ độ, trường ngành, yêu cầu hỗ trợ, kết quả khai, tên; giữ mã, ngày và số đo tổng. Không hoàn tác.
+- **Nhật ký** (`OHCL_Audit`): JSONL theo tháng `uploads/open-hub-client/audit/` (có `.htaccess` chặn), mỗi dòng `{t, a, by, m, n}`: tiếp nhận, cấp / thu hồi khoá (chỉ tiền tố), xác minh / bỏ xác minh, đổi trạng thái, duyệt kết quả, đổi chính sách affiliate, đổi kỳ chi trả, xuất dữ liệu, rời Hub, xoá thông tin. Ghi chú được che khoá / chuỗi dài; không liên hệ, không nội dung hội thoại.
+- **API** (28 route): `GET /me/export`, `POST /me/leave` (cần `confirm`), `GET /owner/export`, `GET /owner/audit`, `POST /owner/members/{id}/anonymize` (cần `confirm`, chỉ hồ sơ đã rời).
+- export-smoke 24/24, rest-smoke 73/73, pages-smoke 48/48, admin-smoke 51/51 (đột biến: xoá khi chưa rời, rời mà giữ đồng ý, bỏ che khoá, lọt bản ghi thô, CSV không chặn công thức — đều bị bắt).
+
 ## 0.13.0 — 2026-11-26 (H3: "Hub đã mang lại gì" có số thật + kết quả hội viên tự khai)
 
 - **Sổ đo** (`OHCL_Events`): lượt **xem hồ sơ** và lượt **bấm "Nhắn Zalo"** trên trang công khai. Mỗi lượt là một dòng JSONL `{t, e, m}` (giờ UTC, sự kiện, mã hội viên) trong `uploads/open-hub-client/events/` (có `.htaccess` chặn truy cập); **không IP, không user-agent, không liên hệ**. Cron hằng ngày gộp **tổng theo tháng** vào `_bzm_rollup` (giữ 14 tháng), xoá tệp quá 120 ngày; không dòng nào vào cơ sở dữ liệu.

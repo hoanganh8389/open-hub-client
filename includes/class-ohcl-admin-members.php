@@ -21,7 +21,7 @@ final class OHCL_Admin_Members {
 	const PAGE = 'open-hub-members';
 
 	public static function boot() {
-		foreach ( array( 'save', 'accept', 'key', 'status', 'verify', 'unverify', 'outcomes' ) as $a ) { // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
+		foreach ( array( 'save', 'accept', 'key', 'status', 'verify', 'unverify', 'outcomes', 'anonymize' ) as $a ) { // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3
 			add_action( 'admin_post_ohcl_member_' . $a, array( __CLASS__, 'handle_' . $a ) );
 		}
 	}
@@ -274,6 +274,19 @@ final class OHCL_Admin_Members {
 			echo '<p class="mute">Số do hội viên tự khai; Hub không kiểm chứng số kinh doanh. Trang công khai ghi rõ "do cơ sở tự khai".</p></div>';
 		}
 
+		// [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — hội viên đã rời: xoá thông tin cá nhân (hai bước: tích xác nhận rồi bấm).
+		if ( 'left' === $m['status'] ) {
+			echo '<div class="ohcl-card"><h3>Xoá thông tin cá nhân</h3>';
+			if ( '' !== $m['anonymized_at'] ) {
+				echo '<p class="mute">Đã xoá thông tin ngày ' . esc_html( substr( $m['anonymized_at'], 0, 10 ) ) . '. Hồ sơ chỉ còn mã, ngày vào / rời và số đo tổng.</p>';
+			} else {
+				echo '<p class="mute">Xoá liên hệ, địa chỉ, website, toạ độ, trường ngành, yêu cầu hỗ trợ, kết quả đã khai và tên. Giữ mã, ngày vào / rời và số đo tổng. <b>Không hoàn tác được.</b> Khoá ở lõi không bị đụng tới.</p><form method="post" action="' . esc_url( admin_url( 'admin-post.php' ) ) . '">';
+				wp_nonce_field( 'ohcl_member_anonymize_' . $m['id'] );
+				echo '<input type="hidden" name="action" value="ohcl_member_anonymize"><input type="hidden" name="id" value="' . (int) $m['id'] . '"><label style="margin-right:8px"><input type="checkbox" name="confirm" value="1"> chắc chắn</label><button class="button">Xoá thông tin cá nhân</button></form>';
+			}
+			echo '</div>';
+		}
+
 		// [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2 — yêu cầu hỗ trợ hội viên gửi từ My Hub.
 		$sup = get_post_meta( $m['id'], '_bzm_support', true );
 		if ( is_array( $sup ) && $sup ) {
@@ -412,6 +425,20 @@ final class OHCL_Admin_Members {
 			self::back( array( 'id' => $id ) );
 		}
 		OHCL_Admin::flash_set( array( 'key' => (string) $res['key'], 'label' => $m['title'], 'plan_code' => (string) $res['plan_code'], 'plan_until' => (string) $res['plan_until'] ) );
+		self::back( array( 'id' => $id ) );
+	}
+
+	public static function handle_anonymize() {
+		// [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+		OHCL_Admin::guard();
+		$id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+		check_admin_referer( 'ohcl_member_anonymize_' . $id );
+		if ( empty( $_POST['confirm'] ) ) {
+			OHCL_Admin::flash_set( OHCL_Admin::error_flash( OHCL_Error::make( 'ohcl_confirm_required', 'Chưa xoá: cần đánh dấu "chắc chắn".', 'Đánh dấu ô "chắc chắn" cạnh nút rồi bấm lại.', 400 ) ) );
+			self::back( array( 'id' => $id ) );
+		}
+		$res = OHCL_Service::anonymize( $id );
+		OHCL_Admin::flash_set( is_wp_error( $res ) ? OHCL_Admin::error_flash( $res ) : array( 'ok' => 'Đã xoá thông tin cá nhân của hồ sơ.' ) );
 		self::back( array( 'id' => $id ) );
 	}
 

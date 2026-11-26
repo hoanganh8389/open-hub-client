@@ -75,15 +75,15 @@ final class OHCL_Events {
 	/* ===================== files ===================== */
 
 	/** Log directory, created with a deny-all rule; '' when it cannot be made. */
-	public static function dir() {
-		if ( ! function_exists( 'wp_upload_dir' ) ) {
+	public static function dir( $sub = 'events' ) {
+		if ( ! function_exists( 'wp_upload_dir' ) || ! in_array( $sub, array( 'events', 'audit' ), true ) ) { // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — cùng cách tạo thư mục có khoá cho nhật ký
 			return '';
 		}
 		$u = wp_upload_dir();
 		if ( ! is_array( $u ) || empty( $u['basedir'] ) ) {
 			return '';
 		}
-		$d = rtrim( $u['basedir'], '/\\' ) . '/' . self::DIR . '/events';
+		$d = rtrim( $u['basedir'], '/\\' ) . '/' . self::DIR . '/' . $sub;
 		if ( ! is_dir( $d ) ) {
 			if ( ! @mkdir( $d, 0755, true ) && ! is_dir( $d ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors,WordPress.WP.AlternativeFunctions
 				return '';

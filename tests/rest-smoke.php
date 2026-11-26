@@ -60,6 +60,8 @@ function sanitize_key( $s ) { return strtolower( preg_replace( '/[^a-z0-9_\-]/i'
 function sanitize_title( $s ) { return trim( strtolower( preg_replace( '/[^a-z0-9]+/i', '-', (string) $s ) ), '-' ); }
 function wp_unslash( $s ) { return $s; }
 function get_current_user_id() { return $GLOBALS['me']; }
+@mkdir( sys_get_temp_dir() . '/ohcl-rs-' . getmypid() );
+function wp_upload_dir() { return array( 'basedir' => sys_get_temp_dir() . '/ohcl-rs-' . getmypid() ); }
 function is_user_logged_in() { return (bool) $GLOBALS['me']; }
 function current_user_can( $c ) { return ! empty( $GLOBALS['admin'] ); }
 function wp_get_current_user() { return $GLOBALS['me'] ? $GLOBALS['users'][ $GLOBALS['me'] ] : (object) array( 'ID' => 0, 'user_email' => '' ); }
@@ -75,7 +77,7 @@ function get_users( array $a ) { return array(); }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
-foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-myhub', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
+foreach ( array( 'class-ohcl-error', 'class-ohcl-modules', 'class-ohcl-industry', 'class-ohcl-slots', 'class-ohcl-core-client', 'class-ohcl-overview', 'class-ohcl-members', 'class-ohcl-demo', 'class-ohcl-shop', 'class-ohcl-certs', 'class-ohcl-coach', 'class-ohcl-affiliate', 'class-ohcl-service', 'class-ohcl-benefits', 'class-ohcl-events', 'class-ohcl-audit', 'class-ohcl-export', 'class-ohcl-myhub', 'class-ohcl-front', 'class-ohcl-rest' ) as $f ) {
 	require $dir . '/includes/' . $f . '.php';
 }
 require $dir . '/examples/wp-sample-hub/wp-sample-hub.php';
@@ -99,7 +101,7 @@ OHCL_Core_Client::$transport = function ( $m, $u, $h, $b ) use ( $now_s ) {
 };
 
 /* ---------- đăng ký route + quyền ---------- */
-check( 'đăng ký 23 route trong namespace open-hub-client/v1', 23 === count( $GLOBALS['routes'] ) && 'open-hub-client/v1' === $GLOBALS['routes'][0][0] );
+check( 'đăng ký 23 route trong namespace open-hub-client/v1', 28 === count( $GLOBALS['routes'] ) && 'open-hub-client/v1' === $GLOBALS['routes'][0][0] );
 login( 0 );
 $ps = route_perm( '/owner/overview', 'GET' );
 check( 'owner: chưa đăng nhập ⇒ 401 ohcl_rest_login_required (đủ bốn trường)', is_wp_error( $ps ) && 'ohcl_rest_login_required' === $ps->get_error_code() && 401 === $ps->get_error_data()['status'] && err4( $ps ) );
@@ -273,6 +275,30 @@ $myh = (string) file_get_contents( $dir . '/includes/class-ohcl-myhub.php' );
 check( 'màn quản trị và My Hub gọi OHCL_Service (không còn bản sao logic cấp khoá / xác minh / hỗ trợ)', substr_count( $adm, 'OHCL_Service::' ) >= 5 && false === strpos( $adm, 'OHCL_Core_Client::issue_key' ) && false !== strpos( $myh, 'OHCL_Service::save_profile' ) && false !== strpos( $myh, 'OHCL_Service::add_support' ) );
 $rest = (string) file_get_contents( $dir . '/includes/class-ohcl-rest.php' );
 check( 'REST: không bảng mới, không gọi Cell / Zalo / LLM, không tự gọi lõi (chỉ qua OHCL_Service)', ! preg_match( '/CREATE\s+TABLE|dbDelta|OHCL_Core_Client::|zalo-hub|chat\/completions|BizCity_LLM/i', $rest ) );
+
+// [2026-11-26 04:36 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — xuất dữ liệu, rời Hub, xoá thông tin, nhật ký qua REST.
+login( 0 );
+check( 'đường H6 đóng với khách: /me/export, /me/leave, /owner/export, /owner/audit, /owner/members/{id}/anonymize', is_wp_error( route_perm( '/me/export', 'GET' ) ) && is_wp_error( route_perm( '/me/leave', 'POST' ) ) && is_wp_error( route_perm( '/owner/export', 'GET' ) ) && is_wp_error( route_perm( '/owner/audit', 'GET' ) ) && is_wp_error( route_perm( '/owner/members/(?P<id>\\d+)/anonymize', 'POST' ) ) );
+login( 5, false );
+check( 'hội viên thường không vào được /owner/export, /owner/audit', is_wp_error( route_perm( '/owner/export', 'GET' ) ) && is_wp_error( route_perm( '/owner/audit', 'GET' ) ) );
+$ex = body( OHCL_Rest::me_export() );
+check( 'GET /me/export: gói của chính mình, đúng định dạng, không khoá', OHCL_Export::MEMBER_FORMAT === $ex['format'] && 0 === preg_match( '/biz-[0-9a-f]{16,}|ohs_[0-9a-f]{16,}/', json_encode( $ex ) ) );
+$lv0 = OHCL_Rest::me_leave( req( array(), array() ) );
+check( 'POST /me/leave thiếu confirm ⇒ 400 ohcl_confirm_required, hồ sơ chưa đổi', is_wp_error( $lv0 ) && 400 === $lv0->get_error_data()['status'] && 'ohcl_confirm_required' === $lv0->get_error_code() && 'left' !== OHCL_Members::get( $mid )['status'] );
+login( 6, false );
+check( '/me/export, /me/leave: tài khoản không có hồ sơ ⇒ lỗi', is_wp_error( OHCL_Rest::me_export() ) && is_wp_error( OHCL_Rest::me_leave( req( array(), array( 'confirm' => true ) ) ) ) );
+login( 1, true );
+$an0 = OHCL_Rest::owner_anonymize( req( array( 'id' => $mid ), array() ) );
+check( 'POST /owner/members/{id}/anonymize thiếu confirm ⇒ 400; hồ sơ chưa rời ⇒ 409', is_wp_error( $an0 ) && 400 === $an0->get_error_data()['status'] && 409 === OHCL_Rest::owner_anonymize( req( array( 'id' => $mid ), array( 'confirm' => true ) ) )->get_error_data()['status'] );
+$oe = body( OHCL_Rest::owner_export() );
+check( 'GET /owner/export: danh sách hồ sơ, không chứa khoá', OHCL_Export::LIST_FORMAT === $oe['format'] && $oe['count'] >= 1 && 0 === preg_match( '/biz-[0-9a-f]{16,}/', json_encode( $oe ) ) );
+login( 5, false );
+$lv1 = OHCL_Rest::me_leave( req( array(), array( 'confirm' => true ) ) );
+check( 'POST /me/leave confirm ⇒ ok, trạng thái "left"', true === body( $lv1 )['ok'] && 'left' === OHCL_Members::get( $mid )['status'] );
+login( 1, true );
+$au = body( OHCL_Rest::owner_audit( req() ) );
+check( 'GET /owner/audit: thấy member_left + export_hub, mới nhất trước', in_array( 'member_left', array_column( $au['items'], 'a' ), true ) && in_array( 'export_hub', array_column( $au['items'], 'a' ), true ) );
+check( 'POST /owner/members/{id}/anonymize sau khi rời + confirm ⇒ ok', true === body( OHCL_Rest::owner_anonymize( req( array( 'id' => $mid ), array( 'confirm' => true ) ) ) )['ok'] && '' !== OHCL_Members::get( $mid )['anonymized_at'] );
 
 echo "\n$pass pass, $fail fail\n";
 exit( $fail ? 1 : 0 );

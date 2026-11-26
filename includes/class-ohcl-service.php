@@ -28,6 +28,7 @@ final class OHCL_Service {
 		}
 		OHCL_Members::accept( (int) $id );
 		OHCL_Slots::emit( 'member_stage_changed', array( 'member_id' => (int) $id, 'to' => 2, 'label' => OHCL_Members::JOURNEY[2] ) );
+		OHCL_Audit::log( 'member_accepted', (int) $id ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		return true;
 	}
 
@@ -36,7 +37,11 @@ final class OHCL_Service {
 		if ( ! OHCL_Members::get( (int) $id ) ) {
 			return self::not_found();
 		}
-		return OHCL_Members::set_status( (int) $id, (string) $status );
+		$res = OHCL_Members::set_status( (int) $id, (string) $status );
+		if ( ! is_wp_error( $res ) ) {
+			OHCL_Audit::log( 'member_status', (int) $id, (string) $status ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+		}
+		return $res;
 	}
 
 	/**
@@ -82,6 +87,7 @@ final class OHCL_Service {
 		OHCL_Members::link_key( (int) $id, (int) $res['id'], (string) $res['key_prefix'] );
 		OHCL_Overview::flush();
 		OHCL_Slots::emit( 'key_issued', array( 'key_id' => (int) $res['id'], 'key_prefix' => (string) $res['key_prefix'], 'member_id' => (int) $id, 'label' => $m['title'], 'coach_ref' => $m['coach'] ) );
+		OHCL_Audit::log( 'key_issued', (int) $id, (string) $res['key_prefix'] ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6 — chỉ tiền tố, không khoá
 		return $res;
 	}
 
@@ -98,6 +104,7 @@ final class OHCL_Service {
 		if ( ! is_wp_error( $res ) ) {
 			OHCL_Overview::flush();
 			OHCL_Members::flush_public();
+			OHCL_Audit::log( 'key_revoked', (int) $id, (string) $m['key_prefix'] ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		}
 		return $res;
 	}
@@ -110,6 +117,7 @@ final class OHCL_Service {
 		$res = OHCL_Members::verify( (int) $id, $evidence, (string) $note, (int) $months );
 		if ( ! is_wp_error( $res ) ) {
 			OHCL_Slots::emit( 'member_verified', array( 'member_id' => (int) $id ) );
+			OHCL_Audit::log( 'member_verified', (int) $id, (int) $months . ' tháng' ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		}
 		return $res;
 	}
@@ -120,6 +128,7 @@ final class OHCL_Service {
 			return self::not_found();
 		}
 		OHCL_Members::unverify( (int) $id );
+		OHCL_Audit::log( 'member_unverified', (int) $id ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 		return true;
 	}
 
@@ -207,6 +216,77 @@ final class OHCL_Service {
 		$o['approved_by'] = $approve ? get_current_user_id() : 0;
 		update_post_meta( $id, '_bzm_outcomes', $o );
 		OHCL_Members::flush_public();
+		OHCL_Audit::log( 'outcomes_reviewed', $id, $approve ? 'duyệt' : 'gỡ' ); // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+		return true;
+	}
+
+	/* ===================== rời Hub và xoá thông tin (H6) ===================== */
+
+	/**
+	 * A member leaves the Hub. Their public traces go at once: status "Đã rời", public-profile / shop / results
+	 * consents withdrawn (the profile leaves the map). Their AI key is NOT revoked here (it runs out at the end
+	 * of what was paid; the Hub Owner may revoke it) and the record is kept until an erase is requested.
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function leave( $member_id ) {
+		// [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
+		$id = (int) $member_id;
+		$m  = OHCL_Members::get( $id );
+		if ( ! $m ) {
+			return self::not_found();
+		}
+		if ( 'left' === $m['status'] ) {
+			return OHCL_Error::make( 'ohcl_member_already_left', 'Hồ sơ này đã rời Hub.', 'Nếu muốn xoá thông tin, nhờ ban điều hành xử lý.', 409 );
+		}
+		OHCL_Members::set_status( $id, 'left' );
+		update_post_meta( $id, '_bzm_public_consent', '' );
+		update_post_meta( $id, '_bzm_shop_consent', '' );
+		$o = get_post_meta( $id, '_bzm_outcomes', true );
+		if ( is_array( $o ) && $o ) {
+			$o['consent_at'] = '';
+			$o['approved']   = false;
+			update_post_meta( $id, '_bzm_outcomes', $o );
+		}
+		OHCL_Members::flush_public();
+		OHCL_Audit::log( 'member_left', $id, 'tự rời', 0 );
+		return true;
+	}
+
+	/**
+	 * Erase the personal data of a member who has left. The record keeps its code, dates and the monthly totals
+	 * (no person in them); contact, address, website, coordinates, industry fields, support requests, reported
+	 * results, verification notes, the linked account and the Coach link are cleared and the name is replaced.
+	 * The key at the core is untouched (keys do not move between Hubs and expire by themselves).
+	 *
+	 * @return true|WP_Error
+	 */
+	public static function anonymize( $member_id ) {
+		$id = (int) $member_id;
+		$m  = OHCL_Members::get( $id );
+		if ( ! $m ) {
+			return self::not_found();
+		}
+		if ( 'left' !== $m['status'] ) {
+			return OHCL_Error::make( 'ohcl_member_not_left', 'Chỉ xoá thông tin của hội viên đã rời Hub.', 'Chuyển hồ sơ sang "Đã rời" (hoặc để hội viên tự rời) rồi xoá thông tin.', 409 );
+		}
+		if ( '' !== (string) $m['anonymized_at'] ) {
+			return OHCL_Error::make( 'ohcl_member_already_erased', 'Thông tin của hồ sơ này đã được xoá.', 'Không còn gì để xoá.', 409 );
+		}
+		foreach ( array( 'phone', 'email', 'address', 'contact_zalo', 'site_url', 'shop_url', 'lat', 'lng', 'hours', 'coach', 'segment', 'province' ) as $k ) {
+			update_post_meta( $id, '_bzm_' . $k, '' );
+		}
+		foreach ( OHCL_Industry::current()['member_fields'] as $f ) {
+			update_post_meta( $id, $f['meta'], '' );
+		}
+		foreach ( array( '_bzm_support', '_bzm_outcomes', '_bzm_verify', '_bzm_certs', '_bzm_public_consent', '_bzm_shop_consent', '_bzm_ref_coach', '_bzm_ref_at' ) as $k ) {
+			update_post_meta( $id, $k, '' );
+		}
+		update_post_meta( $id, '_bzm_user', 0 );
+		update_post_meta( $id, '_bzm_anonymized_at', gmdate( 'Y-m-d H:i:s' ) );
+		wp_update_post( array( 'ID' => $id, 'post_title' => 'Đã xoá thông tin · ' . $m['code'] ) );
+		OHCL_Members::flush_public();
+		OHCL_Audit::log( 'member_anonymized', $id, $m['code'] );
 		return true;
 	}
 

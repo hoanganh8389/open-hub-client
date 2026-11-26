@@ -339,6 +339,7 @@ final class OHCL_Members {
 			'industry'    => array(),
 			'demo'        => '1' === (string) get_post_meta( $id, '_bzm_demo', true ), // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO
 			'outcomes'    => get_post_meta( $id, '_bzm_outcomes', true ), // [2026-11-26 04:07 PM Johnny Chu - Chu Hoàng Anh] OHCL-H3 — kết quả tự khai
+			'anonymized_at' => (string) get_post_meta( $id, '_bzm_anonymized_at', true ), // [2026-11-26 04:31 PM Johnny Chu - Chu Hoàng Anh] OHCL-H6
 			'left_at'     => (string) get_post_meta( $id, '_bzm_left_at', true ), // [2026-11-26 01:10 PM Johnny Chu - Chu Hoàng Anh] OHCL-Q15 — ngày rời (đếm "rời theo tháng")
 			'support_at'  => self::last_support_at( $id ),
 			'ref_coach'   => (int) get_post_meta( $id, '_bzm_ref_coach', true ), // [2026-11-26 11:15 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — Coach đã giới thiệu (người đầu tiên, giữ 12 tháng)
