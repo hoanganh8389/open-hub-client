@@ -117,7 +117,7 @@ function check( $name, $ok ) { global $pass, $fail; if ( $ok ) { $pass++; echo "
 
 /* mẫu trang */
 $tpl = OHCL_Pages::page_templates( array( 'theme.php' => 'Theme' ) );
-check( 'mẫu trang "Open Hub — …" cho 12 trang Hub (không có trang chủ, hồ sơ cơ sở), giữ mẫu của theme', 13 === count( $tpl ) && 'Open Hub — Quyền lợi hội viên' === $tpl['open-hub:benefits'] && ! isset( $tpl['open-hub:home'] ) && ! isset( $tpl['open-hub:place'] ) );
+check( 'mẫu trang "Open Hub — …" cho 13 trang Hub (không có trang chủ, hồ sơ cơ sở), giữ mẫu của theme', 14 === count( $tpl ) && 'Open Hub — Quyền lợi hội viên' === $tpl['open-hub:benefits'] && ! isset( $tpl['open-hub:home'] ) && ! isset( $tpl['open-hub:place'] ) );
 
 /* tạo trang */
 $made = OHCL_Pages::create_missing( 'publish' );

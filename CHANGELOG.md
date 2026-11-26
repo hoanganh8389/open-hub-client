@@ -1,5 +1,12 @@
 # Lịch sử phát hành
 
+## 0.10.1 — 2026-11-26 (My Coach)
+
+- Trang **/my-coach/** (module 04): Coach đăng nhập thấy link giới thiệu + mã, mức hoa hồng giới thiệu, bốn ô (hội viên giới thiệu · tạm tính · đã duyệt · đã trả), danh sách hội viên mình giới thiệu (tên cơ sở, mã, giai đoạn, "Đã ghi nhận / Chờ kích hoạt / Hết hạn 12 tháng") và lịch sử chi trả từng kỳ.
+- Riêng tư: chỉ dữ liệu của chính Coach; hội viên **không lộ email, điện thoại, Zalo**; Coach khác không thấy. Khách → mời đăng nhập; tài khoản không phải Coach → link ứng tuyển.
+- Đầu trang hiện "My Coach" cho người có vai Coach. Module 04 tắt ⇒ trang biến mất.
+- affiliate-smoke 51/51 (đột biến: ai cũng là Coach, Coach thấy mọi hội viên — đều bị bắt).
+
 ## 0.10.0 — 2026-11-26 (Đ3a: Coach + affiliate, backend)
 
 - **Vai `hub_coach`**: ở Hub › 04 · Coach, hồ sơ đã duyệt bấm "Cấp vai Coach" + email ⇒ tạo tài khoản (hoặc thêm vai vào tài khoản cùng email, giữ vai cũ), gửi email đặt mật khẩu, cấp **mã giới thiệu** 6 ký tự.

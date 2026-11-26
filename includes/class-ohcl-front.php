@@ -59,6 +59,7 @@ final class OHCL_Front {
 			'becoach'  => array( 'slug' => 'tro-thanh-coach', 'title' => 'Trở thành Coach', 'group' => 'Học & đồng hành', 'module' => '04', 'menu' => true, 'desc' => 'Ứng tuyển Coach của Hub.' ),
 			'cert'     => array( 'slug' => 'chung-nhan', 'title' => 'Xác minh & chứng nhận', 'group' => 'Chứng nhận', 'module' => '06', 'menu' => true, 'desc' => 'Bốn loại ghi nhận, tra cứu giấy chứng nhận.' ),
 			'myhub'    => array( 'slug' => 'my-hub', 'title' => 'My Hub', 'group' => '' ),
+			'mycoach'  => array( 'slug' => 'my-coach', 'title' => 'My Coach', 'group' => '', 'module' => '04' ), // [2026-11-26 11:40 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — Coach tự xem link giới thiệu, hội viên, hoa hồng
 			'sitemap'  => array( 'slug' => 'so-do-trang', 'title' => 'Sơ đồ trang', 'group' => '' ),
 		);
 		$p = apply_filters( 'ohcl_front_pages', $p );

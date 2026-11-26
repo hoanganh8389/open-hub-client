@@ -441,6 +441,61 @@ final class OHCL_Affiliate {
 		return true;
 	}
 
+	/** Does this user hold the hub_coach role? */
+	public static function is_coach( $user ) {
+		return is_object( $user ) && ! empty( $user->roles ) && in_array( self::ROLE, (array) $user->roles, true );
+	}
+
+	/**
+	 * What a Coach sees on My Coach ([2026-11-26 11:40 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A). Pure. Own data only; referred members show business name,
+	 * code, journey stage and dates — never contact details.
+	 *
+	 * @param array   $coach    coaches() row.
+	 * @param array[] $members  to_array() rows.
+	 * @param array   $keys     key_id => key view (empty when the core is unreachable).
+	 * @param array[] $payouts  payouts() rows.
+	 * @param array   $policy   current policy.
+	 */
+	public static function coach_view( array $coach, array $members, array $keys, array $payouts, array $policy, $now_ts ) {
+		$have = array();
+		$mine = array();
+		foreach ( $payouts as $p ) {
+			if ( $p['coach'] !== (int) $coach['id'] ) {
+				continue;
+			}
+			$mine[] = $p;
+			foreach ( $p['lines'] as $l ) {
+				$have[ $l['key'] ] = true;
+			}
+		}
+		usort( $mine, function ( $a, $b ) { return strcmp( $b['month'], $a['month'] ); } );
+		$refs = array();
+		foreach ( $members as $m ) {
+			if ( (int) $m['ref_coach'] !== (int) $coach['id'] ) {
+				continue;
+			}
+			$kv     = $m['key_id'] && isset( $keys[ $m['key_id'] ] ) ? $keys[ $m['key_id'] ] : null;
+			$lvl    = OHCL_Members::journey( $m, $kv, $now_ts );
+			$refs[] = array(
+				'name'      => $m['title'],
+				'code'      => $m['code'],
+				'since'     => substr( (string) $m['ref_at'], 0, 10 ),
+				'stage'     => OHCL_Members::JOURNEY[ $lvl ],
+				'level'     => $lvl,
+				'holding'   => self::ref_active( $m['ref_at'], $now_ts ),
+				'recognised' => isset( $have[ 'member:' . (int) $m['id'] ] ),
+			);
+		}
+		$amount = null !== $coach['override'] ? (int) $coach['override'] : (int) $policy['referral_member'];
+		return array(
+			'amount'  => $amount,
+			'members' => $refs,
+			'payouts' => $mine,
+			'sum'     => self::coach_summary( $coach['id'], $payouts, $members ),
+			'core_ok' => (bool) $keys,
+		);
+	}
+
 	/** Totals of one Coach: tentative / approved / paid (đồng) and referred members. */
 	public static function coach_summary( $coach_id, array $payouts, array $members ) {
 		$s = array( 'tentative' => 0, 'approved' => 0, 'paid' => 0, 'members' => 0 );

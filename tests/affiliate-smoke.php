@@ -81,6 +81,18 @@ function register_post_type() {}
 function get_post_type() { return 'x'; }
 function is_admin() { return false; }
 function is_ssl() { return true; }
+function is_user_logged_in() { return ! empty( $GLOBALS['me'] ); }
+function wp_get_current_user() { return ! empty( $GLOBALS['me'] ) ? $GLOBALS['users'][ $GLOBALS['me'] ] : (object) array( 'ID' => 0, 'roles' => array() ); }
+function wp_login_url( $r = '' ) { return 'https://hub.test/wp-login.php?redirect_to=' . $r; }
+function get_bloginfo( $k ) { return 'Site'; }
+function language_attributes() {}
+function bloginfo( $k ) {}
+function wp_head() {}
+function wp_footer() {}
+function wp_body_open() {}
+function body_class( $c ) {}
+function get_permalink( $p ) { return ''; }
+function has_post_thumbnail( $p ) { return false; }
 
 $dir = dirname( __DIR__ );
 define( 'OHCL_DIR', $dir . '/' );
@@ -223,6 +235,39 @@ post_admin( 'handle_affiliate', array( 'do' => 'move', 'payout' => $pid, 'to' =>
 check( 'Đánh dấu đã trả ⇒ đã trả; sau đó không còn nút chuyển', 'paid' === OHCL_Affiliate::payouts()[ $pid ]['status'] && is_wp_error( OHCL_Affiliate::move( $pid, 'approved' ) ) );
 $sm = OHCL_Affiliate::coach_summary( $uid, OHCL_Affiliate::payouts(), OHCL_Members::all() );
 check( 'tổng theo Coach: đã trả 2.100.000, tạm tính tháng sau, hội viên giới thiệu đếm đủ', 2100000 === $sm['paid'] && $sm['tentative'] > 0 && $sm['members'] >= 5 );
+
+/* ---------- My Coach (trang công khai của Coach) ---------- */
+// [2026-11-26 11:40 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A
+$GLOBALS['me'] = 0;
+$g = OHCL_Front::html( 'mycoach', array() );
+check( 'My Coach: khách ⇒ mời đăng nhập, không lộ dữ liệu Coach', false !== strpos( $g, 'Đăng nhập để vào My Coach' ) && false === strpos( $g, 'Link giới thiệu của bạn' ) && false === strpos( $g, $code ) );
+$GLOBALS['users'][9] = new T_User( 9, 'Người thường', 'nt@example.com', array( 'subscriber' ) );
+$GLOBALS['me'] = 9;
+$g = OHCL_Front::html( 'mycoach', array() );
+check( 'My Coach: tài khoản không phải Coach ⇒ báo chưa là Coach + link ứng tuyển, không có số liệu', false !== strpos( $g, 'chưa là Coach' ) && false !== strpos( $g, 'Trở thành Coach' ) && false === strpos( $g, 'Lịch sử chi trả' ) );
+$GLOBALS['me'] = $uid;
+update_user_meta( $uid, 'ohcl_coach_skills', array() );
+$g = OHCL_Front::html( 'mycoach', array() );
+$vw = OHCL_Affiliate::coach_view( OHCL_Affiliate::coaches()[ $uid ], OHCL_Members::all(), OHCL_Members::keys_by_id(), OHCL_Affiliate::payouts(), OHCL_Affiliate::policy(), time() );
+check( 'My Coach: Coach thấy link giới thiệu của mình, mã, số hội viên, bốn ô tiền, lịch sử chi trả', false !== strpos( $g, 'Link giới thiệu của bạn' ) && false !== strpos( $g, 'ref=' . $code ) && false !== strpos( $g, 'Lịch sử chi trả' ) && false !== strpos( $g, 'Tạm tính' ) && false !== strpos( $g, 'Đã trả' ) && false !== strpos( $g, '<b>' . (int) $vw['sum']['members'] . '</b>' ) );
+check( 'My Coach: liệt kê hội viên do mình giới thiệu (tên, mã, giai đoạn), đánh dấu "Đã ghi nhận"; KHÔNG có email / điện thoại của hội viên', false !== strpos( $g, 'Cơ sở một' ) && false !== strpos( $g, 'Đã ghi nhận' ) && false === strpos( $g, '_bzm_' ) );
+$ph = wp_insert_post( array( 'post_type' => OHCL_Members::CPT, 'post_title' => 'Có liên hệ riêng' ) );
+foreach ( array( '_bzm_status' => 'active', '_bzm_ref_coach' => $uid, '_bzm_ref_at' => gmdate( 'Y-m-d H:i:s' ), '_bzm_email' => 'bi-mat@example.com', '_bzm_phone' => '0912345678', '_bzm_contact_zalo' => '0987654321' ) as $k => $x ) { update_post_meta( $ph, $k, $x ); }
+$g = OHCL_Front::html( 'mycoach', array() );
+check( 'My Coach: hội viên có email / điện thoại / Zalo ⇒ hiện tên, nhưng không lộ liên hệ', false !== strpos( $g, 'Có liên hệ riêng' ) && false === strpos( $g, 'bi-mat@example.com' ) && false === strpos( $g, '0912345678' ) && false === strpos( $g, '0987654321' ) );
+$other = $GLOBALS['users'][3]; // Coach khác (HHHHHH)
+$GLOBALS['me'] = 3;
+$g3 = OHCL_Front::html( 'mycoach', array() );
+check( 'My Coach: Coach khác không thấy hội viên / hoa hồng của Coach này', false !== strpos( $g3, 'HHHHHH' ) && false === strpos( $g3, 'Cơ sở một' ) && false === strpos( $g3, 'ref=' . $code ) );
+$GLOBALS['me'] = $uid;
+$hd = OHCL_Front::html( 'home', array() );
+check( 'đầu trang: Coach thấy liên kết "My Coach"; người thường không', false !== strpos( $hd, '>My Coach</a>' ) );
+$GLOBALS['me'] = 9;
+check( 'đầu trang: người không phải Coach không thấy liên kết My Coach', false === strpos( OHCL_Front::html( 'home', array() ), '>My Coach</a>' ) );
+$GLOBALS['me'] = 0;
+OHCL_Modules::set_enabled( '04', false );
+check( 'module 04 tắt ⇒ trang My Coach cũng biến khỏi sổ trang', ! OHCL_Front::page_on( 'mycoach' ) );
+OHCL_Modules::set_enabled( '04', true );
 
 /* ---------- màn quản trị ---------- */
 ob_start(); OHCL_Admin_Coach::page(); $ap = ob_get_clean();

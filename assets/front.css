@@ -279,3 +279,10 @@ body.ohcl-front .mfp-hide,body.ohcl-front .hidden,body.ohcl-front #main-menu.mob
 @media (max-width:720px){.ohcl-front .states{grid-template-columns:1fr}.ohcl-front .near-grid{grid-template-columns:1fr}}
 .ohcl-front .stats .in{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:18px 22px}
 .ohcl-front .stats .motto{grid-column:1/-1;margin:6px 0 0;text-align:center}
+
+/* [2026-11-26 11:40 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A — My Coach: bốn ô số liệu */
+.ohcl-front .coach-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:18px}
+.ohcl-front .coach-kpis .kpi span{font-size:13px;color:var(--mute)}
+.ohcl-front .coach-kpis .kpi b{display:block;font-size:22px;margin-top:4px;font-variant-numeric:tabular-nums}
+@media (max-width:720px){.ohcl-front .coach-kpis{grid-template-columns:1fr 1fr}}
+.ohcl-front .tbl th{text-align:left}.ohcl-front .tbl th.n,.ohcl-front .tbl td.n{text-align:right}

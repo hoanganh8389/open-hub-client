@@ -40,6 +40,9 @@ $ohcl_blogv = 'wp' === $page && ( is_home() || is_singular( 'post' ) || is_categ
 	<nav class="hlinks" aria-label="Tài khoản">
 		<?php if ( is_user_logged_in() ) : ?>
 			<a class="txt" href="<?php echo esc_url( OHCL_Front::myhub_url() ); ?>"><?php echo OHCL_Front::icon( 'user' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>My Hub</a>
+			<?php if ( class_exists( 'OHCL_Affiliate' ) && OHCL_Front::page_on( 'mycoach' ) && OHCL_Affiliate::is_coach( wp_get_current_user() ) ) : // [2026-11-26 11:40 AM Johnny Chu - Chu Hoàng Anh] OHCL-D3A ?>
+				<a class="txt" href="<?php echo esc_url( OHCL_Front::url( 'mycoach' ) ); ?>"><?php echo OHCL_Front::icon( 'coach' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>My Coach</a>
+			<?php endif; ?>
 		<?php else : ?>
 			<a class="txt" href="<?php echo esc_url( wp_login_url( OHCL_Front::myhub_url() ) ); ?>">Đăng nhập</a>
 		<?php endif; ?>
