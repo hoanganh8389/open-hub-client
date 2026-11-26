@@ -58,5 +58,5 @@ $ohcl_any   = '' !== $ohcl_q['q'] || '' !== $ohcl_q['seg'] || '' !== $ohcl_q['pr
 		<?php endif; ?>
 	</div>
 
-	<div class="pnl"><?php if ( $ohcl_items ) : ?><div class="map tall" data-ohcl-map data-pins="<?php echo esc_attr( OHCL_Front::pins_json( $ohcl_items ) ); ?>"></div><?php else : ?><div class="map tall state">Bản đồ hiện khi có cơ sở công khai.</div><?php endif; ?></div>
+	<div class="pnl"><?php if ( $ohcl_items ) : // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — tâm bản đồ khi không lọc; nút Gần tôi + danh sách gần nhất ?><p class="h-act" style="margin:0 0 10px"><button type="button" class="btn o sm" data-ohcl-locate>Gần tôi</button></p><div class="map tall" data-ohcl-map<?php echo $ohcl_any ? '' : OHCL_Front::map_view_attrs( $cfg['persona'] ); // phpcs:ignore WordPress.Security.EscapeOutput ?> data-pins="<?php echo esc_attr( OHCL_Front::pins_json( $ohcl_items ) ); ?>"></div><div class="near" data-ohcl-near hidden></div><?php else : ?><div class="map tall state">Bản đồ hiện khi có cơ sở công khai.</div><?php endif; ?></div>
 </div>

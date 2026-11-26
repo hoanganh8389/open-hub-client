@@ -1,5 +1,14 @@
 # Lịch sử phát hành
 
+## 0.9.1 — 2026-11-26 (góp ý trang chủ)
+
+- Bỏ khối chú thích dữ liệu mẫu dưới bản đồ trang chủ; nhãn "Mẫu" vẫn ở từng cơ sở mẫu.
+- **Tâm bản đồ** theo ngành (`persona.map` = `{ lat, lng, zoom }`) hoặc chủ Hub đặt ở 14 · Cài đặt (option `ohcl_map_view`); trang chủ và trang bản đồ (khi không lọc) mở ở tâm đó.
+- **Gần tôi**: nút trên bản đồ trang chủ và trang bản đồ; vị trí lấy trong trình duyệt (không gửi lên máy chủ), hiện chấm vị trí + 5 cơ sở gần nhất kèm khoảng cách; bị từ chối quyền thì nói cách bật.
+- **Ảnh nền dưới hero** theo ngành (`persona.hero_bg`) hoặc chủ Hub đặt (option `ohcl_hero_bg`); chỉ nhận URL ảnh https / đường dẫn tương đối, không chèn được CSS.
+- Trang Quyền lợi: "8 quyền lợi đặc biệt".
+- demo-smoke 47/47.
+
 ## 0.9.0 — 2026-11-26 (dữ liệu mẫu + sản phẩm của cơ sở, chủ Hub chốt CM-Q1…Q4)
 
 - **Dữ liệu mẫu theo ngành** (`OHCL_Demo`, filter `open_hub_client_demo`): plugin ngành cấp cơ sở mẫu, chuyên mục, bài mẫu. Cơ sở mẫu hiện công khai trên bản đồ, danh bạ, giao thương với nhãn **"Mẫu"** (không bao giờ "Đã xác minh"), không nút Zalo, **không vào số liệu**; tự ẩn khi Hub có đủ cơ sở thật công khai (ngưỡng do ngành đặt, mặc định 15). Chủ Hub tắt được bất cứ lúc nào.

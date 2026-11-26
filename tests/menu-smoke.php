@@ -154,7 +154,7 @@ check( 'vị trí không có trong theme ⇒ bỏ qua', '' === OHCL_Pages::sync_
 /* đầu trang đọc menu */
 $GLOBALS['mitems'][ $kid->ID ]->title = 'Quyền lợi (đổi tên trong Menu)';
 $h = OHCL_Front::html( 'benefits', array() );
-check( 'đầu trang đọc "Menu Hub": tên chủ Hub đổi hiện ra, mục tự thêm hiện ra, mô tả trang giữ', false !== strpos( $h, 'Quyền lợi (đổi tên trong Menu)' ) && false !== strpos( $h, '>Liên hệ</a>' ) && false !== strpos( $h, '8 trụ cột quyền lợi khi tham gia Hub.' ) );
+check( 'đầu trang đọc "Menu Hub": tên chủ Hub đổi hiện ra, mục tự thêm hiện ra, mô tả trang giữ', false !== strpos( $h, 'Quyền lợi (đổi tên trong Menu)' ) && false !== strpos( $h, '>Liên hệ</a>' ) && false !== strpos( $h, '8 quyền lợi đặc biệt khi tham gia Hub.' ) );
 check( 'mục của trang đang mở được đánh dấu', false !== strpos( $h, 'aria-current="page"><b>Quyền lợi (đổi tên trong Menu)' ) );
 check( 'chân trang cùng cây menu (cột nhóm + cột Trang)', false !== strpos( $h, '<h4>Hội viên</h4>' ) && false !== strpos( $h, '<h4>Trang</h4>' ) );
 update_option( OHCL_Modules::OPTION, array( '06' => false ) );

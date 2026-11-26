@@ -10,7 +10,7 @@
 defined( 'ABSPATH' ) || exit;
 ?>
 <div class="page-h"><div class="in"><p class="crumb"><a href="<?php echo esc_url( OHCL_Front::url() ); ?>">Trang chủ</a> › Quyền lợi hội viên</p>
-	<h1>8 trụ cột quyền lợi</h1>
+	<h1>8 quyền lợi đặc biệt</h1><?php // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — chủ Hub đổi chữ ?>
 	<p class="lead">Công nghệ 0đ là lý do để bắt đầu. Đào tạo, khách hàng, uy tín và giao thương là lý do để gắn bó lâu dài.</p></div></div>
 <div class="in">
 	<div class="tiles">

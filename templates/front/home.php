@@ -19,7 +19,7 @@ $ohcl_segs    = $cfg['segments'];
 $ohcl_blog    = (int) get_option( 'page_for_posts' ) ? get_permalink( (int) get_option( 'page_for_posts' ) ) : '';
 $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_strtolower( $cfg['industry'], 'UTF-8' ) : $cfg['industry'] ) : 'ngành';
 ?>
-<section class="hero"><div class="in">
+<section class="hero<?php echo $persona['hero_bg'] ? ' has-bg' : ''; ?>"<?php echo $persona['hero_bg'] ? ' style="background-image:url(\'' . esc_url( $persona['hero_bg'] ) . '\')"' : ''; // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — ảnh nền hero theo ngành, URL đã kiểm ở OHCL_Industry::clean_image_url() ?>><div class="in">
 	<p class="slogan"><?php echo esc_html( $persona['slogan'] ); ?></p>
 	<div>
 		<p class="kick"><?php echo esc_html( $persona['kicker'] ); ?></p>
@@ -47,16 +47,14 @@ $ohcl_ind     = $cfg['industry'] ? ( function_exists( 'mb_strtolower' ) ? mb_str
 </nav></div>
 
 <?php // [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — bản đồ lớn ngay dưới phần "Cùng kiến tạo"; luôn hiện nền bản đồ, chưa có cơ sở thì phủ một dòng giải thích. ?>
-<section class="in mapband"><div class="pnl"><h2><span><span class="num">1</span>Bản đồ <?php echo esc_html( $ohcl_ind ); ?></span><a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">Xem bản đồ đầy đủ</a></h2>
+<section class="in mapband"><div class="pnl"><h2><span><span class="num">1</span>Bản đồ <?php echo esc_html( $ohcl_ind ); ?></span><span class="h-act"><button type="button" class="btn o sm" data-ohcl-locate>Gần tôi</button><a href="<?php echo esc_url( OHCL_Front::url( 'map' ) ); ?>">Xem bản đồ đầy đủ</a></span></h2>
 	<div class="mapwrap">
-		<div class="map big" data-ohcl-map data-pins="<?php echo esc_attr( OHCL_Front::pins_json( $ohcl_pub['items'] ) ); ?>"></div>
+		<div class="map big" data-ohcl-map<?php echo OHCL_Front::map_view_attrs( $persona ); // phpcs:ignore WordPress.Security.EscapeOutput -- [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 số đã kiểm ?> data-pins="<?php echo esc_attr( OHCL_Front::pins_json( $ohcl_pub['items'] ) ); ?>"></div>
 		<?php if ( ! $ohcl_pub['items'] ) : ?>
 			<div class="map-note"><b>Bản đồ đang chờ cơ sở đầu tiên</b>Cơ sở được ban điều hành xác minh và đồng ý công khai sẽ hiện ở đây.<a class="btn g sm" href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đăng ký cơ sở</a></div>
 		<?php endif; ?>
 	</div>
-	<?php if ( ! empty( $ohcl_pub['demo'] ) ) : // [2026-11-26 09:59 AM Johnny Chu - Chu Hoàng Anh] OHCL-DEMO — chú thích dữ liệu mẫu ngay dưới bản đồ. ?>
-		<p class="demo-note"><span class="badge demo">Mẫu</span> <?php echo (int) $ohcl_pub['demo']; ?> điểm có chữ "(mẫu)" là dữ liệu xem thử, không phải cơ sở có thật. Chúng tự ẩn khi Hub đủ cơ sở thật được xác minh. <a href="<?php echo esc_url( OHCL_Front::url( 'join' ) ); ?>">Đưa cơ sở của bạn lên bản đồ</a></p>
-	<?php endif; ?>
+	<div class="near" data-ohcl-near hidden></div><?php // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — bỏ khối chú thích dữ liệu mẫu (chủ Hub yêu cầu); nhãn "Mẫu" vẫn ở từng cơ sở. Danh sách "Gần tôi" hiện ở đây. ?>
 </div></section>
 
 <div class="in row">

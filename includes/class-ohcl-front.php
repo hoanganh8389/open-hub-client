@@ -51,7 +51,7 @@ final class OHCL_Front {
 			'trade'    => array( 'slug' => 'giao-thuong', 'title' => 'Kết nối giao thương', 'group' => 'Khám phá', 'module' => '09', 'menu' => true, 'desc' => 'Nguồn cung, nhà sản xuất, đối tác trong ngành.' ),
 			'events'   => array( 'slug' => 'su-kien', 'title' => 'Sự kiện & chương trình', 'group' => 'Khám phá', 'module' => '09', 'menu' => true, 'desc' => 'Chương trình theo dịp, hội thảo, hội chợ.' ),
 			'place'    => array( 'slug' => 'co-so', 'title' => 'Hồ sơ cơ sở', 'group' => 'Khám phá', 'module' => '07' ),
-			'benefits' => array( 'slug' => 'quyen-loi', 'title' => 'Quyền lợi hội viên', 'group' => 'Hội viên', 'menu' => true, 'desc' => '8 trụ cột quyền lợi khi tham gia Hub.' ),
+			'benefits' => array( 'slug' => 'quyen-loi', 'title' => 'Quyền lợi hội viên', 'group' => 'Hội viên', 'menu' => true, 'desc' => '8 quyền lợi đặc biệt khi tham gia Hub.' ),
 			'tech'     => array( 'slug' => 'cong-nghe-0d', 'title' => 'Bộ công nghệ 0đ', 'group' => 'Hội viên', 'module' => '03', 'menu' => true, 'desc' => 'Phần mềm mã nguồn mở tặng hội viên.' ),
 			'join'     => array( 'slug' => 'tro-thanh-hoi-vien', 'title' => 'Trở thành hội viên', 'group' => 'Hội viên', 'menu' => true, 'desc' => 'Đăng ký, ban điều hành liên hệ trong ít ngày.' ),
 			'academy'  => array( 'slug' => 'hoc-vien', 'title' => 'Học viện', 'group' => 'Học & đồng hành', 'module' => '05', 'menu' => true, 'desc' => 'Lộ trình học và kho mẫu của ngành.' ),
@@ -588,6 +588,13 @@ final class OHCL_Front {
 			$out[] = array( 't' => $it['title'], 's' => $it['seg_label'], 'p' => $it['province'], 'lat' => $it['lat'], 'lng' => $it['lng'], 'u' => self::place_url( $it['id'], $it['title'] ), 'd' => empty( $it['demo'] ) ? 0 : 1 );
 		}
 		return wp_json_encode( $out );
+	}
+
+	/** data-center / data-zoom attributes from persona.map (numbers only), or ''. */
+	public static function map_view_attrs( array $persona ) {
+		// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — bản đồ mở ở tâm ngành / chủ Hub đặt (ví dụ Hà Nội) thay vì vừa khung cả nước.
+		$m = isset( $persona['map'] ) ? OHCL_Industry::clean_map( $persona['map'] ) : array();
+		return $m ? ' data-center="' . esc_attr( $m['lat'] . ',' . $m['lng'] ) . '" data-zoom="' . (int) $m['zoom'] . '"' : '';
 	}
 
 	/** "Đã xác minh" for a real public business, "Mẫu" for a sample one (never mixed up). */

@@ -130,6 +130,17 @@ final class OHCL_Admin {
 		}
 	}
 
+	/** Settings rows: hero background image + map centre (owner > industry plugin). */
+	private static function front_look_fields() {
+		// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — chủ Hub chọn ảnh nền hero và tâm / zoom bản đồ; để trống = dùng của plugin ngành.
+		$ind = OHCL_Industry::report()['config']['persona'];
+		$bg  = (string) get_option( OHCL_Industry::HERO_OPTION, '' );
+		$mv  = OHCL_Industry::clean_map( get_option( OHCL_Industry::MAP_OPTION, array() ) );
+		$im  = $ind['map'];
+		return '<p><label>Ảnh nền phía dưới phần hero (URL https, svg / png / jpg / webp)<br><input name="hero_bg" type="url" class="large-text" value="' . esc_attr( $bg ) . '" placeholder="' . esc_attr( $ind['hero_bg'] ? $ind['hero_bg'] : 'https://…/anh-nen.jpg' ) . '"></label><br><span class="mute">Để trống = ảnh của plugin ngành' . ( $ind['hero_bg'] ? '' : ' (plugin ngành chưa có ảnh)' ) . '. Lấy URL ở Thư viện ảnh › Sao chép URL.</span></p>'
+			. '<p>Tâm bản đồ khi mở trang<br><label>Vĩ độ <input name="map_lat" size="10" value="' . esc_attr( $mv ? $mv['lat'] : '' ) . '" placeholder="' . esc_attr( $im ? $im['lat'] : '21.0285' ) . '"></label> <label>Kinh độ <input name="map_lng" size="10" value="' . esc_attr( $mv ? $mv['lng'] : '' ) . '" placeholder="' . esc_attr( $im ? $im['lng'] : '105.8542' ) . '"></label> <label>Zoom <input name="map_zoom" type="number" min="3" max="17" style="width:70px" value="' . esc_attr( $mv ? $mv['zoom'] : '' ) . '" placeholder="' . esc_attr( $im ? $im['zoom'] : '12' ) . '"></label><br><span class="mute">Để trống = theo plugin ngành' . ( $im ? ' (' . esc_html( $im['lat'] . ', ' . $im['lng'] . ', zoom ' . $im['zoom'] ) . ')' : ', hoặc vừa khung mọi điểm' ) . '. Ví dụ Hà Nội 21.0285 · 105.8542 · 12; TP.HCM 10.7769 · 106.7009 · 12. Người xem bấm "Gần tôi" để xem cơ sở gần mình.</span></p>';
+	}
+
 	public static function kpi( $label, $value, $note = '' ) {
 		return '<div class="ohcl-card ohcl-kpi"><span>' . esc_html( $label ) . '</span><b>' . esc_html( $value ) . '</b>' . ( $note ? '<small>' . esc_html( $note ) . '</small>' : '' ) . '</div>';
 	}
@@ -295,6 +306,7 @@ final class OHCL_Admin {
 		echo '<input type="hidden" name="action" value="ohcl_settings"><input type="hidden" name="part" value="front">'
 			. '<p><label><input type="checkbox" name="front_home" value="1"' . checked( OHCL_Front::home_on(), true, false ) . '> Dùng trang chủ cổng ngành của Hub thay trang chủ của theme</label></p>'
 			. '<p><label>Màu nhấn của Hub<br><input type="color" name="accent" value="' . esc_attr( OHCL_Industry::current()['brand']['accent'] ) . '"> <label><input type="checkbox" name="accent_reset" value="1"> Trả về màu của plugin ngành</label></label><br><span class="mute">Màu của plugin ngành: <code>' . esc_html( OHCL_Industry::report()['config']['brand']['accent'] ) . '</code>' . ( OHCL_Industry::report()['ok'] ? '' : ' (chưa có dữ liệu ngành — đang là màu mặc định)' ) . '</span></p>' // [2026-11-26 12:51 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX2
+			. self::front_look_fields() // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — ảnh nền hero + tâm bản đồ
 			. '<p><label><input type="checkbox" name="front_takeover" value="1"' . checked( OHCL_Front::takeover_on(), true, false ) . '> Vẽ cả site trong khung Hub (bài viết, trang, tin tức, tìm kiếm, 404) — bỏ giao diện theme</label></p>' // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
 			. '<p><label>Trang giữ giao diện theme (ID, cách nhau bằng dấu phẩy)<br><input name="keep_theme" class="regular-text" value="' . esc_attr( implode( ',', OHCL_Front::keep_theme_ids() ) ) . '"></label><br><span class="mute">Dùng cho trang dựng bằng trình dựng của theme (UX Builder…) cần CSS của theme. Cửa hàng / sản phẩm WooCommerce luôn giữ theme.</span></p>'
 			. '<p class="mute">Trang: <a href="' . esc_url( OHCL_Front::url() ) . '" target="_blank" rel="noopener">trang chủ</a> · <a href="' . esc_url( OHCL_Front::url( 'map' ) ) . '" target="_blank" rel="noopener">bản đồ</a> · <a href="' . esc_url( OHCL_Front::url( 'join' ) ) . '" target="_blank" rel="noopener">trở thành hội viên</a>. Chỉ hồ sơ V4 (đã xác minh, đồng ý công khai, có toạ độ, khoá đang dùng) hiện ra ngoài.</p>'
@@ -363,6 +375,13 @@ final class OHCL_Admin {
 			// [2026-11-26 01:11 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX3 — màu chọn được lưu (trước đây ô "Dùng màu của plugin ngành" tích sẵn nên màu bị bỏ); trùng màu plugin ngành thì không cần lưu riêng.
 			$ind_acc = OHCL_Industry::report()['config']['brand']['accent'];
 			update_option( OHCL_Industry::ACCENT_OPTION, empty( $_POST['accent_reset'] ) && preg_match( '/^#[0-9a-f]{6}$/', $acc ) && $acc !== $ind_acc ? $acc : '', false ); // [2026-11-25 11:30 PM Johnny Chu - Chu Hoàng Anh] OHCL-F2
+			// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — ảnh nền hero và tâm bản đồ của chủ Hub (rỗng = theo plugin ngành).
+			update_option( OHCL_Industry::HERO_OPTION, OHCL_Industry::clean_image_url( isset( $_POST['hero_bg'] ) ? esc_url_raw( wp_unslash( $_POST['hero_bg'] ) ) : '' ), false );
+			$mv = array();
+			if ( isset( $_POST['map_lat'], $_POST['map_lng'] ) && '' !== trim( (string) $_POST['map_lat'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- clean_map() kiểm số.
+				$mv = OHCL_Industry::clean_map( array( 'lat' => str_replace( ',', '.', sanitize_text_field( wp_unslash( $_POST['map_lat'] ) ) ), 'lng' => str_replace( ',', '.', sanitize_text_field( wp_unslash( $_POST['map_lng'] ) ) ), 'zoom' => isset( $_POST['map_zoom'] ) ? absint( $_POST['map_zoom'] ) : 12 ) );
+			}
+			update_option( OHCL_Industry::MAP_OPTION, $mv, false );
 			update_option( OHCL_Front::KEEP_OPTION, implode( ',', array_filter( array_map( 'absint', explode( ',', isset( $_POST['keep_theme'] ) ? sanitize_text_field( wp_unslash( $_POST['keep_theme'] ) ) : '' ) ) ) ), false );
 			self::flash_set( array( 'ok' => empty( $_POST['front_home'] ) ? 'Đã trả trang chủ về theme.' : 'Trang chủ giờ là cổng ngành của Hub.' ) );
 		} elseif ( 'core' === $part ) {

@@ -242,3 +242,13 @@ body.ohcl-front .mfp-hide,body.ohcl-front .hidden,body.ohcl-front #main-menu.mob
 .ohcl-front .shop .prod b{font-size:.9rem;line-height:1.35}
 .ohcl-front .shop .prod .pr{font-family:"IBM Plex Mono",monospace;font-size:.85rem;color:var(--g)}
 @media (max-width:720px){.ohcl-front .shop{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — ảnh nền dưới hero theo ngành, nút Gần tôi, danh sách cơ sở gần nhất */
+.ohcl-front .hero.has-bg{background-color:#fff;background-repeat:no-repeat;background-position:center bottom;background-size:100% auto}
+.ohcl-front h2 .h-act,.ohcl-front .h-act{display:inline-flex;align-items:center;gap:12px}
+.ohcl-front .h-act .btn.sm{padding:6px 12px;font-size:13px}
+.ohcl-front .near{margin-top:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.ohcl-front .near ol{margin:8px 0 0;padding-left:20px}
+.ohcl-front .near li{margin:6px 0}
+.ohcl-front .near li a{font-weight:700;color:var(--ink)}
+.ohcl-front .near li span{display:block;font-size:13px;color:var(--m)}

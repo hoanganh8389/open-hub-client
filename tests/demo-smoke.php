@@ -145,7 +145,7 @@ check( 'danh sách hội viên / số liệu không thấy cơ sở mẫu', 1 ==
 $pl = OHCL_Members::public_list();
 check( 'danh bạ công khai: 0 cơ sở thật + 2 cơ sở mẫu có cờ demo', 0 === $pl['real'] && 2 === $pl['demo'] && 2 === count( $pl['items'] ) && $pl['items'][0]['demo'] );
 $h = OHCL_Front::html( 'home', array() );
-check( 'trang chủ: bản đồ có điểm mẫu (d:1) + chú thích "Mẫu"; số "Đã xác minh, công khai" vẫn là 0', false !== strpos( $h, '&quot;d&quot;:1' ) && false !== strpos( $h, 'class="demo-note"' ) && 1 === preg_match( '#<b>0</b><span>Đã xác minh, công khai#', $h ) && false === strpos( $h, 'Bản đồ đang chờ cơ sở đầu tiên' ) );
+check( 'trang chủ: bản đồ có điểm mẫu (d:1), không còn khối chú thích dưới bản đồ (OHCL-FIX4); số "Đã xác minh, công khai" vẫn là 0', false !== strpos( $h, '&quot;d&quot;:1' ) && false === strpos( $h, 'class="demo-note"' ) && 1 === preg_match( '#<b>0</b><span>Đã xác minh, công khai#', $h ) && false === strpos( $h, 'Bản đồ đang chờ cơ sở đầu tiên' ) );
 $_GET = array();
 $mh = OHCL_Front::html( 'map', array() );
 check( 'trang bản đồ: cơ sở mẫu mang nhãn "Mẫu", không bao giờ "Đã xác minh"', false !== strpos( $mh, 'class="badge demo"' ) && false === strpos( $mh, '<span class="badge mem">Đã xác minh</span>' ) );
@@ -207,6 +207,26 @@ $GLOBALS['admin'] = false;
 $threw = false;
 try { handle( array( 'do' => 'seed_members' ) ); } catch ( RuntimeException $e ) { $threw = true; }
 check( 'người không có quyền quản trị ⇒ bị chặn', $threw && 0 === count( OHCL_Demo::member_ids() ) );
+
+/* ---------- ảnh nền hero + tâm bản đồ + Gần tôi (OHCL-FIX4) ---------- */
+// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4
+check( 'ảnh nền: nhận https / đường dẫn tương đối; từ chối http, javascript:, dấu nháy, ngoặc (không chèn được CSS)', '/wp-content/plugins/x/hero.svg' === OHCL_Industry::clean_image_url( '/wp-content/plugins/x/hero.svg' ) && 'https://a.vn/b.jpg?v=2' === OHCL_Industry::clean_image_url( 'https://a.vn/b.jpg?v=2' ) && '' === OHCL_Industry::clean_image_url( 'http://a.vn/b.jpg' ) && '' === OHCL_Industry::clean_image_url( 'javascript:alert(1)' ) && '' === OHCL_Industry::clean_image_url( "https://a.vn/b.jpg');x:url('y" ) && '' === OHCL_Industry::clean_image_url( 'https://a.vn/b).jpg' ) && '' === OHCL_Industry::clean_image_url( 'https://a.vn/x\\.jpg' ) );
+check( 'tâm bản đồ: số hợp lệ, zoom kẹp 3–17; sai ⇒ rỗng', array( 'lat' => 21.0285, 'lng' => 105.8542, 'zoom' => 17 ) === OHCL_Industry::clean_map( array( 'lat' => '21.0285', 'lng' => 105.8542, 'zoom' => 30 ) ) && array() === OHCL_Industry::clean_map( array( 'lat' => 'x', 'lng' => 1 ) ) && array() === OHCL_Industry::clean_map( array( 'lat' => 95, 'lng' => 1 ) ) );
+$w = array();
+$pp = OHCL_Industry::validate_persona( array( 'hero_bg' => 'javascript:x', 'map' => array( 'lat' => 'x' ) ), array(), $w );
+check( 'plugin ngành khai sai hero_bg / map ⇒ bỏ, có cảnh báo', '' === $pp['hero_bg'] && array() === $pp['map'] && 2 === count( $w ) );
+update_option( OHCL_Industry::HERO_OPTION, 'https://hub.test/nen.jpg' );
+update_option( OHCL_Industry::MAP_OPTION, array( 'lat' => 21.0285, 'lng' => 105.8542, 'zoom' => 12 ) );
+$h = OHCL_Front::html( 'home', array() );
+check( 'chủ Hub đặt ảnh nền ⇒ hero có nền ở dưới', false !== strpos( $h, '<section class="hero has-bg" style="background-image:url(\'https://hub.test/nen.jpg\')">' ) );
+check( 'chủ Hub đặt tâm Hà Nội ⇒ bản đồ trang chủ mở ở tâm + zoom đó; có nút Gần tôi + ô danh sách gần nhất', false !== strpos( $h, 'data-center="21.0285,105.8542" data-zoom="12"' ) && false !== strpos( $h, 'data-ohcl-locate' ) && false !== strpos( $h, 'data-ohcl-near hidden' ) );
+update_option( OHCL_Industry::HERO_OPTION, 'red;}body{display:none' );
+update_option( OHCL_Industry::MAP_OPTION, array() );
+$h = OHCL_Front::html( 'home', array() );
+check( 'ảnh nền sai dạng / bỏ tâm ⇒ không chèn gì, bản đồ vừa khung các điểm', false !== strpos( $h, '<section class="hero">' ) && false === strpos( $h, 'data-center=' ) );
+update_option( OHCL_Industry::HERO_OPTION, '' );
+$bh = OHCL_Front::html( 'benefits', array() );
+check( 'trang quyền lợi: "8 quyền lợi đặc biệt"', false !== strpos( $bh, '<h1>8 quyền lợi đặc biệt</h1>' ) && false === strpos( $bh, 'trụ cột quyền lợi' ) );
 
 /* ---------- sản phẩm từ cửa hàng của cơ sở (đường B) ---------- */
 check( 'endpoint: chỉ https tên miền thật; http, IP, có query ⇒ rỗng', 'https://shop.vn/wp-json/wc/store/v1/products?per_page=6&orderby=popularity' === OHCL_Shop::endpoint( 'https://shop.vn/' ) && '' === OHCL_Shop::endpoint( 'http://shop.vn' ) && '' === OHCL_Shop::endpoint( 'https://127.0.0.1' ) && '' === OHCL_Shop::endpoint( 'https://shop.vn/?a=1' ) );

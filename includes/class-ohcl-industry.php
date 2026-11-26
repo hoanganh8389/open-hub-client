@@ -104,7 +104,26 @@ final class OHCL_Industry {
 			),
 			'categories' => array(),
 			'join_note'  => 'Ban điều hành duyệt rồi cấp site và khoá trợ lý AI cho cơ sở. Không cần thẻ thanh toán.',
+			'hero_bg'    => '', // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — ảnh nền dưới phần hero, theo ngành (rỗng = nền trắng)
+			'map'        => array(), // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — tâm + zoom mặc định của bản đồ (rỗng = vừa khung mọi điểm)
 		);
+	}
+
+	/** Image URL usable in CSS url(): https or site-relative, no quotes / parentheses / spaces. Pure. */
+	public static function clean_image_url( $v ) {
+		// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — chỉ nhận đường dẫn ảnh an toàn để chèn vào CSS (không chèn được thuộc tính khác).
+		$v = is_string( $v ) ? trim( $v ) : '';
+		return preg_match( '#^(https://|/)[^\s"\'()<>\\\\]+\.(svg|png|jpe?g|webp|avif)(\?[^\s"\'()<>\\\\]*)?$#i', $v ) ? $v : '';
+	}
+
+	/** Map view { lat, lng, zoom } or array() when invalid. Pure. */
+	public static function clean_map( $v ) {
+		// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — tâm bản đồ theo ngành / chủ Hub (ví dụ Hà Nội 21.0285, 105.8542, zoom 12).
+		if ( ! is_array( $v ) || ! isset( $v['lat'], $v['lng'] ) || ! is_numeric( $v['lat'] ) || ! is_numeric( $v['lng'] ) || abs( (float) $v['lat'] ) > 90 || abs( (float) $v['lng'] ) > 180 ) {
+			return array();
+		}
+		$z = isset( $v['zoom'] ) && is_numeric( $v['zoom'] ) ? (int) $v['zoom'] : 12;
+		return array( 'lat' => round( (float) $v['lat'], 6 ), 'lng' => round( (float) $v['lng'], 6 ), 'zoom' => max( 3, min( 17, $z ) ) );
 	}
 
 	/** Validate the optional persona key. Pure. Bad items are dropped with a warning. */
@@ -122,6 +141,18 @@ final class OHCL_Industry {
 					continue;
 				}
 				$out[ $k ] = $v;
+			}
+		}
+		if ( isset( $raw['hero_bg'] ) ) { // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4
+			$out['hero_bg'] = self::clean_image_url( $raw['hero_bg'] );
+			if ( '' === $out['hero_bg'] && '' !== $raw['hero_bg'] ) {
+				$warnings[] = 'persona.hero_bg: cần URL ảnh https (svg, png, jpg, webp), bỏ';
+			}
+		}
+		if ( isset( $raw['map'] ) ) {
+			$out['map'] = self::clean_map( $raw['map'] );
+			if ( ! $out['map'] && array() !== $raw['map'] ) {
+				$warnings[] = 'persona.map: cần { lat, lng, zoom } hợp lệ, bỏ';
 			}
 		}
 		$icon = function ( $v ) {
@@ -404,6 +435,8 @@ final class OHCL_Industry {
 	}
 
 	const ACCENT_OPTION = 'ohcl_accent';
+	const HERO_OPTION   = 'ohcl_hero_bg'; // [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4
+	const MAP_OPTION    = 'ohcl_map_view';
 
 	/** Owner's accent (#rrggbb) or ''. Owner > industry > default, same order as modules. */
 	public static function owner_accent() {
@@ -418,6 +451,15 @@ final class OHCL_Industry {
 		$own = self::owner_accent();
 		if ( '' !== $own ) {
 			$cfg['brand']['accent'] = $own;
+		}
+		// [2026-11-26 10:25 AM Johnny Chu - Chu Hoàng Anh] OHCL-FIX4 — chủ Hub đặt ảnh nền hero / tâm bản đồ > plugin ngành > mặc định.
+		$bg = self::clean_image_url( (string) get_option( self::HERO_OPTION, '' ) );
+		if ( '' !== $bg ) {
+			$cfg['persona']['hero_bg'] = $bg;
+		}
+		$mv = self::clean_map( get_option( self::MAP_OPTION, array() ) );
+		if ( $mv ) {
+			$cfg['persona']['map'] = $mv;
 		}
 		return $cfg;
 	}
